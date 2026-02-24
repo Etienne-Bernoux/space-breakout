@@ -12,9 +12,16 @@ export class Ship {
     this.canvasWidth = canvasWidth;
   }
 
-  update() {
-    if (this.movingLeft) this.x -= this.speed;
-    if (this.movingRight) this.x += this.speed;
+  update(touchX) {
+    if (touchX !== null && touchX !== undefined) {
+      // Tactile : le vaisseau suit le doigt
+      const target = touchX - this.width / 2;
+      const diff = target - this.x;
+      this.x += diff * 0.3; // Lissage
+    } else {
+      if (this.movingLeft) this.x -= this.speed;
+      if (this.movingRight) this.x += this.speed;
+    }
     this.x = Math.max(0, Math.min(this.canvasWidth - this.width, this.x));
   }
 

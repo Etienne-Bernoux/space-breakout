@@ -2,25 +2,11 @@ import { CONFIG } from './config.js';
 import { Ship } from './ship.js';
 import { Drone } from './drone.js';
 import { AsteroidField } from './asteroid.js';
+import { updateStars } from './stars.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-
-// --- Étoiles (fond) ---
-const stars = Array.from({ length: CONFIG.starCount }, () => ({
-  x: Math.random() * CONFIG.canvas.width,
-  y: Math.random() * CONFIG.canvas.height,
-  size: Math.random() * 2 + 0.5,
-  alpha: Math.random() * 0.8 + 0.2,
-}));
-
-function drawStars() {
-  for (const s of stars) {
-    ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
-    ctx.fillRect(s.x, s.y, s.size, s.size);
-  }
-}
 
 // --- État du jeu ---
 let lives = CONFIG.lives;
@@ -124,7 +110,7 @@ document.addEventListener('keydown', (e) => {
 // --- Game loop ---
 function loop() {
   ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
-  drawStars();
+  updateStars();
 
   if (gameOver) {
     drawEndScreen('GAME OVER');

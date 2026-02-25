@@ -25,6 +25,7 @@ const pauseBtn = { x: CONFIG.canvas.width - 45, y: 5, size: 30 };
 
 setupResize(() => {
   // Repositionner le vaisseau en bas quand la hauteur change
+  session.canvasHeight = CONFIG.canvas.height;
   if (ship) {
     ship.y = CONFIG.canvas.height - ship.height - 10;
     ship.canvasWidth = CONFIG.canvas.width;

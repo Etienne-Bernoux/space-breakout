@@ -35,6 +35,7 @@ function makeField(asteroids) {
   return {
     grid: asteroids,
     get remaining() { return this.grid.filter(a => a.alive).length; },
+    fragment(ast) { ast.alive = false; return []; },
   };
 }
 

@@ -47,7 +47,7 @@ export class GameSession {
     return null;
   }
 
-  /** Drone détruit un astéroïde */
+  /** Drone touche un astéroïde — fragmente les gros, détruit les small */
   checkAsteroidCollision(drone, field) {
     for (const a of field.grid) {
       if (!a.alive) continue;
@@ -57,16 +57,22 @@ export class GameSession {
         drone.y + drone.radius > a.y &&
         drone.y - drone.radius < a.y + a.height
       ) {
-        a.alive = false;
         drone.dy = -drone.dy;
+        const hitX = drone.x;
+        const hitY = drone.y;
         const points = a.sizeName === 'large' ? 40 : a.sizeName === 'medium' ? 20 : 10;
         this.score += points;
+
+        // Fragmenter si > 1×1, sinon juste détruire
+        const fragments = field.fragment(a, hitX, hitY);
+
         return {
-          type: 'asteroidHit',
+          type: fragments.length > 0 ? 'asteroidFragment' : 'asteroidHit',
           points,
-          x: a.x + a.width / 2,
-          y: a.y + a.height / 2,
+          x: hitX,
+          y: hitY,
           color: a.color,
+          fragments,
         };
       }
     }

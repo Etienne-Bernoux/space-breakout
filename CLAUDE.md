@@ -27,8 +27,8 @@ js/
     ship.js             → vaisseau (raquette)
     drone.js            → drone de minage (balle) + rebonds + clamp
     drone.spec.js       → specs drone (rebonds, clamp, angle min)
-    asteroid.js         → génération procédurale (3 tailles, quotas, densité)
-    asteroid.spec.js    → specs astéroïdes (placement, chevauchement, tailles)
+    asteroid.js         → génération procédurale, fragmentation, rendu réaliste
+    asteroid.spec.js    → specs astéroïdes (placement, tailles, fragmentation)
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic.js       → GameSession : état, collisions, score, vies
     game-logic.spec.js  → specs game logic (état, collisions, win/lose)
@@ -87,8 +87,10 @@ Mocha + Chai, ES modules natifs.
 - [x] Contrôles souris
 - [x] Menu réglages (volume musique/SFX, localStorage)
 - [x] Génération procédurale des astéroïdes (3 tailles, densité variable)
-- [x] Tests specs (Mocha + Chai, 43 tests)
+- [x] Tests specs (Mocha + Chai, 53 tests)
 - [x] Clean Architecture (domain / use-cases / infra, DI)
+- [x] Rendu astéroïdes réaliste (Bézier, dégradés, cratères, veines, rim lighting)
+- [x] Fragmentation des astéroïdes (large→medium+small, visuel fracturé + lueur)
 - [ ] Récolte de matière (fragments d'astéroïdes)
 - [ ] Power-ups
 - [ ] Upgrades vaisseau

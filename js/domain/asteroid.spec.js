@@ -181,12 +181,110 @@ describe('AsteroidField', () => {
       const f1 = new AsteroidField(CONFIG.asteroids);
       const f2 = new AsteroidField(CONFIG.asteroids);
 
-      // Comparer les positions — au moins une différence
       const positions1 = f1.grid.map(a => `${a.x},${a.baseY}`).sort().join('|');
       const positions2 = f2.grid.map(a => `${a.x},${a.baseY}`).sort().join('|');
 
-      // Très improbable que 2 layouts aléatoires soient identiques
       expect(positions1).to.not.equal(positions2);
+    });
+  });
+
+  describe('fragmentation', () => {
+    // Config minimal pour tests déterministes
+    const fragConfig = {
+      rows: 4, cols: 4, cellW: 70, cellH: 28, padding: 6,
+      offsetTop: 10, offsetLeft: 10, density: 0, colors: ['#8b4513'],
+    };
+
+    function fieldWithAsteroid(cw, ch) {
+      const field = new AsteroidField(fragConfig); // density 0 → grille vide
+      const ast = field._makeAsteroid(0, 0, cw, ch, fragConfig);
+      field.grid.push(ast);
+      return { field, ast };
+    }
+
+    it('small 1×1 → pas de fragments', () => {
+      const { field, ast } = fieldWithAsteroid(1, 1);
+      const frags = field.fragment(ast, ast.x + 10, ast.y + 10);
+      expect(frags).to.have.length(0);
+      expect(ast.alive).to.be.false;
+    });
+
+    it('medium horizontal 2×1 → 1 small', () => {
+      const { field, ast } = fieldWithAsteroid(2, 1);
+      // Toucher côté gauche
+      const frags = field.fragment(ast, ast.x + 5, ast.y + 10);
+      expect(frags).to.have.length(1);
+      expect(frags[0].sizeName).to.equal('small');
+      expect(frags[0].cw).to.equal(1);
+      expect(frags[0].ch).to.equal(1);
+      expect(ast.alive).to.be.false;
+      expect(frags[0].alive).to.be.true;
+    });
+
+    it('medium vertical 1×2 → 1 small', () => {
+      const { field, ast } = fieldWithAsteroid(1, 2);
+      // Toucher en haut
+      const frags = field.fragment(ast, ast.x + 10, ast.y + 5);
+      expect(frags).to.have.length(1);
+      expect(frags[0].sizeName).to.equal('small');
+      expect(frags[0].cw).to.equal(1);
+    });
+
+    it('large 2×2 → 1 medium + 1 small', () => {
+      const { field, ast } = fieldWithAsteroid(2, 2);
+      // Toucher coin haut-gauche
+      const frags = field.fragment(ast, ast.x + 5, ast.y + 5);
+      expect(frags).to.have.length(2);
+      const names = frags.map(f => f.sizeName).sort();
+      expect(names).to.deep.equal(['medium', 'small']);
+      expect(ast.alive).to.be.false;
+    });
+
+    it('les fragments héritent la couleur du parent', () => {
+      const { field, ast } = fieldWithAsteroid(2, 2);
+      const parentColor = ast.color;
+      const frags = field.fragment(ast, ast.x + 5, ast.y + 5);
+      for (const f of frags) {
+        expect(f.color).to.equal(parentColor);
+      }
+    });
+
+    it('les fragments ont un offset de séparation initial', () => {
+      const { field, ast } = fieldWithAsteroid(2, 2);
+      const frags = field.fragment(ast, ast.x + 5, ast.y + 5);
+      const hasOffset = frags.some(f => f.fragOffsetX !== 0 || f.fragOffsetY !== 0);
+      expect(hasOffset).to.be.true;
+    });
+
+    it('les fragments sont ajoutés à la grille', () => {
+      const { field, ast } = fieldWithAsteroid(2, 1);
+      const before = field.grid.length;
+      field.fragment(ast, ast.x + 5, ast.y + 10);
+      expect(field.grid.length).to.equal(before + 1);
+    });
+
+    it('les fragments ont un fracturedSide cohérent', () => {
+      // Medium horizontal, hit gauche → fragment droit a fracturedSide 'left'
+      const { field, ast } = fieldWithAsteroid(2, 1);
+      const frags = field.fragment(ast, ast.x + 5, ast.y + 10);
+      expect(frags[0].fracturedSide).to.equal('left');
+
+      // Medium horizontal, hit droit → fragment gauche a fracturedSide 'right'
+      const { field: f2, ast: a2 } = fieldWithAsteroid(2, 1);
+      const frags2 = f2.fragment(a2, a2.x + a2.width - 5, a2.y + 10);
+      expect(frags2[0].fracturedSide).to.equal('right');
+    });
+
+    it('les fragments ont plus de points shape (fracture dentelée)', () => {
+      const { field, ast } = fieldWithAsteroid(2, 1);
+      const frags = field.fragment(ast, ast.x + 5, ast.y + 10);
+      // Un small normal a 10 points, un fracturé en a 10 + 5 extra = 15
+      expect(frags[0].shape.length).to.be.above(10);
+    });
+
+    it('les astéroïdes non fracturés ont fracturedSide null', () => {
+      const { ast } = fieldWithAsteroid(1, 1);
+      expect(ast.fracturedSide).to.be.null;
     });
   });
 });

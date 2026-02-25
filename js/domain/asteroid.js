@@ -1,5 +1,6 @@
 import { getMaterial } from './materials.js';
 import { renderAsteroid } from './asteroid-render.js';
+import { parsePattern } from './patterns.js';
 
 // Génère un polygone irrégulier (seed par astéroïde)
 function generateShape(numPoints, fracturedSide = null) {
@@ -94,21 +95,41 @@ function generateVeins(count, rx, ry) {
 
 export class AsteroidField {
   /**
-   * @param {object} config - { rows, cols, cellW, cellH, padding, offsetTop, offsetLeft, density, colors }
+   * @param {object} config - { rows, cols, cellW, cellH, padding, offsetTop, offsetLeft, density, colors, materials, pattern }
+   *   pattern : { lines: string[] } — optionnel, ASCII art du niveau
+   *   Si rows/cols changent, cellW/cellH sont recalculés pour rentrer dans le canvas (800×~400).
    */
   constructor(config) {
-    const c = config;
-    const density = c.density;
-    this.config = c; // gardé pour fragment()
+    const c = { ...config };
+
+    // --- Calcul dynamique de cellW/cellH si la grille change ---
+    const canvasW = 800;
+    const areaH = 400; // zone dédiée aux astéroïdes (haut du canvas)
+    if (!c.cellW || c._autoSize) {
+      c.cellW = Math.floor((canvasW - 2 * c.offsetLeft - (c.cols - 1) * c.padding) / c.cols);
+    }
+    if (!c.cellH || c._autoSize) {
+      c.cellH = Math.floor((areaH - c.offsetTop - (c.rows - 1) * c.padding) / c.rows);
+    }
+
+    this.config = c;
     this.grid = [];
 
-    // Grille d'occupation (true = case prise)
+    if (c.pattern && c.pattern.lines) {
+      this._buildFromPattern(c);
+    } else {
+      this._buildRandom(c);
+    }
+  }
+
+  /** Génération aléatoire (algo original : gros d'abord) */
+  _buildRandom(c) {
+    const density = c.density;
     const occupied = Array.from({ length: c.rows }, () => Array(c.cols).fill(false));
     const totalCells = c.rows * c.cols;
     let filledCells = 0;
     const targetCells = Math.floor(totalCells * density);
 
-    // --- Algo : place les gros d'abord, puis moyens, puis petits ---
     for (const size of SIZES) {
       const quotaCells = Math.floor(targetCells * size.quota);
       let sizeFilled = 0;
@@ -116,8 +137,6 @@ export class AsteroidField {
       for (let attempt = 0; attempt < maxAttempts && filledCells < targetCells && sizeFilled < quotaCells; attempt++) {
         const row = Math.floor(Math.random() * c.rows);
         const col = Math.floor(Math.random() * c.cols);
-
-        // Vérifie que toutes les cases nécessaires sont libres
         if (row + size.ch > c.rows || col + size.cw > c.cols) continue;
         let fits = true;
         for (let dr = 0; dr < size.ch && fits; dr++) {
@@ -126,19 +145,86 @@ export class AsteroidField {
           }
         }
         if (!fits) continue;
-
-        // Marquer les cases comme occupées
         for (let dr = 0; dr < size.ch; dr++) {
           for (let dc = 0; dc < size.cw; dc++) {
             occupied[row + dr][col + dc] = true;
           }
         }
-        const cellCount = size.cw * size.ch;
-        filledCells += cellCount;
-        sizeFilled += cellCount;
-
+        filledCells += size.cw * size.ch;
+        sizeFilled += size.cw * size.ch;
         const matKey = this._pickMaterial(c);
         this.grid.push(this._makeAsteroid(col, row, size.cw, size.ch, c, matKey));
+      }
+    }
+  }
+
+  /** Génération depuis un pattern ASCII : résoudre → merger → créer */
+  _buildFromPattern(c) {
+    const matrix = parsePattern(c.pattern.lines);
+    const rows = Math.min(matrix.length, c.rows);
+    const cols = Math.min(matrix[0]?.length || 0, c.cols);
+
+    // 1. Résoudre les '?' en matériau aléatoire
+    const resolved = Array.from({ length: rows }, (_, r) =>
+      Array.from({ length: cols }, (_, col) => {
+        const cell = matrix[r]?.[col];
+        if (!cell) return null;
+        if (cell === '?') return this._pickMaterial(c);
+        return cell;
+      })
+    );
+
+    // 2. Merger glouton : 2×2, puis 2×1/1×2, puis 1×1
+    const used = Array.from({ length: rows }, () => Array(cols).fill(false));
+
+    // Passe 2×2
+    for (let r = 0; r < rows - 1; r++) {
+      for (let col = 0; col < cols - 1; col++) {
+        if (used[r][col]) continue;
+        const m = resolved[r][col];
+        if (!m) continue;
+        if (resolved[r][col + 1] === m && resolved[r + 1][col] === m && resolved[r + 1][col + 1] === m
+            && !used[r][col + 1] && !used[r + 1][col] && !used[r + 1][col + 1]) {
+          used[r][col] = used[r][col + 1] = used[r + 1][col] = used[r + 1][col + 1] = true;
+          this.grid.push(this._makeAsteroid(col, r, 2, 2, c, m));
+        }
+      }
+    }
+
+    // Passe 2×1 (horizontal)
+    for (let r = 0; r < rows; r++) {
+      for (let col = 0; col < cols - 1; col++) {
+        if (used[r][col]) continue;
+        const m = resolved[r][col];
+        if (!m) continue;
+        if (resolved[r][col + 1] === m && !used[r][col + 1]) {
+          used[r][col] = used[r][col + 1] = true;
+          this.grid.push(this._makeAsteroid(col, r, 2, 1, c, m));
+        }
+      }
+    }
+
+    // Passe 1×2 (vertical)
+    for (let r = 0; r < rows - 1; r++) {
+      for (let col = 0; col < cols; col++) {
+        if (used[r][col]) continue;
+        const m = resolved[r][col];
+        if (!m) continue;
+        if (resolved[r + 1][col] === m && !used[r + 1][col]) {
+          used[r][col] = used[r + 1][col] = true;
+          this.grid.push(this._makeAsteroid(col, r, 1, 2, c, m));
+        }
+      }
+    }
+
+    // Passe 1×1 (restants)
+    for (let r = 0; r < rows; r++) {
+      for (let col = 0; col < cols; col++) {
+        if (used[r][col]) continue;
+        const m = resolved[r][col];
+        if (!m) continue;
+        used[r][col] = true;
+        this.grid.push(this._makeAsteroid(col, r, 1, 1, c, m));
       }
     }
   }

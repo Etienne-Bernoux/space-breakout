@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { AsteroidField } from './asteroid.js';
 import { CONFIG } from '../config.js';
+import { PATTERNS, parsePattern, GRID_PRESETS } from './patterns.js';
 
 describe('AsteroidField', () => {
   describe('génération procédurale', () => {
@@ -334,6 +335,90 @@ describe('AsteroidField', () => {
     it('les astéroïdes non fracturés ont fracturedSide null', () => {
       const { ast } = fieldWithAsteroid(1, 1);
       expect(ast.fracturedSide).to.be.null;
+    });
+  });
+
+  describe('patterns', () => {
+    const patConfig = {
+      rows: 4, cols: 6, cellW: 0, cellH: 0, padding: 4,
+      offsetTop: 10, offsetLeft: 10, _autoSize: true,
+      density: 0.5, materials: { rock: 1.0 },
+    };
+
+    it('parsePattern convertit ASCII en matrice', () => {
+      const m = parsePattern(['R.I', '.O.']);
+      expect(m).to.deep.equal([
+        ['rock', null, 'ice'],
+        [null, 'obsidian', null],
+      ]);
+    });
+
+    it('génère des astéroïdes depuis un pattern', () => {
+      const cfg = {
+        ...patConfig,
+        pattern: { lines: ['RR..', 'RR..', '..II', '..II'] },
+      };
+      const field = new AsteroidField(cfg);
+      expect(field.grid.length).to.be.above(0);
+      // Devrait avoir au moins un rock et un ice
+      const mats = new Set(field.grid.map(a => a.materialKey));
+      expect(mats.has('rock')).to.be.true;
+      expect(mats.has('ice')).to.be.true;
+    });
+
+    it('merge 2×2 adjacents même matériau', () => {
+      const cfg = {
+        ...patConfig,
+        pattern: { lines: ['RR..', 'RR..', '....', '....'] },
+      };
+      const field = new AsteroidField(cfg);
+      const large = field.grid.find(a => a.cw === 2 && a.ch === 2);
+      expect(large).to.not.be.undefined;
+      expect(large.sizeName).to.equal('large');
+    });
+
+    it('merge 2×1 horizontal', () => {
+      const cfg = {
+        ...patConfig,
+        pattern: { lines: ['MM....', '......', '......', '......'] },
+      };
+      const field = new AsteroidField(cfg);
+      const med = field.grid.find(a => a.cw === 2 && a.ch === 1);
+      expect(med).to.not.be.undefined;
+      expect(med.materialKey).to.equal('metal');
+    });
+
+    it('les ? sont résolus en matériau aléatoire', () => {
+      const cfg = {
+        ...patConfig,
+        materials: { ice: 1.0 },
+        pattern: { lines: ['??..', '....', '....', '....'] },
+      };
+      const field = new AsteroidField(cfg);
+      expect(field.grid.length).to.be.above(0);
+      expect(field.grid[0].materialKey).to.equal('ice');
+    });
+
+    it('les . restent vides', () => {
+      const cfg = {
+        ...patConfig,
+        pattern: { lines: ['R...', '....', '....', '....'] },
+      };
+      const field = new AsteroidField(cfg);
+      expect(field.grid.length).to.equal(1);
+    });
+
+    it('grille variable : cellW/cellH recalculés avec _autoSize', () => {
+      const cfg = {
+        ...patConfig,
+        rows: 10, cols: 14,
+        pattern: { lines: Array(10).fill('R'.repeat(14)) },
+      };
+      const field = new AsteroidField(cfg);
+      // Vérifier que des astéroïdes existent et que la config a des cellW > 0
+      expect(field.grid.length).to.be.above(0);
+      expect(field.config.cellW).to.be.above(0);
+      expect(field.config.cellH).to.be.above(0);
     });
   });
 });

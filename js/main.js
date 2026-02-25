@@ -376,7 +376,7 @@ function loop() {
   ship.draw(ctx);
   drone.draw(ctx);
   drawHUD();
-  drawPowerUpHUD(ctx, puManager.getActive(), CONFIG.canvas.width);
+  drawPowerUpHUD(ctx, puManager.getActive());
   drawPauseButton();
 
   requestAnimationFrame(loop);

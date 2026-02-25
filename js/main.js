@@ -10,6 +10,7 @@ import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler
 import { spawnExplosion, spawnTrail, updateParticles } from './infra/particles.js';
 import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './infra/audio.js';
 import { startMusic, isPlaying, setVolume as setMusicVolume } from './infra/music.js';
+import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -37,6 +38,10 @@ setupTouch();
 function perceptualVolume(v) { return v * v; }
 
 loadSettings();
+loadDevConfig();
+// En mode dev, afficher le panel avant le menu
+if (isDevMode()) showDevPanel();
+
 setVolumeChangeCallback((music, sfx) => {
   setMusicVolume(perceptualVolume(music) * 0.3);
   setSfxVolume(perceptualVolume(sfx));
@@ -56,7 +61,9 @@ function startGame() {
   ensureMusic();
   ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height);
   drone = new Drone(CONFIG.drone, ship);
-  field = new AsteroidField(CONFIG.asteroids);
+  // En mode dev, utiliser la config enrichie (matériaux + densité)
+  const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
+  field = new AsteroidField(astConfig);
   session.start();
 }
 
@@ -74,11 +81,21 @@ setTapHandler((x, y) => {
   if (session.state === 'gameOver' || session.state === 'won') {
     resetMenu();
     session.backToMenu();
+    if (isDevMode()) showDevPanel();
   }
 });
 
 setMenuTapHandler((x, y) => {
   ensureMusic();
+  // Dev panel intercepte les taps quand actif
+  if (isDevPanelActive()) {
+    const result = handleDevTap(x, y);
+    if (result === 'launch') {
+      hideDevPanel();
+      startGame();
+    }
+    return;
+  }
   if (session.state === 'menu') {
     const action = handleMenuTap(x, y);
     if (action === 'play') startGame();
@@ -94,21 +111,29 @@ setMenuTapHandler((x, y) => {
     if (x >= cx - 120 && x <= cx + 120 && y >= cy + 60 && y <= cy + 100) {
       resetMenu();
       session.backToMenu();
+      if (isDevMode()) showDevPanel();
     }
   }
 });
 
-// --- Drag slider (réglages) ---
+// --- Drag slider (réglages + dev panel) ---
 setDragHandler((x, y) => {
+  if (isDevPanelActive()) { handleDevDrag(x, y); return; }
   if (session.state === 'menu') handleMenuDrag(x, y);
 });
 setReleaseHandler(() => {
+  if (isDevPanelActive()) { handleDevRelease(); return; }
   handleMenuRelease();
 });
 
 // --- Contrôles clavier ---
 document.addEventListener('keydown', (e) => {
   ensureMusic();
+  // Dev panel : Entrée pour lancer
+  if (isDevPanelActive()) {
+    if (e.key === 'Enter') { hideDevPanel(); startGame(); }
+    return;
+  }
   if (session.state === 'menu') {
     const action = handleMenuInput(e.key);
     if (action === 'play') startGame();
@@ -124,13 +149,14 @@ document.addEventListener('keydown', (e) => {
 
   if (session.state === 'paused') {
     if (e.key === 'Escape') session.resume();
-    if (e.key === 'r') { resetMenu(); session.backToMenu(); }
+    if (e.key === 'r') { resetMenu(); session.backToMenu(); if (isDevMode()) showDevPanel(); }
     return;
   }
 
   if ((session.state === 'gameOver' || session.state === 'won') && e.key === 'r') {
     resetMenu();
     session.backToMenu();
+    if (isDevMode()) showDevPanel();
   }
 });
 
@@ -239,6 +265,14 @@ function loop() {
 
   // Curseur adapté à l'état
   document.body.classList.toggle('menu', session.state === 'menu' || session.state === 'paused');
+
+  if (isDevPanelActive()) {
+    const mouse = getMousePos();
+    handleDevHover(mouse.x, mouse.y);
+    drawDevPanel(ctx);
+    requestAnimationFrame(loop);
+    return;
+  }
 
   if (session.state === 'menu') {
     const mouse = getMousePos();

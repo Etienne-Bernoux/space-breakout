@@ -5,7 +5,7 @@ import { CONFIG } from './config.js';
 describe('AsteroidField', () => {
   describe('génération procédurale', () => {
     it('génère des astéroïdes vivants', () => {
-      const field = new AsteroidField();
+      const field = new AsteroidField(CONFIG.asteroids);
 
       expect(field.grid.length).to.be.above(0);
       expect(field.grid.every(a => a.alive)).to.be.true;
@@ -20,7 +20,7 @@ describe('AsteroidField', () => {
       const runs = 20;
       let totalFilled = 0;
       for (let i = 0; i < runs; i++) {
-        const field = new AsteroidField();
+        const field = new AsteroidField(CONFIG.asteroids);
         let cells = 0;
         for (const a of field.grid) {
           const cw = Math.round(a.width / c.cellW) || 1;
@@ -36,8 +36,8 @@ describe('AsteroidField', () => {
     });
 
     it('accepte une densité custom en paramètre', () => {
-      const field100 = new AsteroidField({ density: 1.0 });
-      const field20 = new AsteroidField({ density: 0.2 });
+      const field100 = new AsteroidField({ ...CONFIG.asteroids, density: 1.0 });
+      const field20 = new AsteroidField({ ...CONFIG.asteroids, density: 0.2 });
 
       expect(field100.grid.length).to.be.above(field20.grid.length);
     });
@@ -48,7 +48,7 @@ describe('AsteroidField', () => {
       // Générer plusieurs fois pour s\'assurer d\'avoir les 3 (algo aléatoire)
       const allSizes = new Set();
       for (let i = 0; i < 10; i++) {
-        const field = new AsteroidField();
+        const field = new AsteroidField(CONFIG.asteroids);
         field.grid.forEach(a => allSizes.add(a.sizeName));
       }
 
@@ -64,7 +64,7 @@ describe('AsteroidField', () => {
 
       let found = false;
       for (let i = 0; i < 10 && !found; i++) {
-        const field = new AsteroidField();
+        const field = new AsteroidField(CONFIG.asteroids);
         const large = field.grid.find(a => a.sizeName === 'large');
         if (large) {
           expect(large.width).to.equal(expectedW);
@@ -80,7 +80,7 @@ describe('AsteroidField', () => {
 
       let found = false;
       for (let i = 0; i < 10 && !found; i++) {
-        const field = new AsteroidField();
+        const field = new AsteroidField(CONFIG.asteroids);
         const small = field.grid.find(a => a.sizeName === 'small');
         if (small) {
           expect(small.width).to.equal(c.cellW);
@@ -95,7 +95,7 @@ describe('AsteroidField', () => {
   describe('pas de chevauchement', () => {
     it('aucun astéroïde ne se superpose sur la grille', () => {
       for (let run = 0; run < 20; run++) {
-        const field = new AsteroidField();
+        const field = new AsteroidField(CONFIG.asteroids);
         const c = CONFIG.asteroids;
         const occupied = Array.from({ length: c.rows }, () => Array(c.cols).fill(false));
 
@@ -120,7 +120,7 @@ describe('AsteroidField', () => {
 
   describe('propriétés des astéroïdes', () => {
     it('chaque astéroïde a une forme (shape) avec des points', () => {
-      const field = new AsteroidField();
+      const field = new AsteroidField(CONFIG.asteroids);
 
       for (const a of field.grid) {
         expect(a.shape).to.be.an('array').with.length.above(0);
@@ -130,7 +130,7 @@ describe('AsteroidField', () => {
     });
 
     it('chaque astéroïde a des cratères', () => {
-      const field = new AsteroidField();
+      const field = new AsteroidField(CONFIG.asteroids);
 
       for (const a of field.grid) {
         expect(a.craters).to.be.an('array').with.length.above(0);
@@ -141,7 +141,7 @@ describe('AsteroidField', () => {
     });
 
     it('chaque astéroïde a une couleur valide', () => {
-      const field = new AsteroidField();
+      const field = new AsteroidField(CONFIG.asteroids);
       const validColors = CONFIG.asteroids.colors;
 
       for (const a of field.grid) {
@@ -152,7 +152,7 @@ describe('AsteroidField', () => {
 
   describe('remaining', () => {
     it('retourne le nombre d\'astéroïdes vivants', () => {
-      const field = new AsteroidField();
+      const field = new AsteroidField(CONFIG.asteroids);
       const total = field.grid.length;
 
       expect(field.remaining).to.equal(total);
@@ -164,7 +164,7 @@ describe('AsteroidField', () => {
 
   describe('update (flottement)', () => {
     it('fait varier la position Y autour de baseY', () => {
-      const field = new AsteroidField();
+      const field = new AsteroidField(CONFIG.asteroids);
       const a = field.grid[0];
       const baseY = a.baseY;
 
@@ -178,8 +178,8 @@ describe('AsteroidField', () => {
 
   describe('layouts aléatoires', () => {
     it('deux générations produisent des layouts différents', () => {
-      const f1 = new AsteroidField();
-      const f2 = new AsteroidField();
+      const f1 = new AsteroidField(CONFIG.asteroids);
+      const f2 = new AsteroidField(CONFIG.asteroids);
 
       // Comparer les positions — au moins une différence
       const positions1 = f1.grid.map(a => `${a.x},${a.baseY}`).sort().join('|');

@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { Ship } from './ship.js';
 import { Drone } from './drone.js';
 import { AsteroidField } from './asteroid.js';
+import { GameSession } from './game-logic.js';
 import { updateStars } from './stars.js';
 import { updateMenu, handleMenuInput, handleMenuTap, updateMenuHover, handleMenuDrag, handleMenuRelease, resetMenu, loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from './menu.js';
 import { setupResize } from './resize.js';
@@ -14,9 +15,9 @@ import { startMusic, isPlaying, setVolume as setMusicVolume } from './music.js';
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-// --- États du jeu ---
-let state = 'menu'; // menu | playing | paused | gameOver | won
-let lives, score, ship = null, drone = null, field;
+// --- Session de jeu (use case) ---
+const session = new GameSession(CONFIG);
+let ship = null, drone = null, field;
 
 // --- Bouton pause (mobile) ---
 const pauseBtn = { x: CONFIG.canvas.width - 45, y: 5, size: 30 };
@@ -53,55 +54,53 @@ function ensureMusic() {
 function startGame() {
   unlockAudio();
   ensureMusic();
-  lives = CONFIG.lives;
-  score = 0;
-  ship = new Ship(CONFIG.canvas.width, CONFIG.canvas.height);
-  drone = new Drone(ship);
-  field = new AsteroidField();
-  state = 'playing';
+  ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height);
+  drone = new Drone(CONFIG.drone, ship);
+  field = new AsteroidField(CONFIG.asteroids);
+  session.start();
 }
 
 // --- Handlers tactiles ---
 setTapHandler((x, y) => {
-  if (state === 'playing') {
+  if (session.state === 'playing') {
     // Tap sur bouton pause
     if (x >= pauseBtn.x && x <= pauseBtn.x + pauseBtn.size &&
         y >= pauseBtn.y && y <= pauseBtn.y + pauseBtn.size) {
-      state = 'paused';
+      session.pause();
       return;
     }
     if (!drone.launched) { drone.launched = true; playLaunch(); }
   }
-  if (state === 'gameOver' || state === 'won') {
+  if (session.state === 'gameOver' || session.state === 'won') {
     resetMenu();
-    state = 'menu';
+    session.backToMenu();
   }
 });
 
 setMenuTapHandler((x, y) => {
   ensureMusic();
-  if (state === 'menu') {
+  if (session.state === 'menu') {
     const action = handleMenuTap(x, y);
     if (action === 'play') startGame();
   }
-  if (state === 'paused') {
+  if (session.state === 'paused') {
     const cx = CONFIG.canvas.width / 2;
     const cy = CONFIG.canvas.height / 2;
     // Bouton REPRENDRE
     if (x >= cx - 120 && x <= cx + 120 && y >= cy && y <= cy + 40) {
-      state = 'playing';
+      session.resume();
     }
     // Bouton MENU
     if (x >= cx - 120 && x <= cx + 120 && y >= cy + 60 && y <= cy + 100) {
       resetMenu();
-      state = 'menu';
+      session.backToMenu();
     }
   }
 });
 
 // --- Drag slider (réglages) ---
 setDragHandler((x, y) => {
-  if (state === 'menu') handleMenuDrag(x, y);
+  if (session.state === 'menu') handleMenuDrag(x, y);
 });
 setReleaseHandler(() => {
   handleMenuRelease();
@@ -110,94 +109,63 @@ setReleaseHandler(() => {
 // --- Contrôles clavier ---
 document.addEventListener('keydown', (e) => {
   ensureMusic();
-  if (state === 'menu') {
+  if (session.state === 'menu') {
     const action = handleMenuInput(e.key);
     if (action === 'play') startGame();
     return;
   }
 
-  if (state === 'playing') {
+  if (session.state === 'playing') {
     if (e.key === 'ArrowLeft') ship.movingLeft = true;
     if (e.key === 'ArrowRight') ship.movingRight = true;
     if (e.key === ' ' && !drone.launched) { drone.launched = true; playLaunch(); }
-    if (e.key === 'Escape') { state = 'paused'; return; }
+    if (e.key === 'Escape') { session.pause(); return; }
   }
 
-  if (state === 'paused') {
-    if (e.key === 'Escape') state = 'playing';
-    if (e.key === 'r') { resetMenu(); state = 'menu'; }
+  if (session.state === 'paused') {
+    if (e.key === 'Escape') session.resume();
+    if (e.key === 'r') { resetMenu(); session.backToMenu(); }
     return;
   }
 
-  if ((state === 'gameOver' || state === 'won') && e.key === 'r') {
+  if ((session.state === 'gameOver' || session.state === 'won') && e.key === 'r') {
     resetMenu();
-    state = 'menu';
+    session.backToMenu();
   }
 });
 
 document.addEventListener('keyup', (e) => {
-  if (state === 'playing') {
+  if (session.state === 'playing') {
     if (e.key === 'ArrowLeft') ship.movingLeft = false;
     if (e.key === 'ArrowRight') ship.movingRight = false;
   }
 });
 
-// --- Collisions ---
-function checkShipCollision() {
-  const d = drone;
-  const s = ship;
-  if (
-    d.dy > 0 &&
-    d.y + d.radius >= s.y &&
-    d.x >= s.x &&
-    d.x <= s.x + s.width
-  ) {
-    d.dy = -d.dy;
-    const hit = (d.x - s.x) / s.width;
-    d.dx = d.speed * (hit - 0.5) * 2;
-    playBounce();
-  }
-}
+// --- Collisions (déléguées au use case, dispatch des effets ici) ---
+function handleCollisions() {
+  const ev1 = session.checkShipCollision(drone, ship);
+  if (ev1) playBounce();
 
-function checkAsteroidCollision() {
-  for (const a of field.grid) {
-    if (!a.alive) continue;
-    if (
-      drone.x + drone.radius > a.x &&
-      drone.x - drone.radius < a.x + a.width &&
-      drone.y + drone.radius > a.y &&
-      drone.y - drone.radius < a.y + a.height
-    ) {
-      spawnExplosion(a.x + a.width / 2, a.y + a.height / 2, a.color);
-      playAsteroidHit();
-      a.alive = false;
-      drone.dy = -drone.dy;
-      const pts = a.sizeName === 'large' ? 40 : a.sizeName === 'medium' ? 20 : 10;
-      score += pts;
-      return;
-    }
+  const ev2 = session.checkAsteroidCollision(drone, field);
+  if (ev2) {
+    spawnExplosion(ev2.x, ev2.y, ev2.color);
+    playAsteroidHit();
   }
-}
 
-function checkDroneLost() {
-  if (drone.y - drone.radius > CONFIG.canvas.height) {
-    lives--;
-    if (lives <= 0) {
-      state = 'gameOver';
-      playGameOver();
-    } else {
-      playLoseLife();
-      drone.reset(ship);
-    }
-  }
+  const ev3 = session.checkDroneLost(drone, ship);
+  if (ev3 && ev3.type === 'gameOver') playGameOver();
+  if (ev3 && ev3.type === 'loseLife') playLoseLife();
+
+  const ev4 = session.checkWin(field);
+  if (ev4) playWin();
 }
 
 // --- HUD ---
 function drawHUD() {
   ctx.fillStyle = '#ffffff';
   ctx.font = '16px monospace';
-  ctx.fillText(`VIES: ${lives}`, 15, 25);
-  ctx.fillText(`SCORE: ${score}`, CONFIG.canvas.width - 130, 25);
+  ctx.fillText(`VIES: ${session.lives}`, 15, 25);
+  ctx.fillText(`SCORE: ${session.score}`, CONFIG.canvas.width - 130, 25);
 }
 
 function drawPauseButton() {
@@ -270,9 +238,9 @@ function loop() {
   updateStars();
 
   // Curseur adapté à l'état
-  document.body.classList.toggle('menu', state === 'menu' || state === 'paused');
+  document.body.classList.toggle('menu', session.state === 'menu' || session.state === 'paused');
 
-  if (state === 'menu') {
+  if (session.state === 'menu') {
     const mouse = getMousePos();
     updateMenuHover(mouse.x, mouse.y);
     updateMenu(ctx);
@@ -280,7 +248,7 @@ function loop() {
     return;
   }
 
-  if (state === 'paused') {
+  if (session.state === 'paused') {
     field.draw(ctx);
     ship.draw(ctx);
     drone.draw(ctx);
@@ -290,12 +258,12 @@ function loop() {
     return;
   }
 
-  if (state === 'gameOver') {
+  if (session.state === 'gameOver') {
     drawEndScreen('GAME OVER');
     requestAnimationFrame(loop);
     return;
   }
-  if (state === 'won') {
+  if (session.state === 'won') {
     drawEndScreen('ZONE NETTOYÉE !');
     requestAnimationFrame(loop);
     return;
@@ -305,11 +273,7 @@ function loop() {
   ship.update(getTouchX());
   drone.update(ship, CONFIG.canvas.width);
   if (drone.launched) spawnTrail(drone.x, drone.y);
-  checkShipCollision();
-  checkAsteroidCollision();
-  checkDroneLost();
-
-  if (field.remaining === 0) { state = 'won'; playWin(); }
+  handleCollisions();
 
   field.draw(ctx);
   updateParticles(ctx);

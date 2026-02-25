@@ -1,5 +1,3 @@
-import { CONFIG } from './config.js';
-
 // --- Helpers couleur ---
 function parseHex(hex) {
   const h = hex.replace('#', '');
@@ -47,9 +45,12 @@ function generateCraters(count, rx, ry) {
 }
 
 export class AsteroidField {
-  constructor(config = {}) {
-    const c = CONFIG.asteroids;
-    const density = config.density ?? c.density;
+  /**
+   * @param {object} config - { rows, cols, cellW, cellH, padding, offsetTop, offsetLeft, density, colors }
+   */
+  constructor(config) {
+    const c = config;
+    const density = c.density;
     this.grid = [];
 
     // Grille d'occupation (true = case prise)

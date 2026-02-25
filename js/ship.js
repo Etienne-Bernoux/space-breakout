@@ -1,10 +1,14 @@
-import { CONFIG } from './config.js';
-
 export class Ship {
-  constructor(canvasWidth, canvasHeight) {
-    this.width = CONFIG.ship.width;
-    this.height = CONFIG.ship.height;
-    this.speed = CONFIG.ship.speed;
+  /**
+   * @param {object} config - { width, height, speed, color }
+   * @param {number} canvasWidth
+   * @param {number} canvasHeight
+   */
+  constructor(config, canvasWidth, canvasHeight) {
+    this.width = config.width;
+    this.height = config.height;
+    this.speed = config.speed;
+    this.color = config.color;
     this.x = (canvasWidth - this.width) / 2;
     this.y = canvasHeight - this.height - 10;
     this.movingLeft = false;
@@ -70,7 +74,7 @@ export class Ship {
     // Corps central (dégradé)
     const bodyGrad = ctx.createLinearGradient(cx - 16, y, cx + 16, y + height);
     bodyGrad.addColorStop(0, '#33ddff');
-    bodyGrad.addColorStop(0.4, CONFIG.ship.color);
+    bodyGrad.addColorStop(0.4, this.color);
     bodyGrad.addColorStop(1, '#005580');
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();

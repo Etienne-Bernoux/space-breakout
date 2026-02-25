@@ -1,9 +1,12 @@
-import { CONFIG } from './config.js';
-
 export class Drone {
-  constructor(ship) {
-    this.radius = CONFIG.drone.radius;
-    this.speed = CONFIG.drone.speed;
+  /**
+   * @param {object} config - { radius, speed, color }
+   * @param {object} ship
+   */
+  constructor(config, ship) {
+    this.radius = config.radius;
+    this.speed = config.speed;
+    this.color = config.color;
     this.reset(ship);
   }
 
@@ -47,7 +50,7 @@ export class Drone {
   }
 
   draw(ctx) {
-    ctx.fillStyle = CONFIG.drone.color;
+    ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();

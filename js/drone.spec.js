@@ -1,16 +1,22 @@
 import { expect } from 'chai';
 import { Drone } from './drone.js';
 
+const DRONE_CONFIG = { radius: 6, speed: 3, color: '#ffcc00' };
+
 // Ship factice pour les tests
 function makeShip(x = 100, y = 500, width = 100) {
   return { x, y, width };
+}
+
+function makeDrone(ship) {
+  return new Drone(DRONE_CONFIG, ship);
 }
 
 describe('Drone', () => {
   describe('constructor + reset', () => {
     it('se positionne centré sur le vaisseau', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
 
       expect(drone.x).to.equal(150); // ship.x + width/2
       expect(drone.y).to.equal(500 - drone.radius);
@@ -19,7 +25,7 @@ describe('Drone', () => {
 
     it('reset remet le drone sur le vaisseau', () => {
       const ship = makeShip(200, 400, 80);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       drone.x = 999;
       drone.y = 999;
@@ -34,7 +40,7 @@ describe('Drone', () => {
   describe('update — non lancé', () => {
     it('suit le vaisseau tant que non lancé', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
 
       ship.x = 300;
       drone.update(ship, 800);
@@ -47,7 +53,7 @@ describe('Drone', () => {
   describe('update — mouvement', () => {
     it('se déplace selon dx/dy une fois lancé', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       const startX = drone.x;
       const startY = drone.y;
@@ -62,7 +68,7 @@ describe('Drone', () => {
   describe('rebond mur gauche', () => {
     it('clamp la position et inverse dx', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       drone.x = 2; // proche du bord gauche
       drone.dx = -3;
@@ -77,7 +83,7 @@ describe('Drone', () => {
   describe('rebond mur droit', () => {
     it('clamp la position et inverse dx', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       drone.x = 798;
       drone.dx = 3;
@@ -92,7 +98,7 @@ describe('Drone', () => {
   describe('rebond plafond', () => {
     it('clamp la position et inverse dy', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       drone.y = 2;
       drone.dy = -3;
@@ -107,7 +113,7 @@ describe('Drone', () => {
   describe('angle minimum garanti', () => {
     it('force un dx minimum pour éviter les trajectoires verticales', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       drone.dx = 0.01; // quasi-vertical
       drone.x = 400;
@@ -121,7 +127,7 @@ describe('Drone', () => {
 
     it('préserve le signe de dx quand il est corrigé', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       drone.dx = -0.01;
       drone.x = 400;
@@ -136,7 +142,7 @@ describe('Drone', () => {
   describe('pas de sortie par le bas (non géré par drone)', () => {
     it('ne clamp pas en bas — c\'est main.js qui gère la perte de vie', () => {
       const ship = makeShip(100, 500, 100);
-      const drone = new Drone(ship);
+      const drone = makeDrone(ship);
       drone.launched = true;
       drone.y = 700;
       drone.dy = 3;

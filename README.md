@@ -22,6 +22,7 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 - Responsive : s'adapte à toutes les tailles d'écran (portrait et paysage)
 - Menu, réglages audio (volume musique/sons), pause, crédits
 - Souris, clavier et tactile supportés
+- Clean Architecture : entités pures, logique métier isolée, infra séparée
 - Zéro dépendance runtime, 100% vanilla JS + Canvas
 
 ## Développement

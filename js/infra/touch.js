@@ -1,4 +1,4 @@
-import { CONFIG } from './config.js';
+import { CONFIG } from '../config.js';
 import { scale } from './resize.js';
 
 const canvas = document.getElementById('game');

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { AsteroidField } from './asteroid.js';
-import { CONFIG } from './config.js';
+import { CONFIG } from '../config.js';
 
 describe('AsteroidField', () => {
   describe('génération procédurale', () => {

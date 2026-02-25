@@ -1,15 +1,15 @@
 import { CONFIG } from './config.js';
-import { Ship } from './ship.js';
-import { Drone } from './drone.js';
-import { AsteroidField } from './asteroid.js';
-import { GameSession } from './game-logic.js';
-import { updateStars } from './stars.js';
-import { updateMenu, handleMenuInput, handleMenuTap, updateMenuHover, handleMenuDrag, handleMenuRelease, resetMenu, loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from './menu.js';
-import { setupResize } from './resize.js';
-import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from './touch.js';
-import { spawnExplosion, spawnTrail, updateParticles } from './particles.js';
-import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './audio.js';
-import { startMusic, isPlaying, setVolume as setMusicVolume } from './music.js';
+import { Ship } from './domain/ship.js';
+import { Drone } from './domain/drone.js';
+import { AsteroidField } from './domain/asteroid.js';
+import { GameSession } from './use-cases/game-logic.js';
+import { updateStars } from './infra/stars.js';
+import { updateMenu, handleMenuInput, handleMenuTap, updateMenuHover, handleMenuDrag, handleMenuRelease, resetMenu, loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from './infra/menu.js';
+import { setupResize } from './infra/resize.js';
+import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from './infra/touch.js';
+import { spawnExplosion, spawnTrail, updateParticles } from './infra/particles.js';
+import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './infra/audio.js';
+import { startMusic, isPlaying, setVolume as setMusicVolume } from './infra/music.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');

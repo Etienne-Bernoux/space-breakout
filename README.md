@@ -15,18 +15,23 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 ## Fonctionnalités
 
 - Vaisseau détaillé avec réacteurs animés et lumières clignotantes
-- Astéroïdes uniques générés procéduralement
+- Astéroïdes générés procéduralement (3 tailles, layout aléatoire à chaque partie)
+- Musique et sons procéduraux (Web Audio, zéro fichier audio)
+- Effets de particules (explosions, traînée du drone)
 - Fond étoilé parallaxe à 3 couches
 - Responsive : s'adapte à toutes les tailles d'écran (portrait et paysage)
-- Menu, pause, crédits
-- Zéro dépendance, 100% vanilla JS + Canvas
+- Menu, réglages audio (volume musique/sons), pause, crédits
+- Souris, clavier et tactile supportés
+- Zéro dépendance runtime, 100% vanilla JS + Canvas
 
 ## Développement
 
 ```bash
 git clone https://github.com/etienne-bernoux/space-breakout.git
 cd space-breakout
-npx serve .
+npm install     # installe les devDependencies (tests)
+npx serve .     # lance le serveur local
+npm test        # lance les tests (Mocha + Chai)
 ```
 
 Puis ouvrir `http://localhost:3000` dans le navigateur.

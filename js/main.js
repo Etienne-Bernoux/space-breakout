@@ -3,9 +3,12 @@ import { Ship } from './ship.js';
 import { Drone } from './drone.js';
 import { AsteroidField } from './asteroid.js';
 import { updateStars } from './stars.js';
-import { updateMenu, handleMenuInput, handleMenuTap, resetMenu } from './menu.js';
+import { updateMenu, handleMenuInput, handleMenuTap, updateMenuHover, handleMenuDrag, handleMenuRelease, resetMenu, loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from './menu.js';
 import { setupResize } from './resize.js';
-import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler } from './touch.js';
+import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from './touch.js';
+import { spawnExplosion, spawnTrail, updateParticles } from './particles.js';
+import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './audio.js';
+import { startMusic, isPlaying, setVolume as setMusicVolume } from './music.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -28,7 +31,28 @@ setupResize(() => {
 });
 setupTouch();
 
+// --- Chargement des réglages audio ---
+// Courbe perceptuelle : x² pour que 50% du slider ≈ moitié du volume perçu
+function perceptualVolume(v) { return v * v; }
+
+loadSettings();
+setVolumeChangeCallback((music, sfx) => {
+  setMusicVolume(perceptualVolume(music) * 0.3);
+  setSfxVolume(perceptualVolume(sfx));
+});
+// Appliquer les volumes sauvegardés
+setSfxVolume(perceptualVolume(getSfxVolume()));
+
+function ensureMusic() {
+  if (!isPlaying()) {
+    startMusic();
+    setMusicVolume(perceptualVolume(getMusicVolume()) * 0.3);
+  }
+}
+
 function startGame() {
+  unlockAudio();
+  ensureMusic();
   lives = CONFIG.lives;
   score = 0;
   ship = new Ship(CONFIG.canvas.width, CONFIG.canvas.height);
@@ -46,7 +70,7 @@ setTapHandler((x, y) => {
       state = 'paused';
       return;
     }
-    if (!drone.launched) drone.launched = true;
+    if (!drone.launched) { drone.launched = true; playLaunch(); }
   }
   if (state === 'gameOver' || state === 'won') {
     resetMenu();
@@ -55,6 +79,7 @@ setTapHandler((x, y) => {
 });
 
 setMenuTapHandler((x, y) => {
+  ensureMusic();
   if (state === 'menu') {
     const action = handleMenuTap(x, y);
     if (action === 'play') startGame();
@@ -74,8 +99,17 @@ setMenuTapHandler((x, y) => {
   }
 });
 
+// --- Drag slider (réglages) ---
+setDragHandler((x, y) => {
+  if (state === 'menu') handleMenuDrag(x, y);
+});
+setReleaseHandler(() => {
+  handleMenuRelease();
+});
+
 // --- Contrôles clavier ---
 document.addEventListener('keydown', (e) => {
+  ensureMusic();
   if (state === 'menu') {
     const action = handleMenuInput(e.key);
     if (action === 'play') startGame();
@@ -85,7 +119,7 @@ document.addEventListener('keydown', (e) => {
   if (state === 'playing') {
     if (e.key === 'ArrowLeft') ship.movingLeft = true;
     if (e.key === 'ArrowRight') ship.movingRight = true;
-    if (e.key === ' ' && !drone.launched) drone.launched = true;
+    if (e.key === ' ' && !drone.launched) { drone.launched = true; playLaunch(); }
     if (e.key === 'Escape') { state = 'paused'; return; }
   }
 
@@ -121,6 +155,7 @@ function checkShipCollision() {
     d.dy = -d.dy;
     const hit = (d.x - s.x) / s.width;
     d.dx = d.speed * (hit - 0.5) * 2;
+    playBounce();
   }
 }
 
@@ -133,9 +168,12 @@ function checkAsteroidCollision() {
       drone.y + drone.radius > a.y &&
       drone.y - drone.radius < a.y + a.height
     ) {
+      spawnExplosion(a.x + a.width / 2, a.y + a.height / 2, a.color);
+      playAsteroidHit();
       a.alive = false;
       drone.dy = -drone.dy;
-      score += 10;
+      const pts = a.sizeName === 'large' ? 40 : a.sizeName === 'medium' ? 20 : 10;
+      score += pts;
       return;
     }
   }
@@ -146,7 +184,9 @@ function checkDroneLost() {
     lives--;
     if (lives <= 0) {
       state = 'gameOver';
+      playGameOver();
     } else {
+      playLoseLife();
       drone.reset(ship);
     }
   }
@@ -229,7 +269,12 @@ function loop() {
   ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
   updateStars();
 
+  // Curseur adapté à l'état
+  document.body.classList.toggle('menu', state === 'menu' || state === 'paused');
+
   if (state === 'menu') {
+    const mouse = getMousePos();
+    updateMenuHover(mouse.x, mouse.y);
     updateMenu(ctx);
     requestAnimationFrame(loop);
     return;
@@ -256,15 +301,18 @@ function loop() {
     return;
   }
 
+  field.update();
   ship.update(getTouchX());
   drone.update(ship, CONFIG.canvas.width);
+  if (drone.launched) spawnTrail(drone.x, drone.y);
   checkShipCollision();
   checkAsteroidCollision();
   checkDroneLost();
 
-  if (field.remaining === 0) state = 'won';
+  if (field.remaining === 0) { state = 'won'; playWin(); }
 
   field.draw(ctx);
+  updateParticles(ctx);
   ship.draw(ctx);
   drone.draw(ctx);
   drawHUD();

@@ -1,0 +1,24 @@
+{
+  "name": "space-breakout",
+  "version": "1.0.0",
+  "description": "Un casse-briques spatial inspiré du jeu Adibou. Pilote un vaisseau de nettoyage et envoie ton drone de minage détruire les astéroïdes qui bloquent la zone !",
+  "type": "module",
+  "scripts": {
+    "test": "mocha 'js/**/*.spec.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Etienne-Bernoux/space-breakout.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Etienne-Bernoux/space-breakout/issues"
+  },
+  "homepage": "https://github.com/Etienne-Bernoux/space-breakout#readme",
+  "devDependencies": {
+    "chai": "^6.2.2",
+    "mocha": "^11.7.5"
+  }
+}

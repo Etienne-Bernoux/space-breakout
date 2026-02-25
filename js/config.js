@@ -19,13 +19,14 @@ export const CONFIG = {
   },
 
   asteroids: {
-    rows: 4,
-    cols: 8,
-    width: 80,
-    height: 25,
-    padding: 10,
-    offsetTop: 50,
-    offsetLeft: 35,
+    rows: 6,
+    cols: 10,
+    cellW: 70,
+    cellH: 28,
+    padding: 6,
+    offsetTop: 45,
+    offsetLeft: 25,
+    density: 0.6,
     colors: ['#8b4513', '#a0522d', '#6b3a2a', '#7a4530'],
   },
 

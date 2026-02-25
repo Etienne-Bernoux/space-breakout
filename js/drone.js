@@ -25,13 +25,24 @@ export class Drone {
     this.x += this.dx;
     this.y += this.dy;
 
-    // Rebond murs latéraux
-    if (this.x - this.radius <= 0 || this.x + this.radius >= canvasWidth) {
-      this.dx = -this.dx;
+    // Rebond murs latéraux + clamp pour éviter de rester collé
+    if (this.x - this.radius <= 0) {
+      this.x = this.radius;
+      this.dx = Math.abs(this.dx);
+    } else if (this.x + this.radius >= canvasWidth) {
+      this.x = canvasWidth - this.radius;
+      this.dx = -Math.abs(this.dx);
     }
     // Rebond plafond
     if (this.y - this.radius <= 0) {
-      this.dy = -this.dy;
+      this.y = this.radius;
+      this.dy = Math.abs(this.dy);
+    }
+
+    // Garantir un angle minimum pour éviter les trajectoires quasi-verticales
+    const minDx = this.speed * 0.25;
+    if (Math.abs(this.dx) < minDx) {
+      this.dx = this.dx >= 0 ? minDx : -minDx;
     }
   }
 

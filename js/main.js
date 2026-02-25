@@ -200,28 +200,29 @@ function drawHUD() {
 }
 
 function drawDeathLine(ship) {
-  const lineY = ship.y + ship.height + ship.bottomMargin * 0.5;
+  const lineY = ship.y + ship.height + ship.bottomMargin * 0.4;
   const w = CONFIG.canvas.width;
-  const pulse = 0.3 + 0.15 * Math.sin(Date.now() * 0.002);
 
-  // Lueur diffuse
-  const glow = ctx.createLinearGradient(0, lineY - 8, 0, lineY + 8);
+  // Lueur diffuse statique
+  const glow = ctx.createLinearGradient(0, lineY - 15, 0, lineY + 15);
   glow.addColorStop(0, 'rgba(0, 212, 255, 0)');
-  glow.addColorStop(0.5, `rgba(0, 212, 255, ${pulse * 0.12})`);
+  glow.addColorStop(0.5, 'rgba(0, 212, 255, 0.07)');
   glow.addColorStop(1, 'rgba(0, 212, 255, 0)');
   ctx.fillStyle = glow;
-  ctx.fillRect(0, lineY - 8, w, 16);
+  ctx.fillRect(0, lineY - 15, w, 30);
 
-  // Ligne fine
+  // Ligne continue avec grésillement (segments d'opacité variable)
   ctx.save();
-  ctx.strokeStyle = `rgba(0, 212, 255, ${pulse})`;
-  ctx.lineWidth = 0.5;
-  ctx.setLineDash([12, 8]);
-  ctx.beginPath();
-  ctx.moveTo(0, lineY);
-  ctx.lineTo(w, lineY);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  const segW = 6;
+  for (let x = 0; x < w; x += segW) {
+    const a = 0.25 + Math.random() * 0.35;
+    ctx.strokeStyle = `rgba(0, 212, 255, ${a})`;
+    ctx.lineWidth = 0.8 + Math.random() * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(x, lineY + (Math.random() - 0.5) * 1.2);
+    ctx.lineTo(x + segW, lineY + (Math.random() - 0.5) * 1.2);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 

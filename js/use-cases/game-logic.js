@@ -42,7 +42,10 @@ export class GameSession {
     ) {
       if (drone.sticky) {
         drone.launched = false;
-        drone.reset(ship);
+        drone._stickyOffset = drone.x - ship.x;
+        drone.y = ship.y - drone.radius;
+        drone.dx = drone.speed;
+        drone.dy = -drone.speed;
         return { type: 'sticky' };
       }
       drone.dy = -drone.dy;

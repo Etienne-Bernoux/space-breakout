@@ -23,7 +23,7 @@ describe('PowerUpManager', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('shipWide', gs, 0);
-      pm.update(gs, 15001);
+      pm.update(gs, 20001);
       expect(gs.ship.width).to.equal(100);
     });
   });
@@ -49,7 +49,7 @@ describe('PowerUpManager', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('dronePiercing', gs, 0);
-      pm.update(gs, 10001);
+      pm.update(gs, 15001);
       expect(gs.drone.piercing).to.be.false;
     });
   });
@@ -60,9 +60,9 @@ describe('PowerUpManager', () => {
       const gs = makeGameState();
       pm.activate('droneSticky', gs, 0);
       expect(gs.drone.sticky).to.be.true;
-      // N'expire pas tout seul
-      pm.update(gs, 999999);
-      expect(gs.drone.sticky).to.be.true;
+      // Expire après 30s
+      pm.update(gs, 30001);
+      expect(gs.drone.sticky).to.be.false;
     });
   });
 
@@ -119,10 +119,10 @@ describe('PowerUpManager', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('shipWide', gs, 0);
-      pm.activate('shipWide', gs, 10000); // re-active à t=10s
-      pm.update(gs, 15001); // 15s après t=0, mais seulement 5s après re-active
+      pm.activate('shipWide', gs, 15000); // re-active à t=15s
+      pm.update(gs, 20001); // 20s après t=0, mais seulement 5s après re-active
       expect(gs.ship.width).to.equal(150); // encore actif
-      pm.update(gs, 25001); // 15s après re-active → expiré
+      pm.update(gs, 35001); // 20s après re-active → expiré
       expect(gs.ship.width).to.equal(100);
     });
   });
@@ -148,7 +148,7 @@ describe('PowerUpManager', () => {
       const list = pm.getActive(5000);
       expect(list).to.have.length(1);
       expect(list[0].id).to.equal('shipWide');
-      expect(list[0].remaining).to.equal(10000);
+      expect(list[0].remaining).to.equal(15000);
     });
   });
 });

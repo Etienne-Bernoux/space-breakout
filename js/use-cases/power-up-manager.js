@@ -66,10 +66,10 @@ export class PowerUpManager {
     const saved = {};
     if (puId === 'shipWide') {
       saved.width = gs.ship.width;
-      gs.ship.width = Math.round(gs.ship.width * 1.5);
+      this._resizeShip(gs, 1.5);
     } else if (puId === 'shipNarrow') {
       saved.width = gs.ship.width;
-      gs.ship.width = Math.round(gs.ship.width * 0.6);
+      this._resizeShip(gs, 0.6);
     } else if (puId === 'droneSticky') {
       gs.drone.sticky = true;
     } else if (puId === 'dronePiercing') {
@@ -80,11 +80,32 @@ export class PowerUpManager {
     return saved;
   }
 
+  /** Resize le vaisseau en gardant le centre + repositionne le drone. */
+  _resizeShip(gs, factor) {
+    const cx = gs.ship.x + gs.ship.width / 2;
+    gs.ship.width = Math.round(gs.ship.width * factor);
+    gs.ship.x = cx - gs.ship.width / 2;
+    // Recentrer le drone s'il est posé
+    if (gs.drone && !gs.drone.launched) {
+      gs.drone.x = gs.ship.x + gs.ship.width / 2;
+    }
+  }
+
   _revert(puId, saved, gs) {
     if (puId === 'shipWide' || puId === 'shipNarrow') {
+      const cx = gs.ship.x + gs.ship.width / 2;
       gs.ship.width = saved.width;
+      gs.ship.x = cx - gs.ship.width / 2;
+      if (gs.drone && !gs.drone.launched) {
+        gs.drone.x = gs.ship.x + gs.ship.width / 2;
+      }
     } else if (puId === 'droneSticky') {
       gs.drone.sticky = false;
+      gs.drone._stickyOffset = undefined;
+      // Si le drone est posé, le relancer automatiquement
+      if (!gs.drone.launched) {
+        gs.drone.launched = true;
+      }
     } else if (puId === 'dronePiercing') {
       gs.drone.piercing = false;
     } else if (puId === 'scoreDouble') {

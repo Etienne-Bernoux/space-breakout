@@ -22,7 +22,12 @@ export class Drone {
 
   update(ship, canvasWidth) {
     if (!this.launched) {
-      this.x = ship.x + ship.width / 2;
+      if (this.sticky && this._stickyOffset !== undefined) {
+        // Sticky : garder l'offset relatif au vaisseau
+        this.x = ship.x + this._stickyOffset;
+      } else {
+        this.x = ship.x + ship.width / 2;
+      }
       this.y = ship.y - this.radius;
       return;
     }

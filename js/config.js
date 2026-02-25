@@ -10,8 +10,8 @@ export const CONFIG = {
     height: 20,
     speed: 7,
     color: '#00d4ff',
-    bottomMargin: 10,        // desktop
-    bottomMarginMobile: 90,  // mobile : évite le doigt + zone swipe OS
+    bottomMargin: 10,              // desktop (fixe)
+    bottomMarginMobileRatio: 0.08, // mobile : 8% de la hauteur canvas
   },
 
   drone: {

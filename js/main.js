@@ -27,6 +27,9 @@ setupResize(() => {
   // Repositionner le vaisseau en bas quand la hauteur change
   session.canvasHeight = CONFIG.canvas.height;
   if (ship) {
+    if (ship.isMobile) {
+      ship.bottomMargin = Math.max(60, Math.round(CONFIG.canvas.height * ship._mobileRatio));
+    }
     ship.y = CONFIG.canvas.height - ship.height - ship.bottomMargin;
     ship.canvasWidth = CONFIG.canvas.width;
     if (drone && !drone.launched) drone.reset(ship);
@@ -196,6 +199,32 @@ function drawHUD() {
   ctx.fillText(`SCORE: ${session.score}`, CONFIG.canvas.width - 130, 25);
 }
 
+function drawDeathLine(ship) {
+  const lineY = ship.y + ship.height + ship.bottomMargin * 0.5;
+  const w = CONFIG.canvas.width;
+  const pulse = 0.3 + 0.15 * Math.sin(Date.now() * 0.002);
+
+  // Lueur diffuse
+  const glow = ctx.createLinearGradient(0, lineY - 8, 0, lineY + 8);
+  glow.addColorStop(0, 'rgba(0, 212, 255, 0)');
+  glow.addColorStop(0.5, `rgba(0, 212, 255, ${pulse * 0.12})`);
+  glow.addColorStop(1, 'rgba(0, 212, 255, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, lineY - 8, w, 16);
+
+  // Ligne fine
+  ctx.save();
+  ctx.strokeStyle = `rgba(0, 212, 255, ${pulse})`;
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([12, 8]);
+  ctx.beginPath();
+  ctx.moveTo(0, lineY);
+  ctx.lineTo(w, lineY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
 function drawPauseButton() {
   const { x, y, size } = pauseBtn;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
@@ -313,6 +342,7 @@ function loop() {
 
   field.draw(ctx);
   updateParticles(ctx);
+  if (ship.isMobile) drawDeathLine(ship);
   ship.draw(ctx);
   drone.draw(ctx);
   drawHUD();

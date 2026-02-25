@@ -9,9 +9,12 @@ export class Ship {
     this.height = config.height;
     this.speed = config.speed;
     this.color = config.color;
+    this.isMobile = isMobile;
+    this._mobileRatio = config.bottomMarginMobileRatio || 0.08;
+    this._desktopMargin = config.bottomMargin || 10;
     this.bottomMargin = isMobile
-      ? (config.bottomMarginMobile || 90)
-      : (config.bottomMargin || 10);
+      ? Math.max(60, Math.round(canvasHeight * this._mobileRatio))
+      : this._desktopMargin;
     this.x = (canvasWidth - this.width) / 2;
     this.y = canvasHeight - this.height - this.bottomMargin;
     this.movingLeft = false;

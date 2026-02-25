@@ -4,13 +4,16 @@ export class Ship {
    * @param {number} canvasWidth
    * @param {number} canvasHeight
    */
-  constructor(config, canvasWidth, canvasHeight) {
+  constructor(config, canvasWidth, canvasHeight, isMobile = false) {
     this.width = config.width;
     this.height = config.height;
     this.speed = config.speed;
     this.color = config.color;
+    this.bottomMargin = isMobile
+      ? (config.bottomMarginMobile || 90)
+      : (config.bottomMargin || 10);
     this.x = (canvasWidth - this.width) / 2;
-    this.y = canvasHeight - this.height - 10;
+    this.y = canvasHeight - this.height - this.bottomMargin;
     this.movingLeft = false;
     this.movingRight = false;
     this.canvasWidth = canvasWidth;

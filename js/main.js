@@ -27,7 +27,7 @@ setupResize(() => {
   // Repositionner le vaisseau en bas quand la hauteur change
   session.canvasHeight = CONFIG.canvas.height;
   if (ship) {
-    ship.y = CONFIG.canvas.height - ship.height - 10;
+    ship.y = CONFIG.canvas.height - ship.height - ship.bottomMargin;
     ship.canvasWidth = CONFIG.canvas.width;
     if (drone && !drone.launched) drone.reset(ship);
   }
@@ -60,7 +60,8 @@ function ensureMusic() {
 function startGame() {
   unlockAudio();
   ensureMusic();
-  ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height);
+  const isMobile = 'ontouchstart' in window;
+  ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
   drone = new Drone(CONFIG.drone, ship);
   // En mode dev, utiliser la config enrichie (matériaux + densité)
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;

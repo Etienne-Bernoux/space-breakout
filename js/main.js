@@ -11,6 +11,11 @@ import { spawnExplosion, spawnTrail, updateParticles } from './infra/particles.j
 import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './infra/audio.js';
 import { startMusic, isPlaying, setVolume as setMusicVolume } from './infra/music.js';
 import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel.js';
+import { Capsule } from './domain/capsule.js';
+import { DropSystem } from './use-cases/drop-system.js';
+import { PowerUpManager } from './use-cases/power-up-manager.js';
+import { getPowerUp } from './domain/power-ups.js';
+import { drawCapsule, drawPowerUpHUD } from './infra/power-up-render.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -19,6 +24,9 @@ const ctx = canvas.getContext('2d');
 // --- Session de jeu (use case) ---
 const session = new GameSession(CONFIG);
 let ship = null, drone = null, field;
+let capsules = [];
+const dropSystem = new DropSystem();
+const puManager = new PowerUpManager();
 
 // --- Bouton pause (mobile) ---
 const pauseBtn = { x: CONFIG.canvas.width - 45, y: 5, size: 30 };
@@ -69,6 +77,8 @@ function startGame() {
   // En mode dev, utiliser la config enrichie (matériaux + densité)
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
   field = new AsteroidField(astConfig);
+  capsules = [];
+  puManager.clear({ ship, drone, session, field });
   session.start();
 }
 
@@ -181,7 +191,23 @@ function handleCollisions() {
   if (ev2) {
     spawnExplosion(ev2.x, ev2.y, ev2.color);
     playAsteroidHit();
+    // Drop de power-up sur destruction
+    if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
+      const puId = dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
+      if (puId) capsules.push(new Capsule(puId, ev2.x, ev2.y));
+    }
   }
+
+  // Capsules ramassées
+  const capEvts = session.checkCapsuleCollision(capsules, ship);
+  for (const ce of capEvts) {
+    const gs = { ship, drone, session, field };
+    puManager.activate(ce.powerUpId, gs);
+    spawnExplosion(ce.x, ce.y, getPowerUp(ce.powerUpId)?.color || '#fff');
+  }
+
+  // Expiration des power-ups
+  puManager.update({ ship, drone, session, field });
 
   const ev3 = session.checkDroneLost(drone, ship);
   if (ev3 && ev3.type === 'gameOver') playGameOver();
@@ -339,14 +365,18 @@ function loop() {
   ship.update(getTouchX());
   drone.update(ship, CONFIG.canvas.width);
   if (drone.launched) spawnTrail(drone.x, drone.y);
+  for (const c of capsules) c.update(CONFIG.canvas.height);
+  capsules = capsules.filter(c => c.alive);
   handleCollisions();
 
   field.draw(ctx);
   updateParticles(ctx);
+  for (const c of capsules) drawCapsule(ctx, c);
   if (ship.isMobile) drawDeathLine(ship);
   ship.draw(ctx);
   drone.draw(ctx);
   drawHUD();
+  drawPowerUpHUD(ctx, puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();
 
   requestAnimationFrame(loop);

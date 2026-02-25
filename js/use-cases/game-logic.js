@@ -14,6 +14,7 @@ export class GameSession {
   start() {
     this.lives = this.maxLives;
     this.score = 0;
+    this.scoreMultiplier = 1;
     this.state = 'playing';
   }
 
@@ -31,7 +32,7 @@ export class GameSession {
 
   // --- Collisions (retournent des events) ---
 
-  /** Drone rebondit sur le vaisseau */
+  /** Drone rebondit sur le vaisseau (+ sticky) */
   checkShipCollision(drone, ship) {
     if (
       drone.dy > 0 &&
@@ -39,6 +40,11 @@ export class GameSession {
       drone.x >= ship.x &&
       drone.x <= ship.x + ship.width
     ) {
+      if (drone.sticky) {
+        drone.launched = false;
+        drone.reset(ship);
+        return { type: 'sticky' };
+      }
       drone.dy = -drone.dy;
       const hit = (drone.x - ship.x) / ship.width;
       drone.dx = drone.speed * (hit - 0.5) * 2;
@@ -47,8 +53,11 @@ export class GameSession {
     return null;
   }
 
-  /** Drone touche un astéroïde — gère HP, fragmentation, indestructibles */
+  /** Drone touche un astéroïde — gère HP, fragmentation, indestructibles, piercing */
   checkAsteroidCollision(drone, field) {
+    const piercing = !!drone.piercing;
+    let firstEvent = null;
+
     for (const a of field.grid) {
       if (!a.alive) continue;
       if (
@@ -57,47 +66,46 @@ export class GameSession {
         drone.y + drone.radius > a.y &&
         drone.y - drone.radius < a.y + a.height
       ) {
-        drone.dy = -drone.dy;
         const hitX = drone.x;
         const hitY = drone.y;
 
-        // Indestructible → simple rebond
+        // Indestructible → rebond (même en piercing)
         if (!a.destructible) {
-          return { type: 'bounce', x: hitX, y: hitY, color: a.color };
+          if (!piercing) drone.dy = -drone.dy;
+          if (!firstEvent) firstEvent = { type: 'bounce', x: hitX, y: hitY, color: a.color };
+          if (!piercing) return firstEvent;
+          continue;
         }
+
+        // Rebond normal (sauf piercing)
+        if (!piercing && !firstEvent) drone.dy = -drone.dy;
 
         // Décrémenter HP
         a.hp--;
         if (a.hp > 0) {
-          // Endommagé mais pas détruit
-          return {
-            type: 'asteroidDamage',
-            x: hitX, y: hitY,
-            color: a.color,
-            hpLeft: a.hp,
-            maxHp: a.maxHp,
-          };
+          const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: a.color, hpLeft: a.hp, maxHp: a.maxHp };
+          if (!piercing) return ev;
+          if (!firstEvent) firstEvent = ev;
+          continue;
         }
 
         // Détruit — scoring
         const basePoints = a.sizeName === 'large' ? 40 : a.sizeName === 'medium' ? 20 : 10;
-        const points = Math.round(basePoints * (a.material?.pointsMult || 1));
+        const mult = (a.material?.pointsMult || 1) * (this.scoreMultiplier || 1);
+        const points = Math.round(basePoints * mult);
         this.score += points;
 
-        // Fragmenter si > 1×1 et matériau fragmentable
         const fragments = field.fragment(a, hitX, hitY);
-
-        return {
+        const ev = {
           type: fragments.length > 0 ? 'asteroidFragment' : 'asteroidHit',
-          points,
-          x: hitX,
-          y: hitY,
-          color: a.color,
-          fragments,
+          points, x: hitX, y: hitY, color: a.color, fragments,
+          materialKey: a.materialKey, sizeName: a.sizeName,
         };
+        if (!piercing) return ev;
+        if (!firstEvent) firstEvent = ev;
       }
     }
-    return null;
+    return firstEvent;
   }
 
   /** Drone perdu en bas de l'écran */
@@ -112,6 +120,21 @@ export class GameSession {
       return { type: 'loseLife', livesLeft: this.lives };
     }
     return null;
+  }
+
+  /** Capsule ramassée par le vaisseau */
+  checkCapsuleCollision(capsules, ship) {
+    const events = [];
+    for (const cap of capsules) {
+      if (!cap.alive) continue;
+      const cx = Math.max(ship.x, Math.min(cap.x, ship.x + ship.width));
+      const cy = Math.max(ship.y, Math.min(cap.y, ship.y + ship.height));
+      if (Math.hypot(cap.x - cx, cap.y - cy) < cap.radius + 4) {
+        cap.alive = false;
+        events.push({ type: 'capsuleCollected', powerUpId: cap.powerUpId, x: cap.x, y: cap.y });
+      }
+    }
+    return events;
   }
 
   /** Tous les astéroïdes détruits */

@@ -7,6 +7,8 @@ export class Drone {
     this.radius = config.radius;
     this.speed = config.speed;
     this.color = config.color;
+    this.piercing = false;
+    this.sticky = false;
     this.reset(ship);
   }
 

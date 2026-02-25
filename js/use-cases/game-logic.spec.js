@@ -27,6 +27,8 @@ function makeAsteroid(overrides = {}) {
   return {
     x: 100, y: 50, width: 70, height: 28,
     alive: true, sizeName: 'small', color: '#8b4513',
+    hp: 1, maxHp: 1, destructible: true,
+    materialKey: 'rock', material: { pointsMult: 1, noFragment: false },
     ...overrides,
   };
 }
@@ -178,6 +180,58 @@ describe('GameSession — checkAsteroidCollision', () => {
     const drone = makeDrone({ x: 400, y: 500 });
     const ev = s.checkAsteroidCollision(drone, field);
     expect(ev).to.be.null;
+  });
+});
+
+// --- Matériaux : HP, indestructible ---
+
+describe('GameSession — matériaux', () => {
+  it('métal HP 3 : 2 premiers coups → asteroidDamage', () => {
+    const s = makeSession();
+    s.start();
+    const ast = makeAsteroid({ hp: 3, maxHp: 3, x: 395, y: 495 });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    const ev = s.checkAsteroidCollision(d, field);
+    expect(ev.type).to.equal('asteroidDamage');
+    expect(ev.hpLeft).to.equal(2);
+    expect(ast.alive).to.be.true;
+    expect(s.score).to.equal(0); // pas de points tant que pas détruit
+  });
+
+  it('métal HP 1 restant → détruit et score', () => {
+    const s = makeSession();
+    s.start();
+    const ast = makeAsteroid({ hp: 1, maxHp: 3, x: 395, y: 495, material: { pointsMult: 2, noFragment: false } });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    const ev = s.checkAsteroidCollision(d, field);
+    expect(ev.type).to.equal('asteroidHit');
+    expect(ev.points).to.equal(20); // 10 * pointsMult 2
+    expect(ast.alive).to.be.false;
+  });
+
+  it('obsidienne indestructible → bounce, pas de dégât', () => {
+    const s = makeSession();
+    s.start();
+    const ast = makeAsteroid({ destructible: false, hp: Infinity, x: 395, y: 495 });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    const ev = s.checkAsteroidCollision(d, field);
+    expect(ev.type).to.equal('bounce');
+    expect(ast.alive).to.be.true;
+    expect(ast.hp).to.equal(Infinity);
+    expect(s.score).to.equal(0);
+  });
+
+  it('cristal pointsMult 3 → triple points', () => {
+    const s = makeSession();
+    s.start();
+    const ast = makeAsteroid({ x: 395, y: 495, material: { pointsMult: 3, noFragment: false } });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    const ev = s.checkAsteroidCollision(d, field);
+    expect(ev.points).to.equal(30); // 10 * 3
   });
 });
 

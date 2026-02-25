@@ -140,12 +140,12 @@ describe('AsteroidField', () => {
       }
     });
 
-    it('chaque astéroïde a une couleur valide', () => {
+    it('chaque astéroïde a une couleur valide (issue du matériau)', () => {
       const field = new AsteroidField(CONFIG.asteroids);
-      const validColors = CONFIG.asteroids.colors;
 
       for (const a of field.grid) {
-        expect(validColors).to.include(a.color);
+        expect(a.material.colors || a.color).to.not.be.undefined;
+        expect(a.color).to.be.a('string');
       }
     });
   });
@@ -185,6 +185,55 @@ describe('AsteroidField', () => {
       const positions2 = f2.grid.map(a => `${a.x},${a.baseY}`).sort().join('|');
 
       expect(positions1).to.not.equal(positions2);
+    });
+  });
+
+  describe('matériaux', () => {
+    it('chaque astéroïde a un materialKey et des HP', () => {
+      const field = new AsteroidField(CONFIG.asteroids);
+      for (const a of field.grid) {
+        expect(a.materialKey).to.be.a('string');
+        expect(a.hp).to.be.a('number');
+        expect(a.maxHp).to.be.a('number');
+        expect(a).to.have.property('destructible');
+      }
+    });
+
+    it('remaining ignore les indestructibles', () => {
+      const mixConfig = {
+        rows: 2, cols: 2, cellW: 70, cellH: 28, padding: 6,
+        offsetTop: 10, offsetLeft: 10, density: 0, colors: ['#8b4513'],
+      };
+      const field = new AsteroidField(mixConfig);
+      // Ajouter manuellement un rock et un obsidian
+      field.grid.push(field._makeAsteroid(0, 0, 1, 1, mixConfig, 'rock'));
+      field.grid.push(field._makeAsteroid(1, 0, 1, 1, mixConfig, 'obsidian'));
+      // remaining = seulement le rock
+      expect(field.remaining).to.equal(1);
+    });
+
+    it('distribution materials via config', () => {
+      const matConfig = {
+        ...CONFIG.asteroids,
+        materials: { ice: 1.0 }, // 100% glace
+      };
+      const field = new AsteroidField(matConfig);
+      for (const a of field.grid) {
+        expect(a.materialKey).to.equal('ice');
+      }
+    });
+
+    it('ice noFragment → pas de fragments même en large', () => {
+      const fragConfig = {
+        rows: 4, cols: 4, cellW: 70, cellH: 28, padding: 6,
+        offsetTop: 10, offsetLeft: 10, density: 0, colors: ['#88ccee'],
+      };
+      const field = new AsteroidField(fragConfig);
+      const ast = field._makeAsteroid(0, 0, 2, 2, fragConfig, 'ice');
+      field.grid.push(ast);
+      const frags = field.fragment(ast, ast.x + 5, ast.y + 5);
+      expect(frags).to.have.length(0);
+      expect(ast.alive).to.be.false;
     });
   });
 

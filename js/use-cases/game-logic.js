@@ -47,7 +47,7 @@ export class GameSession {
     return null;
   }
 
-  /** Drone touche un astéroïde — fragmente les gros, détruit les small */
+  /** Drone touche un astéroïde — gère HP, fragmentation, indestructibles */
   checkAsteroidCollision(drone, field) {
     for (const a of field.grid) {
       if (!a.alive) continue;
@@ -60,10 +60,31 @@ export class GameSession {
         drone.dy = -drone.dy;
         const hitX = drone.x;
         const hitY = drone.y;
-        const points = a.sizeName === 'large' ? 40 : a.sizeName === 'medium' ? 20 : 10;
+
+        // Indestructible → simple rebond
+        if (!a.destructible) {
+          return { type: 'bounce', x: hitX, y: hitY, color: a.color };
+        }
+
+        // Décrémenter HP
+        a.hp--;
+        if (a.hp > 0) {
+          // Endommagé mais pas détruit
+          return {
+            type: 'asteroidDamage',
+            x: hitX, y: hitY,
+            color: a.color,
+            hpLeft: a.hp,
+            maxHp: a.maxHp,
+          };
+        }
+
+        // Détruit — scoring
+        const basePoints = a.sizeName === 'large' ? 40 : a.sizeName === 'medium' ? 20 : 10;
+        const points = Math.round(basePoints * (a.material?.pointsMult || 1));
         this.score += points;
 
-        // Fragmenter si > 1×1, sinon juste détruire
+        // Fragmenter si > 1×1 et matériau fragmentable
         const fragments = field.fragment(a, hitX, hitY);
 
         return {

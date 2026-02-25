@@ -1,17 +1,5 @@
-// --- Helpers couleur ---
-function parseHex(hex) {
-  const h = hex.replace('#', '');
-  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-}
-function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
-function lighten(hex, amt) {
-  const [r, g, b] = parseHex(hex);
-  return `rgb(${clamp(r + amt)},${clamp(g + amt)},${clamp(b + amt)})`;
-}
-function darken(hex, amt) {
-  const [r, g, b] = parseHex(hex);
-  return `rgb(${clamp(r - amt)},${clamp(g - amt)},${clamp(b - amt)})`;
-}
+import { getMaterial } from './materials.js';
+import { renderAsteroid } from './asteroid-render.js';
 
 // Génère un polygone irrégulier (seed par astéroïde)
 function generateShape(numPoints, fracturedSide = null) {
@@ -149,28 +137,36 @@ export class AsteroidField {
         filledCells += cellCount;
         sizeFilled += cellCount;
 
-        this.grid.push(this._makeAsteroid(col, row, size.cw, size.ch, c));
+        const matKey = this._pickMaterial(c);
+        this.grid.push(this._makeAsteroid(col, row, size.cw, size.ch, c, matKey));
       }
     }
   }
 
   /** Fabrique un astéroïde à partir de ses coordonnées grille
+   *  @param {string} materialKey - clé du matériau ('rock','ice',…)
    *  @param {string|null} fracturedSide - 'left'|'right'|'top'|'bottom' ou null
    */
-  _makeAsteroid(col, row, cw, ch, c, fracturedSide = null) {
+  _makeAsteroid(col, row, cw, ch, c, materialKey = 'rock', fracturedSide = null) {
     const pw = cw * c.cellW + (cw - 1) * c.padding;
     const ph = ch * c.cellH + (ch - 1) * c.padding;
     const px = c.offsetLeft + col * (c.cellW + c.padding);
     const py = c.offsetTop + row * (c.cellH + c.padding);
     const sizeDef = SIZES.find(s => s.cw === cw && s.ch === ch) || SIZES[3];
+    const mat = getMaterial(materialKey);
     return {
       x: px, y: py, baseY: py,
       width: pw, height: ph,
       gridCol: col, gridRow: row, cw, ch,
       alive: true,
       sizeName: sizeDef.name,
+      materialKey,
+      material: mat,
+      hp: mat.hp,
+      maxHp: mat.hp,
+      destructible: mat.destructible,
       fracturedSide,
-      color: c.colors[Math.floor(Math.random() * c.colors.length)],
+      color: mat.colors[Math.floor(Math.random() * mat.colors.length)],
       shape: generateShape(sizeDef.shapePoints, fracturedSide),
       craters: generateCraters(fracturedSide ? Math.max(1, sizeDef.craterCount - 1) : sizeDef.craterCount, pw / 2, ph / 2),
       veins: generateVeins(sizeDef.veinCount, pw / 2, ph / 2),
@@ -182,8 +178,25 @@ export class AsteroidField {
     };
   }
 
+  /** Choisit un matériau selon la distribution du niveau (config.materials)
+   *  Format attendu : { rock: 0.6, ice: 0.2, lava: 0.1, ... }
+   *  Si absent, 100% rock.
+   */
+  _pickMaterial(c) {
+    const dist = c.materials;
+    if (!dist) return 'rock';
+    const r = Math.random();
+    let cumul = 0;
+    for (const [key, weight] of Object.entries(dist)) {
+      cumul += weight;
+      if (r < cumul) return key;
+    }
+    return 'rock'; // fallback
+  }
+
+  /** Nombre d'astéroïdes destructibles encore vivants */
   get remaining() {
-    return this.grid.filter((a) => a.alive).length;
+    return this.grid.filter((a) => a.alive && a.destructible).length;
   }
 
   /**
@@ -198,6 +211,7 @@ export class AsteroidField {
     const { gridCol, gridRow, cw, ch } = asteroid;
 
     if (cw === 1 && ch === 1) return []; // small → rien
+    if (asteroid.material.noFragment) return []; // ice/crystal → explose tout
 
     // Déterminer quelle sous-cellule est touchée
     const localX = hitX - asteroid.x;
@@ -208,32 +222,30 @@ export class AsteroidField {
     const fragments = [];
     const sepForce = 3; // force de séparation initiale
 
+    const mk = asteroid.materialKey;
+
     if (cw === 2 && ch === 2) {
       // Large 2×2 → medium (2×1) + small (1×1)
       const medRow = hitRow === 0 ? 1 : 0;
-      // Le medium a son côté fracturé du côté de l'impact (haut ou bas)
       const medFrac = hitRow === 0 ? 'top' : 'bottom';
-      const med = this._makeAsteroid(gridCol, gridRow + medRow, 2, 1, c, medFrac);
+      const med = this._makeAsteroid(gridCol, gridRow + medRow, 2, 1, c, mk, medFrac);
       med.fragOffsetY = (medRow - hitRow) * sepForce;
       fragments.push(med);
-      // Le small a son côté fracturé du côté du hit (gauche ou droite)
       const smlCol = hitCol === 0 ? 1 : 0;
       const smlFrac = hitCol === 0 ? 'left' : 'right';
-      const sml = this._makeAsteroid(gridCol + smlCol, gridRow + hitRow, 1, 1, c, smlFrac);
+      const sml = this._makeAsteroid(gridCol + smlCol, gridRow + hitRow, 1, 1, c, mk, smlFrac);
       sml.fragOffsetX = (smlCol - hitCol) * sepForce;
       fragments.push(sml);
     } else if (cw === 2 && ch === 1) {
-      // Medium horizontal → small opposé, fracturé du côté du hit
       const smlCol = hitCol === 0 ? 1 : 0;
       const smlFrac = hitCol === 0 ? 'left' : 'right';
-      const sml = this._makeAsteroid(gridCol + smlCol, gridRow, 1, 1, c, smlFrac);
+      const sml = this._makeAsteroid(gridCol + smlCol, gridRow, 1, 1, c, mk, smlFrac);
       sml.fragOffsetX = (smlCol - hitCol) * sepForce;
       fragments.push(sml);
     } else if (cw === 1 && ch === 2) {
-      // Medium vertical → small opposé, fracturé du côté du hit
       const smlRow = hitRow === 0 ? 1 : 0;
       const smlFrac = hitRow === 0 ? 'top' : 'bottom';
-      const sml = this._makeAsteroid(gridCol, gridRow + smlRow, 1, 1, c, smlFrac);
+      const sml = this._makeAsteroid(gridCol, gridRow + smlRow, 1, 1, c, mk, smlFrac);
       sml.fragOffsetY = (smlRow - hitRow) * sepForce;
       fragments.push(sml);
     }
@@ -283,112 +295,17 @@ export class AsteroidField {
   }
 
   draw(ctx) {
+    const tp = this._tracePath.bind(this);
     for (const a of this.grid) {
       if (!a.alive) continue;
-
       const cx = a.x + a.width / 2 + (a.fragOffsetX || 0);
       const cy = a.y + a.height / 2 + (a.fragOffsetY || 0);
       const rx = a.width / 2;
       const ry = a.height / 2;
-
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(a.rotation);
-
-      // --- Contour lissé (Bézier) ---
-      this._tracePath(ctx, a.shape, rx, ry);
-
-      // --- Dégradé radial principal (lumière haut-gauche) ---
-      const grad = ctx.createRadialGradient(-rx * 0.35, -ry * 0.35, 1, 0, 0, Math.max(rx, ry));
-      grad.addColorStop(0, lighten(a.color, 55));
-      grad.addColorStop(0.35, lighten(a.color, 15));
-      grad.addColorStop(0.7, a.color);
-      grad.addColorStop(1, darken(a.color, 50));
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // --- Veines / stries de surface ---
-      ctx.save();
-      this._tracePath(ctx, a.shape, rx, ry);
-      ctx.clip();
-      for (const v of a.veins) {
-        ctx.beginPath();
-        ctx.moveTo(v.x1, v.y1);
-        ctx.quadraticCurveTo(v.cpx, v.cpy, v.x2, v.y2);
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-        ctx.lineWidth = v.width;
-        ctx.stroke();
-        // Highlight parallèle (lumière)
-        ctx.beginPath();
-        ctx.moveTo(v.x1 - 0.5, v.y1 - 0.5);
-        ctx.quadraticCurveTo(v.cpx - 0.5, v.cpy - 0.5, v.x2 - 0.5, v.y2 - 0.5);
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-        ctx.lineWidth = v.width * 0.6;
-        ctx.stroke();
-      }
-
-      // --- Cratères avec dégradé interne ---
-      for (const c of a.craters) {
-        const crx = rx * c.ox;
-        const cry = ry * c.oy;
-        const cr = c.r;
-        // Ombre portée (décalée bas-droit)
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.beginPath();
-        ctx.arc(crx + 1, cry + 1, cr + 0.5, 0, Math.PI * 2);
-        ctx.fill();
-        // Dégradé radial du cratère (fond sombre → bord clair)
-        const cGrad = ctx.createRadialGradient(crx - cr * 0.2, cry - cr * 0.2, 0, crx, cry, cr);
-        cGrad.addColorStop(0, darken(a.color, 40 + c.depth * 60));
-        cGrad.addColorStop(0.6, darken(a.color, 20 + c.depth * 30));
-        cGrad.addColorStop(1, a.color);
-        ctx.fillStyle = cGrad;
-        ctx.beginPath();
-        ctx.arc(crx, cry, cr, 0, Math.PI * 2);
-        ctx.fill();
-        // Rebord éclairé (arc haut-gauche)
-        ctx.strokeStyle = `rgba(255,255,255,${0.1 + c.depth * 0.15})`;
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.arc(crx, cry, cr, Math.PI * 0.9, Math.PI * 1.7);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // --- Rim lighting (bord éclairé haut-gauche, ombre bas-droit) ---
-      this._tracePath(ctx, a.shape, rx, ry);
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([]);
-      ctx.stroke();
-      this._tracePath(ctx, a.shape, rx * 0.98, ry * 0.98);
-      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // --- Lueur de fracture (roche chaude côté cassé) ---
-      if (a.fracturedSide) {
-        ctx.save();
-        this._tracePath(ctx, a.shape, rx, ry);
-        ctx.clip();
-        const glowDir = {
-          left:   [-rx, 0],
-          right:  [rx, 0],
-          top:    [0, -ry],
-          bottom: [0, ry],
-        }[a.fracturedSide];
-        const glow = ctx.createRadialGradient(
-          glowDir[0] * 0.8, glowDir[1] * 0.8, 0,
-          glowDir[0] * 0.8, glowDir[1] * 0.8, Math.max(rx, ry) * 0.6
-        );
-        glow.addColorStop(0, 'rgba(255,140,40,0.35)');
-        glow.addColorStop(0.5, 'rgba(255,80,20,0.12)');
-        glow.addColorStop(1, 'rgba(255,60,10,0)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(-rx, -ry, rx * 2, ry * 2);
-        ctx.restore();
-      }
-
+      renderAsteroid(ctx, a, rx, ry, tp);
       ctx.restore();
     }
   }

@@ -27,8 +27,10 @@ js/
     ship.js             → vaisseau (raquette)
     drone.js            → drone de minage (balle) + rebonds + clamp
     drone.spec.js       → specs drone (rebonds, clamp, angle min)
-    asteroid.js         → génération procédurale, fragmentation, rendu réaliste
-    asteroid.spec.js    → specs astéroïdes (placement, tailles, fragmentation)
+    materials.js        → définitions des 6 matériaux (roche, glace, lave, métal, cristal, obsidienne)
+    asteroid.js         → génération procédurale, fragmentation, HP, matériaux
+    asteroid-render.js  → rendu visuel par matériau (styles, dégradés, effets)
+    asteroid.spec.js    → specs astéroïdes (placement, tailles, fragmentation, matériaux)
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic.js       → GameSession : état, collisions, score, vies
     game-logic.spec.js  → specs game logic (état, collisions, win/lose)
@@ -87,11 +89,12 @@ Mocha + Chai, ES modules natifs.
 - [x] Contrôles souris
 - [x] Menu réglages (volume musique/SFX, localStorage)
 - [x] Génération procédurale des astéroïdes (3 tailles, densité variable)
-- [x] Tests specs (Mocha + Chai, 53 tests)
+- [x] Tests specs (Mocha + Chai, 61 tests)
 - [x] Clean Architecture (domain / use-cases / infra, DI)
 - [x] Rendu astéroïdes réaliste (Bézier, dégradés, cratères, veines, rim lighting)
 - [x] Fragmentation des astéroïdes (large→medium+small, visuel fracturé + lueur)
+- [x] 6 matériaux d'astéroïdes (roche, glace, lave, métal, cristal, obsidienne)
 - [ ] Récolte de matière (fragments d'astéroïdes)
 - [ ] Power-ups
-- [ ] Upgrades vaisseau
-- [ ] Niveaux multiples (difficulté progressive)
+- [ ] Upgrades vaisseau (drone renforcé pour casser métal/obsidienne)
+- [ ] Niveaux multiples (difficulté progressive, distribution matériaux par niveau)

@@ -32,6 +32,20 @@ const puManager = new PowerUpManager();
 // --- Scale responsive pour le jeu (HUD, boutons, overlays) ---
 function gameScale() { return Math.min(1.0, Math.max(0.6, CONFIG.canvas.width / 500)); }
 
+// --- Slow-motion ---
+let slowMoTimer = 0;
+const SLOW_MO_DURATION = 30; // frames (~0.5s à 60fps)
+const SLOW_MO_FACTOR = 0.3;
+
+function triggerSlowMo() { slowMoTimer = SLOW_MO_DURATION; }
+function getSlowMoFactor() { return slowMoTimer > 0 ? SLOW_MO_FACTOR : 1; }
+
+// --- Combo counter ---
+let combo = 0;
+let comboDisplay = 0;   // valeur affichée (garde la dernière valeur pendant le fade)
+let comboFadeTimer = 0;
+const COMBO_FADE_DURATION = 90; // frames (~1.5s)
+
 // --- Bouton pause (responsive) ---
 function pauseBtnLayout() {
   const s = gameScale();
@@ -86,6 +100,7 @@ function startGame() {
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
   field = new AsteroidField(astConfig);
   capsules = [];
+  combo = 0; comboDisplay = 0; comboFadeTimer = 0; slowMoTimer = 0;
   puManager.clear({ ship, drone, session, field });
   session.start();
 }
@@ -200,18 +215,22 @@ document.addEventListener('keyup', (e) => {
 // --- Collisions (déléguées au use case, dispatch des effets ici) ---
 function handleCollisions() {
   const ev1 = session.checkShipCollision(drone, ship);
-  if (ev1) playBounce();
+  if (ev1) { playBounce(); combo = 0; }
 
   const ev2 = session.checkAsteroidCollision(drone, field);
   if (ev2) {
     spawnExplosion(ev2.x, ev2.y, ev2.color);
     playAsteroidHit();
-    // Screenshake + drop de power-up sur destruction
+    // Screenshake + combo + drop de power-up sur destruction
     if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
+      combo++;
+      if (combo >= 2) { comboDisplay = combo; comboFadeTimer = COMBO_FADE_DURATION; }
       const shakeAmount = CONFIG.screenshake.intensity[ev2.sizeName] || CONFIG.screenshake.intensity.small;
       triggerShake(shakeAmount);
       const puId = dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
       if (puId) capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
+      // Slow-motion sur le dernier astéroïde
+      if (field.remaining === 0) triggerSlowMo();
     }
   }
 
@@ -229,10 +248,13 @@ function handleCollisions() {
 
   const ev3 = session.checkDroneLost(drone, ship);
   if (ev3 && ev3.type === 'gameOver') { playGameOver(); playGameOverStinger(); }
-  if (ev3 && ev3.type === 'loseLife') playLoseLife();
+  if (ev3 && ev3.type === 'loseLife') { playLoseLife(); combo = 0; }
 
-  const ev4 = session.checkWin(field);
-  if (ev4) { playWin(); playWinStinger(); }
+  // Retarder le win pendant le slow-mo pour qu'il soit visible
+  if (slowMoTimer <= 0) {
+    const ev4 = session.checkWin(field);
+    if (ev4) { playWin(); playWinStinger(); }
+  }
 }
 
 // --- HUD ---
@@ -248,6 +270,41 @@ function drawHUD() {
   const scoreW = ctx.measureText(scoreText).width;
   // Placer le score à gauche du bouton pause
   ctx.fillText(scoreText, pb.x - scoreW - 8, pad + fontSize * 0.6);
+}
+
+function drawCombo() {
+  if (comboFadeTimer <= 0) return;
+  comboFadeTimer--;
+  const alpha = Math.min(1, comboFadeTimer / 30); // fade les 30 dernières frames
+  const progress = 1 - comboFadeTimer / COMBO_FADE_DURATION;
+  const s = gameScale();
+  const baseSize = Math.round(36 * s);
+  // Le texte grossit légèrement puis rétrécit
+  const pulse = 1 + Math.sin(progress * Math.PI) * 0.3;
+  const fontSize = Math.round(baseSize * pulse);
+
+  const cx = CONFIG.canvas.width / 2;
+  const cy = CONFIG.canvas.height * 0.45 - progress * 30; // monte légèrement
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = `bold ${fontSize}px monospace`;
+  ctx.textAlign = 'center';
+
+  // Couleur selon combo (jaune → orange → rouge)
+  const hue = Math.max(0, 60 - (comboDisplay - 2) * 15);
+  ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+
+  // Ombre
+  ctx.shadowColor = `hsl(${hue}, 100%, 40%)`;
+  ctx.shadowBlur = 12;
+
+  ctx.fillText(`×${comboDisplay}`, cx, cy);
+
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'start';
+  ctx.restore();
 }
 
 function drawDeathLine(ship) {
@@ -396,6 +453,31 @@ function loop() {
     return;
   }
 
+  // Slow-motion : on skip des frames pour ralentir le gameplay
+  if (slowMoTimer > 0) {
+    slowMoTimer--;
+    // En slow-mo, on n'update qu'1 frame sur 3
+    if (slowMoTimer % 3 !== 0) {
+      // Mais on dessine quand même (pour l'effet visuel)
+      const shake = updateShake();
+      ctx.save();
+      ctx.translate(shake.x, shake.y);
+      field.draw(ctx);
+      updateParticles(ctx);
+      for (const c of capsules) drawCapsule(ctx, c);
+      if (ship.isMobile) drawDeathLine(ship);
+      ship.draw(ctx);
+      drone.draw(ctx);
+      ctx.restore();
+      drawHUD();
+      drawPowerUpHUD(ctx, puManager.getActive(), CONFIG.canvas.width);
+      drawPauseButton();
+      if (comboFadeTimer > 0) drawCombo();
+      requestAnimationFrame(loop);
+      return;
+    }
+  }
+
   field.update();
   ship.update(getTouchX());
   drone.update(ship, CONFIG.canvas.width);
@@ -420,6 +502,7 @@ function loop() {
   drawHUD();
   drawPowerUpHUD(ctx, puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();
+  if (comboFadeTimer > 0) drawCombo();
 
   requestAnimationFrame(loop);
 }

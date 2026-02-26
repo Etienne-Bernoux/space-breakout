@@ -62,7 +62,9 @@ export class GameSession {
     const piercing = !!drone.piercing;
     let firstEvent = null;
 
-    for (const a of field.grid) {
+    // Snapshot de la grille pour éviter de toucher les fragments créés pendant l'itération
+    const snapshot = [...field.grid];
+    for (const a of snapshot) {
       if (!a.alive) continue;
       if (
         drone.x + drone.radius > a.x &&

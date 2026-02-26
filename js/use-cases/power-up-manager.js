@@ -119,8 +119,7 @@ export class PowerUpManager {
     } else if (effect.action === 'weakenAll') {
       for (const a of gs.field.grid) {
         if (!a.alive || !a.destructible) continue;
-        a.hp = Math.max(0, a.hp + effect.delta);
-        if (a.hp <= 0) a.alive = false;
+        a.hp = Math.max(1, a.hp + effect.delta);
       }
     }
   }

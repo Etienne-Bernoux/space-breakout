@@ -28,8 +28,15 @@ let capsules = [];
 const dropSystem = new DropSystem(CONFIG.drop);
 const puManager = new PowerUpManager();
 
-// --- Bouton pause (mobile) ---
-const pauseBtn = { x: CONFIG.canvas.width - 45, y: 5, size: 30 };
+// --- Scale responsive pour le jeu (HUD, boutons, overlays) ---
+function gameScale() { return Math.min(1.0, Math.max(0.6, CONFIG.canvas.width / 500)); }
+
+// --- Bouton pause (responsive) ---
+function pauseBtnLayout() {
+  const s = gameScale();
+  const size = Math.round(40 * s);
+  return { x: CONFIG.canvas.width - size - 10, y: 8, size };
+}
 
 setupResize(() => {
   // Repositionner le vaisseau en bas quand la hauteur change
@@ -73,7 +80,7 @@ function startGame() {
   ensureMusic();
   const isMobile = 'ontouchstart' in window;
   ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
-  drone = new Drone(CONFIG.drone, ship);
+  drone = new Drone(CONFIG.drone, ship, isMobile, CONFIG.canvas.width);
   // En mode dev, utiliser la config enrichie (matériaux + densité)
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
   field = new AsteroidField(astConfig);
@@ -86,8 +93,9 @@ function startGame() {
 setTapHandler((x, y) => {
   if (session.state === 'playing') {
     // Tap sur bouton pause
-    if (x >= pauseBtn.x && x <= pauseBtn.x + pauseBtn.size &&
-        y >= pauseBtn.y && y <= pauseBtn.y + pauseBtn.size) {
+    const pb = pauseBtnLayout();
+    if (x >= pb.x && x <= pb.x + pb.size &&
+        y >= pb.y && y <= pb.y + pb.size) {
       session.pause();
       return;
     }
@@ -118,12 +126,16 @@ setMenuTapHandler((x, y) => {
   if (session.state === 'paused') {
     const cx = CONFIG.canvas.width / 2;
     const cy = CONFIG.canvas.height / 2;
+    const s = gameScale();
+    const halfW = Math.round(CONFIG.canvas.width * 0.4);
+    const btnH = Math.round(44 * s);
+    const gap = Math.round(16 * s);
     // Bouton REPRENDRE
-    if (x >= cx - 120 && x <= cx + 120 && y >= cy && y <= cy + 40) {
+    if (x >= cx - halfW && x <= cx + halfW && y >= cy && y <= cy + btnH) {
       session.resume();
     }
     // Bouton MENU
-    if (x >= cx - 120 && x <= cx + 120 && y >= cy + 60 && y <= cy + 100) {
+    if (x >= cx - halfW && x <= cx + halfW && y >= cy + btnH + gap && y <= cy + btnH * 2 + gap) {
       resetMenu();
       session.backToMenu();
       if (isDevMode()) showDevPanel();
@@ -219,10 +231,17 @@ function handleCollisions() {
 
 // --- HUD ---
 function drawHUD() {
+  const s = gameScale();
+  const fontSize = Math.round(18 * s);
+  const pad = Math.round(15 * s);
+  const pb = pauseBtnLayout();
   ctx.fillStyle = '#ffffff';
-  ctx.font = '16px monospace';
-  ctx.fillText(`VIES: ${session.lives}`, 15, 25);
-  ctx.fillText(`SCORE: ${session.score}`, CONFIG.canvas.width - 130, 25);
+  ctx.font = `${fontSize}px monospace`;
+  ctx.fillText(`VIES: ${session.lives}`, pad, pad + fontSize * 0.6);
+  const scoreText = `SCORE: ${session.score}`;
+  const scoreW = ctx.measureText(scoreText).width;
+  // Placer le score à gauche du bouton pause
+  ctx.fillText(scoreText, pb.x - scoreW - 8, pad + fontSize * 0.6);
 }
 
 function drawDeathLine(ship) {
@@ -253,17 +272,25 @@ function drawDeathLine(ship) {
 }
 
 function drawPauseButton() {
-  const { x, y, size } = pauseBtn;
+  const { x, y, size } = pauseBtnLayout();
   ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.fillRect(x, y, size, size);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x + 9, y + 7, 4, 16);
-  ctx.fillRect(x + 17, y + 7, 4, 16);
+  const barW = Math.round(size * 0.13);
+  const barH = Math.round(size * 0.53);
+  const padX = Math.round(size * 0.3);
+  const padY = Math.round(size * 0.23);
+  ctx.fillRect(x + padX, y + padY, barW, barH);
+  ctx.fillRect(x + size - padX - barW, y + padY, barW, barH);
 }
 
 function drawPauseScreen() {
   const cx = CONFIG.canvas.width / 2;
   const cy = CONFIG.canvas.height / 2;
+  const s = gameScale();
+  const halfW = Math.round(CONFIG.canvas.width * 0.4);
+  const btnH = Math.round(44 * s);
+  const gap = Math.round(16 * s);
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
   ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
@@ -272,47 +299,49 @@ function drawPauseScreen() {
   ctx.textAlign = 'center';
 
   ctx.fillStyle = '#00d4ff';
-  ctx.font = 'bold 32px monospace';
-  ctx.fillText('PAUSE', cx, cy - 40);
+  ctx.font = `bold ${Math.round(32 * s)}px monospace`;
+  ctx.fillText('PAUSE', cx, cy - 40 * s);
 
   // Bouton REPRENDRE
   ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
-  ctx.fillRect(cx - 120, cy, 240, 40);
+  ctx.fillRect(cx - halfW, cy, halfW * 2, btnH);
   ctx.strokeStyle = '#00d4ff';
   ctx.lineWidth = 1;
-  ctx.strokeRect(cx - 120, cy, 240, 40);
+  ctx.strokeRect(cx - halfW, cy, halfW * 2, btnH);
   ctx.fillStyle = '#ffffff';
-  ctx.font = '18px monospace';
-  ctx.fillText('REPRENDRE', cx, cy + 26);
+  ctx.font = `${Math.round(20 * s)}px monospace`;
+  ctx.fillText('REPRENDRE', cx, cy + btnH * 0.65);
 
   // Bouton MENU
+  const menuY = cy + btnH + gap;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-  ctx.fillRect(cx - 120, cy + 60, 240, 40);
+  ctx.fillRect(cx - halfW, menuY, halfW * 2, btnH);
   ctx.strokeStyle = '#334455';
-  ctx.strokeRect(cx - 120, cy + 60, 240, 40);
+  ctx.strokeRect(cx - halfW, menuY, halfW * 2, btnH);
   ctx.fillStyle = '#667788';
-  ctx.fillText('MENU', cx, cy + 86);
+  ctx.fillText('MENU', cx, menuY + btnH * 0.65);
 
   // Instructions clavier
   const isMobile = 'ontouchstart' in window;
   if (!isMobile) {
-    ctx.font = '12px monospace';
+    ctx.font = `${Math.round(12 * s)}px monospace`;
     ctx.fillStyle = '#445566';
-    ctx.fillText('ÉCHAP REPRENDRE  ·  R MENU', cx, cy + 130);
+    ctx.fillText('ÉCHAP REPRENDRE  ·  R MENU', cx, menuY + btnH + 30 * s);
   }
 
   ctx.restore();
 }
 
 function drawEndScreen(text) {
+  const s = gameScale();
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
   ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
   ctx.fillStyle = '#ffffff';
-  ctx.font = '32px monospace';
+  ctx.font = `bold ${Math.round(32 * s)}px monospace`;
   ctx.textAlign = 'center';
   ctx.fillText(text, CONFIG.canvas.width / 2, CONFIG.canvas.height / 2);
-  ctx.font = '16px monospace';
-  ctx.fillText('Appuie pour retourner au menu', CONFIG.canvas.width / 2, CONFIG.canvas.height / 2 + 40);
+  ctx.font = `${Math.round(16 * s)}px monospace`;
+  ctx.fillText('Appuie pour retourner au menu', CONFIG.canvas.width / 2, CONFIG.canvas.height / 2 + 40 * s);
   ctx.textAlign = 'start';
 }
 
@@ -376,7 +405,7 @@ function loop() {
   ship.draw(ctx);
   drone.draw(ctx);
   drawHUD();
-  drawPowerUpHUD(ctx, puManager.getActive());
+  drawPowerUpHUD(ctx, puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();
 
   requestAnimationFrame(loop);

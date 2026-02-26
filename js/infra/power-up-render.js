@@ -44,14 +44,17 @@ export function drawCapsule(ctx, capsule) {
 }
 
 /** Dessiner le HUD des power-ups actifs (sous VIES:, même style). */
-export function drawPowerUpHUD(ctx, activeList) {
+export function drawPowerUpHUD(ctx, activeList, canvasWidth = 800) {
   if (activeList.length === 0) return;
 
-  const x = 15;
-  const startY = 42;
-  const lineH = 16;
+  const s = Math.min(1.0, Math.max(0.6, canvasWidth / 500));
+  const fontSize = Math.round(14 * s);
+  const iconSize = Math.round(5 * s);
+  const pad = Math.round(15 * s);
+  const startY = Math.round(42 * s);
+  const lineH = Math.round(18 * s);
 
-  ctx.font = '12px monospace';
+  ctx.font = `${fontSize}px monospace`;
 
   for (let i = 0; i < activeList.length; i++) {
     const { id, def, remaining } = activeList[i];
@@ -59,17 +62,18 @@ export function drawPowerUpHUD(ctx, activeList) {
 
     // Icône
     ctx.save();
-    ctx.translate(x + 6, y - 3);
-    drawIcon(ctx, id, 4, def.color);
+    ctx.translate(pad + iconSize + 2, y - iconSize * 0.5);
+    drawIcon(ctx, id, iconSize, def.color);
     ctx.restore();
 
-    // Texte : nom + timer (même style que VIES/SCORE)
+    // Texte : nom + timer
     ctx.fillStyle = '#ffffff';
+    const textX = pad + iconSize * 2 + 6;
     if (remaining === Infinity) {
-      ctx.fillText(def.short, x + 16, y);
+      ctx.fillText(def.short, textX, y);
     } else {
       const sec = (remaining / 1000).toFixed(0);
-      ctx.fillText(`${def.short} ${sec}s`, x + 16, y);
+      ctx.fillText(`${def.short} ${sec}s`, textX, y);
     }
   }
 }

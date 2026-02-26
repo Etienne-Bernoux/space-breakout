@@ -8,6 +8,7 @@ export const CONFIG = {
   ship: {
     width: 100,
     height: 20,
+    mobileWidthRatio: 0.28,        // mobile : 28% de la largeur canvas
     speed: 7,
     color: '#00d4ff',
     bottomMargin: 10,              // desktop (fixe)
@@ -16,6 +17,7 @@ export const CONFIG = {
 
   drone: {
     radius: 6,
+    mobileRadiusRatio: 0.02,       // mobile : 2% de la largeur canvas
     speed: 3,
     color: '#ffcc00',
   },

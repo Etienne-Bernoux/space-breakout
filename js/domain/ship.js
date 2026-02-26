@@ -5,8 +5,12 @@ export class Ship {
    * @param {number} canvasHeight
    */
   constructor(config, canvasWidth, canvasHeight, isMobile = false) {
-    this.width = config.width;
-    this.height = config.height;
+    this.width = isMobile && config.mobileWidthRatio
+      ? Math.round(canvasWidth * config.mobileWidthRatio)
+      : config.width;
+    this.height = isMobile && config.mobileWidthRatio
+      ? Math.round(this.width * (config.height / config.width))
+      : config.height;
     this.speed = config.speed;
     this.color = config.color;
     this.isMobile = isMobile;

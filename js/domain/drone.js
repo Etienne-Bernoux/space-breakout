@@ -3,8 +3,10 @@ export class Drone {
    * @param {object} config - { radius, speed, color }
    * @param {object} ship
    */
-  constructor(config, ship) {
-    this.radius = config.radius;
+  constructor(config, ship, isMobile = false, canvasWidth = 800) {
+    this.radius = (isMobile && config.mobileRadiusRatio)
+      ? Math.max(config.radius, Math.round(canvasWidth * config.mobileRadiusRatio))
+      : config.radius;
     this.speed = config.speed;
     this.color = config.color;
     this.piercing = false;

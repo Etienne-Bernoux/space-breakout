@@ -13,6 +13,7 @@ import { startMusic, isPlaying, setVolume as setMusicVolume } from './infra/musi
 import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel.js';
 import { Capsule } from './domain/capsule.js';
 import { DropSystem } from './use-cases/drop-system.js';
+import { triggerShake, updateShake } from './infra/screenshake.js';
 import { PowerUpManager } from './use-cases/power-up-manager.js';
 import { getPowerUp } from './domain/power-ups.js';
 import { drawCapsule, drawPowerUpHUD } from './infra/power-up-render.js';
@@ -203,8 +204,10 @@ function handleCollisions() {
   if (ev2) {
     spawnExplosion(ev2.x, ev2.y, ev2.color);
     playAsteroidHit();
-    // Drop de power-up sur destruction
+    // Screenshake + drop de power-up sur destruction
     if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
+      const shakeAmount = CONFIG.screenshake.intensity[ev2.sizeName] || CONFIG.screenshake.intensity.small;
+      triggerShake(shakeAmount);
       const puId = dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
       if (puId) capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
     }
@@ -398,12 +401,19 @@ function loop() {
   capsules = capsules.filter(c => c.alive);
   handleCollisions();
 
+  const shake = updateShake();
+  ctx.save();
+  ctx.translate(shake.x, shake.y);
+
   field.draw(ctx);
   updateParticles(ctx);
   for (const c of capsules) drawCapsule(ctx, c);
   if (ship.isMobile) drawDeathLine(ship);
   ship.draw(ctx);
   drone.draw(ctx);
+
+  ctx.restore();
+
   drawHUD();
   drawPowerUpHUD(ctx, puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();

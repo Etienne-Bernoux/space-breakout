@@ -51,6 +51,11 @@ export const CONFIG = {
     sizeMult: { large: 1.4, medium: 1.0, small: 0.6 },
   },
 
+  screenshake: {
+    intensity: { large: 6, medium: 3, small: 1.5 },
+    decay: 0.85,
+  },
+
   lives: 3,
   starCount: 120,
 };

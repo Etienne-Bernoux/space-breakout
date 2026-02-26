@@ -4,8 +4,19 @@ let ctx = null;
 let masterGain = null;
 let masterFilter = null;
 
-const BPM = 110;
-const BEAT = 60 / BPM;
+let BPM = 110;
+let BEAT = 60 / BPM;
+
+const BPM_MIN = 110;
+const BPM_MAX = 128;
+
+/** Ajuste le BPM (prend effet à la prochaine section). */
+function setBPM(bpm) {
+  BPM = Math.max(BPM_MIN, Math.min(BPM_MAX, bpm));
+  BEAT = 60 / BPM;
+}
+
+function getBPM() { return BPM; }
 const FILTER_OPEN = 20000;
 const FILTER_MUFFLED = 350;
 
@@ -91,9 +102,13 @@ function resetAudio() {
 /** Accès interne au masterGain (pour scheduler). */
 function getMasterGain() { return masterGain; }
 
+/** Live beat getter — utiliser partout où le tempo doit être dynamique. */
+function getBeat() { return BEAT; }
+
 export {
   BPM, BEAT, LAYER_NAMES,
   getCtx, freq, layers, getMasterGain,
+  getBeat, getBPM, setBPM,
   setLayerVolume, getLayerVolumes,
   setVolume, muffle, unmuffle,
   peekAudioContext, resetAudio,

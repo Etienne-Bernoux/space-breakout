@@ -1,6 +1,6 @@
 // --- Section Engine : registre d'instruments + dispatch data-driven ---
 
-import { BEAT } from './audio-core.js';
+import { getBeat } from './audio-core.js';
 import { kick, snare, hihat, bass, lead, pad, arp, arpFast, leadOctave } from './instruments-main.js';
 import { timpani, cymbal, cello, brass, strings, harp, brassHigh, choir } from './instruments-dark.js';
 import { MAIN_INTRO, MAIN_VERSE, MAIN_CHORUS, MAIN_BRIDGE, MAIN_BREAKDOWN, MAIN_CLIMAX, MAIN_OUTRO } from './sections-main.js';
@@ -24,14 +24,14 @@ function playSectionConfig(config, t0) {
     for (const ev of events) {
       const fn = INSTRUMENTS[ev.fn];
       if (!fn) continue;
-      const t = t0 + ev.t * BEAT;
+      const t = t0 + ev.t * getBeat();
       // Dispatch selon la signature de l'instrument
       if (ev.notes) {
         // Accord : pad(t, notes, dur), strings(t, notes, dur, vol)
-        fn(t, ev.notes, ev.dur * BEAT, ev.vol);
+        fn(t, ev.notes, ev.dur * getBeat(), ev.vol);
       } else if (ev.note !== undefined && ev.dur !== undefined) {
         // Note + durée : bass, lead, arp, cello, brass, harp...
-        fn(t, ev.note, ev.dur * BEAT, ev.vol);
+        fn(t, ev.note, ev.dur * getBeat(), ev.vol);
       } else if (ev.note !== undefined) {
         // Note + vol (pas de dur) : timpani(t, note, vol)
         fn(t, ev.note, ev.vol);

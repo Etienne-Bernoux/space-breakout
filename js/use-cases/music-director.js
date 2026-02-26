@@ -3,8 +3,11 @@
 
 import {
   enableAdaptiveMode, requestNextSection, setLayerVolume,
-  getCurrentSection, getTimeToNextSection,
+  getCurrentSection, getTimeToNextSection, setBPM,
 } from '../infra/music/index.js';
+
+// BPM par niveau d'intensité : calm→climax
+const INTENSITY_BPM = [110, 114, 118, 122, 128];
 
 // === Niveaux d'intensité ===
 // 0 = calm    (début, >80% restants)  → pad seul, section intro/verse
@@ -128,6 +131,7 @@ export class MusicDirector {
 
     // Appliquer les changements
     this._applyLayers();
+    setBPM(INTENSITY_BPM[this.intensity]);
 
     // Demander un changement de section si l'intensité a changé significativement
     if (this.intensity !== prev) {

@@ -1,7 +1,8 @@
 // --- Scheduler : boucle de sections, mode adaptatif, contrôle lecture ---
 
-import { getCtx, BEAT, LAYER_NAMES, getMasterGain, resetAudio as coreResetAudio } from './audio-core.js';
+import { getCtx, getBeat, LAYER_NAMES, getMasterGain, resetAudio as coreResetAudio } from './audio-core.js';
 import { playSectionConfig, SECTIONS } from './section-engine.js';
+import { shouldFill, playSnareRoll, playArpRise } from './fills.js';
 
 const TRACK_NAMES = ['main', 'dark'];
 let currentTrack = 'main';
@@ -17,7 +18,7 @@ const FULL_LOOP_NAMES = [
   'verse', 'bridge', 'chorus', 'outro',
 ];
 
-const SECTION_LEN = 16 * BEAT;
+function sectionLen() { return 16 * getBeat(); }
 
 // --- Mode adaptatif : le MusicDirector peut demander la prochaine section ---
 let adaptiveMode = false;
@@ -27,6 +28,7 @@ let currentSectionStartTime = 0;
 let loopIndex = 0;
 let playing = false;
 let loopTimer = null;
+let fillTimer = null;
 
 function enableAdaptiveMode() { adaptiveMode = true; }
 function disableAdaptiveMode() { adaptiveMode = false; }
@@ -42,7 +44,24 @@ function getTimeToNextSection() {
   const c = getCtx();
   if (!c || !playing) return 0;
   const elapsed = c.currentTime - currentSectionStartTime;
-  return Math.max(0, SECTION_LEN - elapsed);
+  return Math.max(0, sectionLen() - elapsed);
+}
+
+function peekNextSectionName() {
+  if (adaptiveMode && nextRequestedSection) return nextRequestedSection;
+  return FULL_LOOP_NAMES[loopIndex % FULL_LOOP_NAMES.length];
+}
+
+function scheduleFill() {
+  if (!playing) return;
+  const nextName = peekNextSectionName();
+  if (currentSectionName && shouldFill(currentSectionName, nextName)) {
+    const c = getCtx();
+    const fillStart = currentSectionStartTime + sectionLen() - getBeat() * 2;
+    // Alterner snare roll et arp rise
+    if (Math.random() > 0.5) playSnareRoll(fillStart);
+    else playArpRise(fillStart);
+  }
 }
 
 function scheduleNextSection() {
@@ -65,7 +84,12 @@ function scheduleNextSection() {
   currentSectionName = sectionName;
   currentSectionStartTime = now;
 
-  loopTimer = setTimeout(scheduleNextSection, SECTION_LEN * 1000 - 100);
+  // Programmer le fill 2 beats avant la fin de cette section
+  const fillDelay = (sectionLen() - getBeat() * 2.5) * 1000;
+  if (fillTimer) clearTimeout(fillTimer);
+  fillTimer = setTimeout(scheduleFill, fillDelay);
+
+  loopTimer = setTimeout(scheduleNextSection, sectionLen() * 1000 - 100);
 }
 
 function startMusic() {
@@ -82,6 +106,7 @@ function stopMusic() {
   const savedVol = mg ? mg.gain.value : 0.3;
   playing = false;
   if (loopTimer) clearTimeout(loopTimer);
+  if (fillTimer) clearTimeout(fillTimer);
   if (mg) {
     const c = getCtx();
     mg.gain.linearRampToValueAtTime(0, c.currentTime + 1);
@@ -95,7 +120,9 @@ function stopMusic() {
 function fadeOutMusic(duration = 1.0, onDone) {
   playing = false;
   if (loopTimer) clearTimeout(loopTimer);
+  if (fillTimer) clearTimeout(fillTimer);
   loopTimer = null;
+  fillTimer = null;
   const mg = getMasterGain();
   const c = getCtx();
   if (mg && c) {
@@ -114,7 +141,9 @@ function isPlaying() {
 function resetAudio() {
   playing = false;
   if (loopTimer) clearTimeout(loopTimer);
+  if (fillTimer) clearTimeout(fillTimer);
   loopTimer = null;
+  fillTimer = null;
   coreResetAudio();
 }
 

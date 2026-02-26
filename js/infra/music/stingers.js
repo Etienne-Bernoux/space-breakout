@@ -209,4 +209,36 @@ function playPowerUpAccent() {
   }
 }
 
-export { playWinStinger, playGameOverStinger, playPowerUpAccent };
+/**
+ * Accent combo par palier :
+ * ×2 : 1 note aiguë douce
+ * ×3 : 2 notes montantes
+ * ×5+: 3 notes montantes + brillantes
+ */
+function playComboAccent(combo) {
+  const c = getCtx();
+  const t = c.currentTime;
+
+  // Palier : nombre de notes et volume
+  let notes, vol;
+  if (combo >= 5)      { notes = [76, 79, 83]; vol = 0.09; }
+  else if (combo >= 3) { notes = [72, 76];     vol = 0.07; }
+  else                 { notes = [71];         vol = 0.05; }
+
+  for (let i = 0; i < notes.length; i++) {
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq(notes[i]);
+    const start = t + i * 0.05;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(vol, start + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(start);
+    osc.stop(start + 0.2);
+  }
+}
+
+export { playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent };

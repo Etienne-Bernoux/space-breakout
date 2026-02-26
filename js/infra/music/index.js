@@ -3,6 +3,7 @@
 
 export {
   BEAT, LAYER_NAMES,
+  getBeat, getBPM, setBPM,
   setLayerVolume, getLayerVolumes,
   setVolume, muffle, unmuffle,
   peekAudioContext,
@@ -17,6 +18,6 @@ export {
   resetAudio, playSectionByName,
 } from './scheduler.js';
 
-export { playWinStinger, playGameOverStinger, playPowerUpAccent } from './stingers.js';
+export { playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent } from './stingers.js';
 
 export { playInstrumentDemo } from './demos.js';

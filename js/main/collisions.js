@@ -3,7 +3,7 @@ import { Capsule } from '../domain/capsule.js';
 import { getPowerUp } from '../domain/power-ups.js';
 import { spawnExplosion } from '../infra/particles.js';
 import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver } from '../infra/audio.js';
-import { fadeOutMusic, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../infra/music/index.js';
+import { fadeOutMusic, playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent } from '../infra/music/index.js';
 import { triggerShake } from '../infra/screenshake.js';
 import { G, triggerSlowMo, COMBO_FADE_DURATION } from './init.js';
 
@@ -18,7 +18,11 @@ export function handleCollisions() {
     // Screenshake + combo + drop de power-up sur destruction
     if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
       G.combo++;
-      if (G.combo >= 2) { G.comboDisplay = G.combo; G.comboFadeTimer = COMBO_FADE_DURATION; }
+      if (G.combo >= 2) {
+        G.comboDisplay = G.combo;
+        G.comboFadeTimer = COMBO_FADE_DURATION;
+        playComboAccent(G.combo);
+      }
       const shakeAmount = CONFIG.screenshake.intensity[ev2.sizeName] || CONFIG.screenshake.intensity.small;
       triggerShake(shakeAmount);
       const puId = G.dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });

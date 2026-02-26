@@ -10,6 +10,7 @@ import {
   playSectionByName, playInstrumentDemo, peekAudioContext, resetAudio,
   setLayerVolume, getLayerVolumes, LAYER_NAMES, getCurrentSection,
   enableAdaptiveMode, requestNextSection,
+  setTrack, getTrack, TRACK_NAMES,
 } from './music.js';
 
 let active = false;
@@ -119,11 +120,11 @@ export function isMusicLab() {
 export function isMusicLabActive() { return active; }
 export function showMusicLab() { active = true; }
 
-// --- Data (prêt multi-pistes : une seule piste pour l'instant) ---
+// --- Data multi-pistes ---
 const TRACKS = [
   { id: 'main', label: 'SPACE MAIN' },
+  { id: 'dark', label: 'DARK ORCH' },
 ];
-let currentTrack = 0;
 
 const SECTIONS = [
   { id: 'intro',     label: 'INTRO',     color: '#4488aa' },
@@ -135,7 +136,7 @@ const SECTIONS = [
   { id: 'outro',     label: 'OUTRO',     color: '#cc4455' },
 ];
 
-const INSTRUMENTS = [
+const INSTRUMENTS_MAIN = [
   { id: 'kick',  label: 'KICK',  color: '#ff6644' },
   { id: 'snare', label: 'SNARE', color: '#ffaa33' },
   { id: 'hihat', label: 'HIHAT', color: '#ffdd44' },
@@ -144,6 +145,18 @@ const INSTRUMENTS = [
   { id: 'pad',   label: 'PAD',   color: '#aa88ff' },
   { id: 'arp',   label: 'ARP',   color: '#44ffaa' },
 ];
+const INSTRUMENTS_DARK = [
+  { id: 'timpani', label: 'TIMPANI', color: '#ff6644' },
+  { id: 'cymbal',  label: 'CYMBAL',  color: '#ffaa33' },
+  { id: 'cello',   label: 'CELLO',   color: '#44aaff' },
+  { id: 'brass',   label: 'BRASS',   color: '#ff44aa' },
+  { id: 'strings', label: 'STRINGS', color: '#aa88ff' },
+  { id: 'harp',    label: 'HARP',    color: '#44ffaa' },
+  { id: 'brassHi', label: 'BRASS HI', color: '#ffee44' },
+];
+function getInstruments() {
+  return getTrack() === 'dark' ? INSTRUMENTS_DARK : INSTRUMENTS_MAIN;
+}
 
 const STINGERS = [
   { id: 'win',      label: 'WIN',      color: '#44ff88', fn: playWinStinger },
@@ -297,11 +310,16 @@ function drawTabSons(ctx, col1, startY, W) {
   const gap = 8;
   let y = startY;
 
-  // Piste
-  drawLabel(ctx, `PISTE: ${TRACKS[currentTrack].label}`, col1, y);
-  if (TRACKS.length > 1) {
-    drawSmallText(ctx, '(← → pour changer)', col1 + 220, y, '#445566');
+  // Piste — boutons de sélection
+  drawLabel(ctx, 'PISTE', col1, y);
+  y += 14;
+  const trackBtnW = 130;
+  for (let i = 0; i < TRACKS.length; i++) {
+    const bx = col1 + i * (trackBtnW + gap);
+    const isCurrent = TRACKS[i].id === getTrack();
+    drawBtn(ctx, bx, y, trackBtnW, btnH, TRACKS[i].label, '#00d4ff', hovered === `track-${TRACKS[i].id}`, isCurrent);
   }
+  y += btnH + gap;
 
   // Sections
   y += 24;
@@ -320,19 +338,20 @@ function drawTabSons(ctx, col1, startY, W) {
   const secRows = Math.ceil(SECTIONS.length / secPerRow);
   y += secRows * (btnH + gap) + 8;
 
-  // Instruments
+  // Instruments (dynamique par piste)
+  const instruments = getInstruments();
   drawLabel(ctx, 'INSTRUMENTS', col1, y);
   y += 14;
   const instPerRow = 4;
-  for (let i = 0; i < INSTRUMENTS.length; i++) {
-    const inst = INSTRUMENTS[i];
+  for (let i = 0; i < instruments.length; i++) {
+    const inst = instruments[i];
     const row = Math.floor(i / instPerRow);
     const col = i % instPerRow;
     const bx = col1 + col * (btnW + gap);
     const by = y + row * (btnH + gap);
     drawBtn(ctx, bx, by, btnW, btnH, inst.label, inst.color, hovered === `inst-${inst.id}`, false);
   }
-  const instRows = Math.ceil(INSTRUMENTS.length / instPerRow);
+  const instRows = Math.ceil(instruments.length / instPerRow);
   y += instRows * (btnH + gap) + 8;
 
   // Stingers
@@ -583,9 +602,17 @@ function getButtonLayout() {
   let y = 16;
 
   if (currentTab === 0) {
+    // Track selector
+    y += 14; // piste label
+    const trackBtnW = 130;
+    for (let i = 0; i < TRACKS.length; i++) {
+      buttons.push({ id: `track-${TRACKS[i].id}`, x: col1 + i * (trackBtnW + gap), y, w: trackBtnW, h: btnH });
+    }
+    y += btnH + gap;
+
     // Sections
-    y += 24; // piste label
-    y += 14; // sections label + gap
+    y += 24; // gap avant section (comme drawTabSons)
+    y += 14; // sections label
     const secPerRow = 4;
     for (let i = 0; i < SECTIONS.length; i++) {
       const row = Math.floor(i / secPerRow);
@@ -595,15 +622,16 @@ function getButtonLayout() {
     const secRows = Math.ceil(SECTIONS.length / secPerRow);
     y += secRows * (btnH + gap) + 8;
 
-    // Instruments
+    // Instruments (dynamique par piste)
+    const instruments = getInstruments();
     y += 14;
     const instPerRow = 4;
-    for (let i = 0; i < INSTRUMENTS.length; i++) {
+    for (let i = 0; i < instruments.length; i++) {
       const row = Math.floor(i / instPerRow);
       const col = i % instPerRow;
-      buttons.push({ id: `inst-${INSTRUMENTS[i].id}`, x: col1 + col * (btnW + gap), y: y + row * (btnH + gap), w: btnW, h: btnH });
+      buttons.push({ id: `inst-${instruments[i].id}`, x: col1 + col * (btnW + gap), y: y + row * (btnH + gap), w: btnW, h: btnH });
     }
-    const instRows = Math.ceil(INSTRUMENTS.length / instPerRow);
+    const instRows = Math.ceil(instruments.length / instPerRow);
     y += instRows * (btnH + gap) + 8;
 
     // Stingers
@@ -692,6 +720,20 @@ export function handleMusicLabTap(x, y) {
       startMusic(); loopStartTime = Date.now();
       setActivity('Boucle complète', SECTION_DUR * LOOP_ORDER.length);
       simApply(); // appliquer l'état courant
+    }
+    return;
+  }
+
+  // --- Track selection ---
+  if (id.startsWith('track-')) {
+    const trackId = id.replace('track-', '');
+    if (trackId !== getTrack()) {
+      setTrack(trackId);
+      // Si la musique joue, on redémarre pour appliquer la piste
+      if (isPlaying()) {
+        stopMusic();
+        setTimeout(() => { startMusic(); loopStartTime = Date.now(); setActivity('Boucle complète', SECTION_DUR * LOOP_ORDER.length); simApply(); }, 200);
+      }
     }
     return;
   }

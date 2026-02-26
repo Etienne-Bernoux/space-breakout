@@ -58,7 +58,9 @@ function freq(note) {
   return 440 * Math.pow(2, (note - 69) / 12);
 }
 
-// === INSTRUMENTS ===
+// =============================================
+// === INSTRUMENTS (piste Main — Space Synth) ===
+// =============================================
 
 function kick(time) {
   const c = getCtx();
@@ -198,8 +200,6 @@ function arp(time, note, dur) {
   osc.stop(time + dur);
 }
 
-// --- Layer "high" : arp rapide + doublage octave lead ---
-
 function arpFast(time, note, dur) {
   const c = getCtx();
   const osc = c.createOscillator();
@@ -221,7 +221,7 @@ function leadOctave(time, note, dur, vol = 0.06) {
   const gain = c.createGain();
   const filter = c.createBiquadFilter();
   osc.type = 'square';
-  osc.frequency.value = freq(note + 12); // octave au-dessus
+  osc.frequency.value = freq(note + 12);
   filter.type = 'lowpass';
   filter.frequency.value = 2200;
   gain.gain.setValueAtTime(0, time);
@@ -235,196 +235,348 @@ function leadOctave(time, note, dur, vol = 0.06) {
   osc.stop(time + dur);
 }
 
-// === PATTERNS (Mi mineur) ===
-// E2=40 G2=43 A2=45 B2=47 D3=50
-// E4=64 G4=67 A4=69 B4=71 D5=74 E5=76
+// =============================================
+// === INSTRUMENTS (piste Dark — Orchestral) ===
+// =============================================
 
-// --- Section A : Intro (16 beats) — pad + arpèges, pas de drums ---
-function sectionIntro(t0) {
-  // Pad Em → Cmaj → G → D
-  pad(t0, [52, 55, 59], 4 * BEAT);
-  pad(t0 + 4 * BEAT, [48, 52, 55], 4 * BEAT);
-  pad(t0 + 8 * BEAT, [55, 59, 62], 4 * BEAT);
-  pad(t0 + 12 * BEAT, [50, 54, 57], 4 * BEAT);
+/** Cordes (ensemble) : 3 sawtooth empilées + filtre doux */
+function strings(time, notes, dur, vol = 0.05) {
+  const c = getCtx();
+  const gain = c.createGain();
+  const filter = c.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 800;
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(vol, time + 0.4);
+  gain.gain.setValueAtTime(vol, time + dur - 0.5);
+  gain.gain.linearRampToValueAtTime(0, time + dur);
+  for (const n of notes) {
+    for (const detune of [0, 3, -3]) {
+      const osc = c.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq(n);
+      osc.detune.value = detune;
+      osc.connect(filter);
+      osc.start(time);
+      osc.stop(time + dur);
+    }
+  }
+  filter.connect(gain);
+  gain.connect(layers.pad || masterGain);
+}
 
-  // Arpèges doux
-  const arpNotes = [64, 71, 76, 71, 69, 71, 67, 64,
-                    60, 67, 72, 67, 64, 67, 60, 64,
-                    67, 74, 79, 74, 71, 74, 67, 71,
-                    62, 69, 74, 69, 66, 69, 62, 66];
-  for (let i = 0; i < 32; i++) {
-    arp(t0 + i * BEAT * 0.5, arpNotes[i], BEAT * 0.6);
+/** Cuivres (brass) : square + attaque, routé vers lead */
+function brass(time, note, dur, vol = 0.1) {
+  const c = getCtx();
+  const osc1 = c.createOscillator();
+  const osc2 = c.createOscillator();
+  const gain = c.createGain();
+  const filter = c.createBiquadFilter();
+  osc1.type = 'square';
+  osc2.type = 'sawtooth';
+  osc1.frequency.value = freq(note);
+  osc2.frequency.value = freq(note) * 1.002;
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(1200, time);
+  filter.frequency.exponentialRampToValueAtTime(500, time + dur);
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(vol, time + 0.08);
+  gain.gain.setValueAtTime(vol, time + dur - 0.1);
+  gain.gain.linearRampToValueAtTime(0, time + dur);
+  osc1.connect(filter);
+  osc2.connect(filter);
+  filter.connect(gain);
+  gain.connect(layers.lead || masterGain);
+  osc1.start(time);
+  osc2.start(time);
+  osc1.stop(time + dur);
+  osc2.stop(time + dur);
+}
+
+/** Timbale : sine avec pitch drop + noise */
+function timpani(time, note = 45, vol = 0.4) {
+  const c = getCtx();
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq(note), time);
+  osc.frequency.exponentialRampToValueAtTime(freq(note) * 0.5, time + 0.4);
+  gain.gain.setValueAtTime(vol, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.8);
+  osc.connect(gain);
+  gain.connect(layers.drums || masterGain);
+  osc.start(time);
+  osc.stop(time + 0.9);
+  // Noise texture
+  const noiseLen = c.sampleRate * 0.08;
+  const buf = c.createBuffer(1, noiseLen, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < noiseLen; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+  const src = c.createBufferSource();
+  const ng = c.createGain();
+  const nf = c.createBiquadFilter();
+  src.buffer = buf;
+  nf.type = 'lowpass';
+  nf.frequency.value = 600;
+  ng.gain.setValueAtTime(0.15, time);
+  ng.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+  src.connect(nf);
+  nf.connect(ng);
+  ng.connect(layers.drums || masterGain);
+  src.start(time);
+}
+
+/** Basse orchestrale (violoncelles) */
+function cello(time, note, dur) {
+  const c = getCtx();
+  const gain = c.createGain();
+  const filter = c.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 350;
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.18, time + 0.15);
+  gain.gain.setValueAtTime(0.18, time + dur - 0.1);
+  gain.gain.linearRampToValueAtTime(0, time + dur);
+  for (const detune of [0, 4]) {
+    const osc = c.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq(note);
+    osc.detune.value = detune;
+    osc.connect(filter);
+    osc.start(time);
+    osc.stop(time + dur);
+  }
+  filter.connect(gain);
+  gain.connect(layers.bass || masterGain);
+}
+
+/** Harpe sombre : sine, note courte, layer high */
+function harp(time, note, dur) {
+  const c = getCtx();
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq(note);
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.06, time + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  osc.connect(gain);
+  gain.connect(layers.high || masterGain);
+  osc.start(time);
+  osc.stop(time + dur);
+}
+
+/** Cuivres haute octave pour layer high */
+function brassHigh(time, note, dur, vol = 0.06) {
+  const c = getCtx();
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  const filter = c.createBiquadFilter();
+  osc.type = 'square';
+  osc.frequency.value = freq(note + 12);
+  filter.type = 'lowpass';
+  filter.frequency.value = 1800;
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(vol, time + 0.04);
+  gain.gain.setValueAtTime(vol, time + dur - 0.06);
+  gain.gain.linearRampToValueAtTime(0, time + dur);
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(layers.high || masterGain);
+  osc.start(time);
+  osc.stop(time + dur);
+}
+
+/** Cymbale orchestrale (crash) */
+function cymbal(time, vol = 0.08) {
+  const c = getCtx();
+  const noiseLen = c.sampleRate * 0.6;
+  const buf = c.createBuffer(1, noiseLen, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < noiseLen; i++) data[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource();
+  const g = c.createGain();
+  const f = c.createBiquadFilter();
+  src.buffer = buf;
+  f.type = 'highpass';
+  f.frequency.value = 6000;
+  g.gain.setValueAtTime(vol, time);
+  g.gain.exponentialRampToValueAtTime(0.001, time + 0.6);
+  src.connect(f);
+  f.connect(g);
+  g.connect(layers.drums || masterGain);
+  src.start(time);
+}
+
+// =============================================
+// === DATA-DRIVEN SECTION ENGINE ===
+// =============================================
+// Chaque instrument est référencé par nom dans les configs.
+// Le scheduler générique lit les events et dispatch vers les fonctions.
+
+const INSTRUMENTS = {
+  // Main synth
+  kick, snare, hihat, bass, lead, pad, arp, arpFast, leadOctave,
+  // Dark orchestral
+  timpani, cymbal, cello, brass, strings, harp, brassHigh,
+};
+
+/**
+ * Joue une section à partir de sa config data-driven.
+ * Config format : { drums: [...], bass: [...], pad: [...], lead: [...], high: [...] }
+ * Chaque event : { fn, t (en beats), note?, notes?, dur? (en beats), vol? }
+ */
+function playSectionConfig(config, t0) {
+  for (const events of Object.values(config)) {
+    for (const ev of events) {
+      const fn = INSTRUMENTS[ev.fn];
+      if (!fn) continue;
+      const t = t0 + ev.t * BEAT;
+      // Dispatch selon la signature de l'instrument
+      if (ev.notes) {
+        // Accord : pad(t, notes, dur), strings(t, notes, dur, vol)
+        fn(t, ev.notes, ev.dur * BEAT, ev.vol);
+      } else if (ev.note !== undefined && ev.dur !== undefined) {
+        // Note + durée : bass, lead, arp, cello, brass, harp...
+        fn(t, ev.note, ev.dur * BEAT, ev.vol);
+      } else if (ev.note !== undefined) {
+        // Note + vol (pas de dur) : timpani(t, note, vol)
+        fn(t, ev.note, ev.vol);
+      } else {
+        // Temps seul ou temps + vol : kick(t), hihat(t, vol), cymbal(t, vol)
+        fn(t, ev.vol);
+      }
+    }
   }
 }
 
-// --- Section B : Couplet (16 beats) — drums légers + basse + mélodie ---
-function sectionVerse(t0) {
-  // Drums légers
-  for (let i = 0; i < 16; i++) {
-    if (i % 4 === 0) kick(t0 + i * BEAT);
-    if (i % 4 === 2) hihat(t0 + i * BEAT, 0.06);
-    if (i % 8 === 4) snare(t0 + i * BEAT);
-  }
+// =============================================
+// === SECTION CONFIGS — MAIN (Mi mineur) ===
+// =============================================
+// E2=40 G2=43 A2=45 B2=47 D3=50
+// E4=64 G4=67 A4=69 B4=71 D5=74 E5=76
 
-  // Basse
-  const bassLine = [
+const MAIN_INTRO = {
+  drums: [],
+  bass: [],
+  pad: [
+    { fn: 'pad', t: 0, notes: [52, 55, 59], dur: 4 },
+    { fn: 'pad', t: 4, notes: [48, 52, 55], dur: 4 },
+    { fn: 'pad', t: 8, notes: [55, 59, 62], dur: 4 },
+    { fn: 'pad', t: 12, notes: [50, 54, 57], dur: 4 },
+  ],
+  lead: [64, 71, 76, 71, 69, 71, 67, 64, 60, 67, 72, 67, 64, 67, 60, 64,
+         67, 74, 79, 74, 71, 74, 67, 71, 62, 69, 74, 69, 66, 69, 62, 66]
+    .map((n, i) => ({ fn: 'arp', t: i * 0.5, note: n, dur: 0.6 })),
+  high: [],
+};
+
+const MAIN_VERSE = {
+  drums: [
+    ...[0, 4, 8, 12].map(t => ({ fn: 'kick', t })),
+    ...[2, 6, 10, 14].map(t => ({ fn: 'hihat', t, vol: 0.06 })),
+    { fn: 'snare', t: 4 },
+  ],
+  bass: [
     [40, 0, 3], [40, 3, 1], [43, 4, 3], [43, 7, 1],
-    [45, 8, 3], [45, 11, 1], [47, 12, 2], [45, 14, 2]
-  ];
-  for (const [n, t, d] of bassLine) bass(t0 + t * BEAT, n, d * BEAT);
-
-  // Pad
-  pad(t0, [52, 55, 59], 4 * BEAT);
-  pad(t0 + 4 * BEAT, [55, 59, 62], 4 * BEAT);
-  pad(t0 + 8 * BEAT, [57, 60, 64], 4 * BEAT);
-  pad(t0 + 12 * BEAT, [47, 55, 59], 4 * BEAT);
-
-  // Mélodie couplet — retenue
-  const mel = [
+    [45, 8, 3], [45, 11, 1], [47, 12, 2], [45, 14, 2],
+  ].map(([note, t, dur]) => ({ fn: 'bass', t, note, dur })),
+  pad: [
+    { fn: 'pad', t: 0, notes: [52, 55, 59], dur: 4 },
+    { fn: 'pad', t: 4, notes: [55, 59, 62], dur: 4 },
+    { fn: 'pad', t: 8, notes: [57, 60, 64], dur: 4 },
+    { fn: 'pad', t: 12, notes: [47, 55, 59], dur: 4 },
+  ],
+  lead: [
     [64, 0, 1.5], [67, 2, 1], [69, 3, 1],
     [67, 4, 1.5], [71, 6, 2],
     [69, 8, 1], [71, 9, 0.5], [74, 9.5, 1.5], [71, 11, 1],
     [69, 12, 1.5], [67, 14, 2],
-  ];
-  for (const [n, t, d] of mel) lead(t0 + t * BEAT, n, d * BEAT, 0.1);
-}
+  ].map(([note, t, dur]) => ({ fn: 'lead', t, note, dur, vol: 0.1 })),
+  high: [],
+};
 
-// --- Section C : Refrain (16 beats) — drums complets + mélodie épique ---
-function sectionChorus(t0) {
-  // Drums complets
-  for (let i = 0; i < 16; i++) {
-    kick(t0 + i * BEAT);
-    hihat(t0 + i * BEAT + BEAT * 0.5, 0.07);
-    if (i % 4 === 2) snare(t0 + i * BEAT);
-  }
-
-  // Basse driving
-  const bassLine = [
+const MAIN_CHORUS = {
+  drums: [
+    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'kick', t: i })),
+    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'hihat', t: i + 0.5, vol: 0.07 })),
+    ...[2, 6, 10, 14].map(t => ({ fn: 'snare', t })),
+  ],
+  bass: [
     [40, 0, 1], [40, 1, 1], [40, 2, 0.5], [43, 2.5, 1.5],
     [43, 4, 1], [43, 5, 1], [45, 6, 1], [47, 7, 1],
     [45, 8, 1], [45, 9, 1], [45, 10, 0.5], [43, 10.5, 1.5],
     [47, 12, 1], [47, 13, 1], [45, 14, 1], [43, 15, 1],
-  ];
-  for (const [n, t, d] of bassLine) bass(t0 + t * BEAT, n, d * BEAT);
-
-  // Pad plus fort
-  pad(t0, [52, 55, 59], 4 * BEAT);
-  pad(t0 + 4 * BEAT, [55, 59, 62], 4 * BEAT);
-  pad(t0 + 8 * BEAT, [57, 60, 64], 4 * BEAT);
-  pad(t0 + 12 * BEAT, [47, 54, 59], 4 * BEAT);
-
-  // Mélodie refrain — épique, mémorable
-  const mel = [
+  ].map(([note, t, dur]) => ({ fn: 'bass', t, note, dur })),
+  pad: [
+    { fn: 'pad', t: 0, notes: [52, 55, 59], dur: 4 },
+    { fn: 'pad', t: 4, notes: [55, 59, 62], dur: 4 },
+    { fn: 'pad', t: 8, notes: [57, 60, 64], dur: 4 },
+    { fn: 'pad', t: 12, notes: [47, 54, 59], dur: 4 },
+  ],
+  lead: [
     [71, 0, 1], [74, 1, 1], [76, 2, 2],
     [74, 4, 0.5], [76, 4.5, 0.5], [79, 5, 1.5], [76, 6.5, 1.5],
     [74, 8, 1], [71, 9, 1], [74, 10, 1], [76, 11, 1],
     [74, 12, 0.5], [71, 12.5, 0.5], [69, 13, 1], [67, 14, 1], [64, 15, 1],
-  ];
-  for (const [n, t, d] of mel) lead(t0 + t * BEAT, n, d * BEAT, 0.15);
-}
+  ].map(([note, t, dur]) => ({ fn: 'lead', t, note, dur, vol: 0.15 })),
+  high: [],
+};
 
-// --- Section D : Pont (16 beats) — breakdown, arpèges + montée ---
-function sectionBridge(t0) {
-  // Drums allégés
-  for (let i = 0; i < 16; i++) {
-    if (i % 2 === 0) kick(t0 + i * BEAT);
-    if (i >= 12) hihat(t0 + i * BEAT + BEAT * 0.5, 0.05);
-  }
+const MAIN_BRIDGE = {
+  drums: [
+    ...Array.from({ length: 8 }, (_, i) => ({ fn: 'kick', t: i * 2 })),
+    ...[12, 13, 14, 15].map(t => ({ fn: 'hihat', t: t + 0.5, vol: 0.05 })),
+  ],
+  bass: [
+    { fn: 'bass', t: 0, note: 40, dur: 4 },
+    { fn: 'bass', t: 4, note: 45, dur: 4 },
+    { fn: 'bass', t: 8, note: 43, dur: 4 },
+    { fn: 'bass', t: 12, note: 47, dur: 4 },
+  ],
+  pad: [
+    { fn: 'pad', t: 0, notes: [52, 55, 59], dur: 8 },
+    { fn: 'pad', t: 8, notes: [55, 59, 62], dur: 8 },
+  ],
+  lead: [64, 67, 71, 67, 69, 71, 74, 71, 67, 71, 74, 71, 69, 74, 76, 74,
+         71, 74, 76, 74, 76, 79, 76, 79, 74, 76, 79, 76, 79, 81, 79, 83]
+    .map((n, i) => ({ fn: 'arp', t: i * 0.5, note: n, dur: 0.55 })),
+  high: [],
+};
 
-  // Basse tenue
-  bass(t0, 40, 4 * BEAT);
-  bass(t0 + 4 * BEAT, 45, 4 * BEAT);
-  bass(t0 + 8 * BEAT, 43, 4 * BEAT);
-  bass(t0 + 12 * BEAT, 47, 4 * BEAT);
+const MAIN_BREAKDOWN = {
+  drums: [
+    { fn: 'kick', t: 0 }, { fn: 'kick', t: 8 },
+    ...Array.from({ length: 8 }, (_, i) => ({ fn: 'hihat', t: i * 2, vol: 0.04 })),
+    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'hihat', t: i + 0.5, vol: 0.03 })),
+    ...[12, 13, 14, 15].map(t => ({ fn: 'snare', t })),
+    { fn: 'snare', t: 14.5 }, { fn: 'snare', t: 15.5 },
+  ],
+  bass: [
+    { fn: 'bass', t: 0, note: 40, dur: 8 },
+    { fn: 'bass', t: 8, note: 43, dur: 4 },
+    { fn: 'bass', t: 12, note: 45, dur: 4 },
+  ],
+  pad: [
+    { fn: 'pad', t: 0, notes: [52, 55, 58], dur: 8 },
+    { fn: 'pad', t: 8, notes: [52, 55, 59], dur: 8 },
+  ],
+  lead: [],
+  high: [],
+};
 
-  // Pad
-  pad(t0, [52, 55, 59], 8 * BEAT);
-  pad(t0 + 8 * BEAT, [55, 59, 62], 8 * BEAT);
-
-  // Arpèges montants (buildup)
-  const arpNotes = [64, 67, 71, 67, 69, 71, 74, 71,
-                    67, 71, 74, 71, 69, 74, 76, 74,
-                    71, 74, 76, 74, 76, 79, 76, 79,
-                    74, 76, 79, 76, 79, 81, 79, 83];
-  for (let i = 0; i < 32; i++) {
-    const vol = 0.04 + (i / 32) * 0.08;
-    arp(t0 + i * BEAT * 0.5, arpNotes[i], BEAT * 0.55);
-  }
-}
-
-// --- Section E : Refrain final (16 beats) — refrain avec variation ---
-function sectionOutro(t0) {
-  // Drums complets
-  for (let i = 0; i < 16; i++) {
-    kick(t0 + i * BEAT);
-    hihat(t0 + i * BEAT + BEAT * 0.5, 0.07);
-    if (i % 4 === 2) snare(t0 + i * BEAT);
-    if (i % 4 === 0 && i > 0) hihat(t0 + i * BEAT, 0.04);
-  }
-
-  // Basse
-  const bassLine = [
-    [40, 0, 1], [40, 1, 0.5], [43, 1.5, 0.5], [40, 2, 1], [43, 3, 1],
-    [45, 4, 1], [45, 5, 1], [43, 6, 1], [47, 7, 1],
-    [40, 8, 1], [40, 9, 0.5], [43, 9.5, 0.5], [45, 10, 1], [47, 11, 1],
-    [45, 12, 2], [43, 14, 1], [40, 15, 1],
-  ];
-  for (const [n, t, d] of bassLine) bass(t0 + t * BEAT, n, d * BEAT);
-
-  // Pad
-  pad(t0, [52, 55, 59], 4 * BEAT);
-  pad(t0 + 4 * BEAT, [57, 60, 64], 4 * BEAT);
-  pad(t0 + 8 * BEAT, [55, 59, 62], 4 * BEAT);
-  pad(t0 + 12 * BEAT, [52, 55, 59], 4 * BEAT);
-
-  // Mélodie finale — variante du refrain, plus haute
-  const mel = [
-    [76, 0, 1], [79, 1, 1], [81, 2, 2],
-    [79, 4, 0.5], [76, 4.5, 0.5], [74, 5, 1.5], [76, 6.5, 1.5],
-    [74, 8, 0.5], [76, 8.5, 0.5], [79, 9, 1], [76, 10, 1], [74, 11, 1],
-    [71, 12, 1.5], [69, 13.5, 1], [67, 14.5, 0.5], [64, 15, 1],
-  ];
-  for (const [n, t, d] of mel) lead(t0 + t * BEAT, n, d * BEAT, 0.15);
-}
-
-// --- Section F : Breakdown (16 beats) — minimal, tendu, basse + hihats ---
-function sectionBreakdown(t0) {
-  // Drums minimalistes — kick espacés, hihats serrés
-  for (let i = 0; i < 16; i++) {
-    if (i % 8 === 0) kick(t0 + i * BEAT);
-    if (i % 2 === 0) hihat(t0 + i * BEAT, 0.04);
-    hihat(t0 + i * BEAT + BEAT * 0.5, 0.03);
-  }
-  // Snare rolls sur les 4 derniers beats
-  for (let i = 12; i < 16; i++) {
-    snare(t0 + i * BEAT);
-    if (i >= 14) snare(t0 + i * BEAT + BEAT * 0.5);
-  }
-
-  // Basse menaçante — notes longues, filtre bas
-  bass(t0, 40, 8 * BEAT);
-  bass(t0 + 8 * BEAT, 43, 4 * BEAT);
-  bass(t0 + 12 * BEAT, 45, 4 * BEAT);
-
-  // Pad très filtré, tension
-  pad(t0, [52, 55, 58], 8 * BEAT);  // Em(b6) → tension
-  pad(t0 + 8 * BEAT, [52, 55, 59], 8 * BEAT);
-}
-
-// --- Section G : Climax (16 beats) — intensité max, double-time hihats ---
-function sectionClimax(t0) {
-  // Drums double-time — kick chaque beat, hihats en croches
-  for (let i = 0; i < 16; i++) {
-    kick(t0 + i * BEAT);
-    hihat(t0 + i * BEAT, 0.08);
-    hihat(t0 + i * BEAT + BEAT * 0.25, 0.05);
-    hihat(t0 + i * BEAT + BEAT * 0.5, 0.07);
-    hihat(t0 + i * BEAT + BEAT * 0.75, 0.04);
-    if (i % 2 === 1) snare(t0 + i * BEAT);
-  }
-
-  // Basse agressive — motif rapide
-  const bassLine = [
+const MAIN_CLIMAX = {
+  drums: [
+    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'kick', t: i })),
+    ...Array.from({ length: 16 }, (_, i) => [
+      { fn: 'hihat', t: i, vol: 0.08 },
+      { fn: 'hihat', t: i + 0.25, vol: 0.05 },
+      { fn: 'hihat', t: i + 0.5, vol: 0.07 },
+      { fn: 'hihat', t: i + 0.75, vol: 0.04 },
+    ]).flat(),
+    ...[1, 3, 5, 7, 9, 11, 13, 15].map(t => ({ fn: 'snare', t })),
+  ],
+  bass: [
     [40, 0, 0.5], [40, 0.5, 0.5], [43, 1, 0.5], [45, 1.5, 0.5],
     [47, 2, 1], [45, 3, 0.5], [43, 3.5, 0.5],
     [40, 4, 0.5], [40, 4.5, 0.5], [43, 5, 0.5], [47, 5.5, 0.5],
@@ -432,43 +584,261 @@ function sectionClimax(t0) {
     [40, 8, 0.5], [43, 8.5, 0.5], [45, 9, 0.5], [47, 9.5, 0.5],
     [48, 10, 1], [47, 11, 0.5], [45, 11.5, 0.5],
     [43, 12, 1], [45, 13, 1], [47, 14, 1], [40, 15, 1],
-  ];
-  for (const [n, t, d] of bassLine) bass(t0 + t * BEAT, n, d * BEAT);
-
-  // Pad épais
-  pad(t0, [52, 55, 59, 64], 4 * BEAT);
-  pad(t0 + 4 * BEAT, [55, 59, 62, 67], 4 * BEAT);
-  pad(t0 + 8 * BEAT, [57, 60, 64, 69], 4 * BEAT);
-  pad(t0 + 12 * BEAT, [52, 55, 59, 64], 4 * BEAT);
-
-  // Mélodie climax — octave haute, urgente
-  const mel = [
+  ].map(([note, t, dur]) => ({ fn: 'bass', t, note, dur })),
+  pad: [
+    { fn: 'pad', t: 0, notes: [52, 55, 59, 64], dur: 4 },
+    { fn: 'pad', t: 4, notes: [55, 59, 62, 67], dur: 4 },
+    { fn: 'pad', t: 8, notes: [57, 60, 64, 69], dur: 4 },
+    { fn: 'pad', t: 12, notes: [52, 55, 59, 64], dur: 4 },
+  ],
+  lead: [
     [76, 0, 0.5], [79, 0.5, 0.5], [81, 1, 1], [83, 2, 1], [81, 3, 1],
     [79, 4, 0.5], [81, 4.5, 0.5], [83, 5, 1], [86, 6, 2],
     [83, 8, 0.5], [81, 8.5, 0.5], [79, 9, 1], [81, 10, 1], [83, 11, 1],
     [81, 12, 1], [79, 13, 1], [76, 14, 1], [74, 15, 1],
-  ];
-  for (const [n, t, d] of mel) {
-    lead(t0 + t * BEAT, n, d * BEAT, 0.18);
-    leadOctave(t0 + t * BEAT, n, d * BEAT, 0.06);
-  }
-
-  // Arp rapide (16th notes) — layer high
-  const arpNotes = [76, 79, 83, 79, 81, 76, 79, 83,
-                    79, 83, 86, 83, 81, 79, 83, 81,
-                    83, 86, 88, 86, 83, 81, 79, 83,
-                    81, 79, 76, 79, 81, 83, 79, 76];
-  for (let i = 0; i < 32; i++) {
-    arpFast(t0 + i * BEAT * 0.5, arpNotes[i % arpNotes.length], BEAT * 0.35);
-  }
-}
-
-// === SCHEDULING ===
-const SECTION_MAP = {
-  intro: sectionIntro, verse: sectionVerse, chorus: sectionChorus,
-  bridge: sectionBridge, breakdown: sectionBreakdown,
-  climax: sectionClimax, outro: sectionOutro,
+  ].map(([note, t, dur]) => ({ fn: 'lead', t, note, dur, vol: 0.18 })),
+  high: [
+    // leadOctave doublant la mélodie
+    ...[
+      [76, 0, 0.5], [79, 0.5, 0.5], [81, 1, 1], [83, 2, 1], [81, 3, 1],
+      [79, 4, 0.5], [81, 4.5, 0.5], [83, 5, 1], [86, 6, 2],
+      [83, 8, 0.5], [81, 8.5, 0.5], [79, 9, 1], [81, 10, 1], [83, 11, 1],
+      [81, 12, 1], [79, 13, 1], [76, 14, 1], [74, 15, 1],
+    ].map(([note, t, dur]) => ({ fn: 'leadOctave', t, note, dur, vol: 0.06 })),
+    // arpFast 16th notes
+    ...[76, 79, 83, 79, 81, 76, 79, 83, 79, 83, 86, 83, 81, 79, 83, 81,
+        83, 86, 88, 86, 83, 81, 79, 83, 81, 79, 76, 79, 81, 83, 79, 76]
+      .map((n, i) => ({ fn: 'arpFast', t: i * 0.5, note: n, dur: 0.35 })),
+  ],
 };
+
+const MAIN_OUTRO = {
+  drums: [
+    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'kick', t: i })),
+    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'hihat', t: i + 0.5, vol: 0.07 })),
+    ...[2, 6, 10, 14].map(t => ({ fn: 'snare', t })),
+    ...[4, 8, 12].map(t => ({ fn: 'hihat', t, vol: 0.04 })),
+  ],
+  bass: [
+    [40, 0, 1], [40, 1, 0.5], [43, 1.5, 0.5], [40, 2, 1], [43, 3, 1],
+    [45, 4, 1], [45, 5, 1], [43, 6, 1], [47, 7, 1],
+    [40, 8, 1], [40, 9, 0.5], [43, 9.5, 0.5], [45, 10, 1], [47, 11, 1],
+    [45, 12, 2], [43, 14, 1], [40, 15, 1],
+  ].map(([note, t, dur]) => ({ fn: 'bass', t, note, dur })),
+  pad: [
+    { fn: 'pad', t: 0, notes: [52, 55, 59], dur: 4 },
+    { fn: 'pad', t: 4, notes: [57, 60, 64], dur: 4 },
+    { fn: 'pad', t: 8, notes: [55, 59, 62], dur: 4 },
+    { fn: 'pad', t: 12, notes: [52, 55, 59], dur: 4 },
+  ],
+  lead: [
+    [76, 0, 1], [79, 1, 1], [81, 2, 2],
+    [79, 4, 0.5], [76, 4.5, 0.5], [74, 5, 1.5], [76, 6.5, 1.5],
+    [74, 8, 0.5], [76, 8.5, 0.5], [79, 9, 1], [76, 10, 1], [74, 11, 1],
+    [71, 12, 1.5], [69, 13.5, 1], [67, 14.5, 0.5], [64, 15, 1],
+  ].map(([note, t, dur]) => ({ fn: 'lead', t, note, dur, vol: 0.15 })),
+  high: [],
+};
+
+// =============================================
+// === SECTION CONFIGS — DARK (Ré mineur) ===
+// =============================================
+// D2=38 F2=41 G2=43 A2=45 Bb2=46 C3=48 D3=50
+// D4=62 F4=65 G4=67 A4=69 Bb4=70 C5=72 D5=74 F5=77
+
+const DARK_INTRO = {
+  drums: [
+    { fn: 'timpani', t: 0, note: 38, vol: 0.2 },
+    { fn: 'timpani', t: 8, note: 38, vol: 0.25 },
+  ],
+  bass: [],
+  pad: [
+    { fn: 'strings', t: 0, notes: [38, 41, 45], dur: 8, vol: 0.04 },
+    { fn: 'strings', t: 8, notes: [38, 41, 44], dur: 8, vol: 0.05 },
+  ],
+  lead: [],
+  high: [74, 70, 67, 65, 62, 58, 55, 50, 72, 69, 65, 62, 58, 55, 50, 46]
+    .map((n, i) => ({ fn: 'harp', t: i, note: n, dur: 1.5 })),
+};
+
+const DARK_VERSE = {
+  drums: [
+    ...[0, 4, 8, 12].map(t => ({ fn: 'timpani', t, note: 38, vol: 0.3 })),
+    ...[2, 6, 10, 14].map(t => ({ fn: 'timpani', t, note: 43, vol: 0.15 })),
+  ],
+  bass: [
+    { fn: 'cello', t: 0, note: 38, dur: 4 },
+    { fn: 'cello', t: 4, note: 41, dur: 4 },
+    { fn: 'cello', t: 8, note: 43, dur: 4 },
+    { fn: 'cello', t: 12, note: 45, dur: 4 },
+  ],
+  pad: [
+    { fn: 'strings', t: 0, notes: [50, 53, 57], dur: 4, vol: 0.04 },
+    { fn: 'strings', t: 4, notes: [53, 57, 60], dur: 4, vol: 0.04 },
+    { fn: 'strings', t: 8, notes: [55, 59, 62], dur: 4, vol: 0.04 },
+    { fn: 'strings', t: 12, notes: [53, 57, 60], dur: 4, vol: 0.04 },
+  ],
+  lead: [
+    [62, 0, 2], [65, 2, 1], [67, 3, 1], [65, 4, 2], [62, 6, 2],
+    [67, 8, 1], [69, 9, 1], [70, 10, 2], [67, 12, 2], [65, 14, 2],
+  ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.07 })),
+  high: [],
+};
+
+const DARK_CHORUS = {
+  drums: [
+    ...Array.from({ length: 8 }, (_, i) => ({ fn: 'timpani', t: i * 2, note: 38, vol: 0.35 })),
+    ...[0, 4, 8, 12].map(t => ({ fn: 'cymbal', t, vol: 0.06 })),
+  ],
+  bass: [
+    [38, 0, 1], [38, 1, 1], [41, 2, 1], [43, 3, 1],
+    [41, 4, 1], [41, 5, 1], [45, 6, 1], [43, 7, 1],
+    [46, 8, 1], [46, 9, 1], [45, 10, 1], [43, 11, 1],
+    [41, 12, 1], [43, 13, 1], [45, 14, 1], [38, 15, 1],
+  ].map(([note, t, dur]) => ({ fn: 'cello', t, note, dur })),
+  pad: [
+    { fn: 'strings', t: 0, notes: [50, 53, 57, 62], dur: 4, vol: 0.06 },
+    { fn: 'strings', t: 4, notes: [53, 57, 60, 65], dur: 4, vol: 0.06 },
+    { fn: 'strings', t: 8, notes: [58, 62, 65, 70], dur: 4, vol: 0.06 },
+    { fn: 'strings', t: 12, notes: [53, 57, 60, 65], dur: 4, vol: 0.06 },
+  ],
+  lead: [
+    [62, 0, 1], [65, 1, 1], [69, 2, 2], [67, 4, 1], [69, 5, 1], [72, 6, 2],
+    [70, 8, 1], [69, 9, 1], [67, 10, 2], [65, 12, 1], [67, 13, 1], [62, 14, 2],
+  ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.12 })),
+  high: [],
+};
+
+const DARK_BRIDGE = {
+  drums: [
+    { fn: 'timpani', t: 0, note: 38, vol: 0.25 },
+    { fn: 'timpani', t: 4, note: 38, vol: 0.25 },
+    // Montée chromatique beats 8-15
+    ...Array.from({ length: 8 }, (_, i) => ({ fn: 'timpani', t: 8 + i, note: 38 + i, vol: 0.2 })),
+  ],
+  bass: [
+    { fn: 'cello', t: 0, note: 38, dur: 4 },
+    { fn: 'cello', t: 4, note: 41, dur: 4 },
+    { fn: 'cello', t: 8, note: 43, dur: 4 },
+    { fn: 'cello', t: 12, note: 41, dur: 4 },
+  ],
+  pad: [
+    { fn: 'strings', t: 0, notes: [50, 53, 57], dur: 8, vol: 0.03 },
+    { fn: 'strings', t: 8, notes: [53, 57, 62], dur: 8, vol: 0.05 },
+  ],
+  lead: [],
+  high: [50, 53, 57, 62, 53, 57, 62, 65, 57, 62, 65, 69, 62, 65, 69, 74]
+    .map((n, i) => ({ fn: 'harp', t: i, note: n, dur: 0.8 })),
+};
+
+const DARK_BREAKDOWN = {
+  drums: [
+    { fn: 'timpani', t: 0, note: 36, vol: 0.3 },
+    { fn: 'timpani', t: 4, note: 36, vol: 0.25 },
+    { fn: 'timpani', t: 8, note: 36, vol: 0.2 },
+    ...[12, 13, 14, 15].map((t, i) => ({ fn: 'timpani', t, note: 36, vol: 0.15 + i * 0.08 })),
+  ],
+  bass: [
+    { fn: 'cello', t: 0, note: 36, dur: 12 },
+    { fn: 'cello', t: 12, note: 38, dur: 4 },
+  ],
+  pad: [
+    { fn: 'strings', t: 0, notes: [50, 51, 55], dur: 8, vol: 0.03 },
+    { fn: 'strings', t: 8, notes: [50, 53, 56], dur: 8, vol: 0.04 },
+  ],
+  lead: [],
+  high: [],
+};
+
+const DARK_CLIMAX = {
+  drums: [
+    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'timpani', t: i, note: i % 2 === 0 ? 38 : 43, vol: 0.4 })),
+    ...[0, 4, 8, 12].map(t => ({ fn: 'cymbal', t, vol: 0.08 })),
+    ...[1, 3, 5, 7, 9, 11, 13, 15].map(t => ({ fn: 'cymbal', t, vol: 0.04 })),
+  ],
+  bass: [
+    [38, 0, 0.5], [38, 0.5, 0.5], [41, 1, 0.5], [43, 1.5, 0.5],
+    [45, 2, 1], [43, 3, 0.5], [41, 3.5, 0.5],
+    [38, 4, 0.5], [41, 4.5, 0.5], [43, 5, 0.5], [45, 5.5, 0.5],
+    [46, 6, 1], [45, 7, 0.5], [43, 7.5, 0.5],
+    [38, 8, 0.5], [41, 8.5, 0.5], [43, 9, 0.5], [45, 9.5, 0.5],
+    [46, 10, 1], [45, 11, 0.5], [43, 11.5, 0.5],
+    [41, 12, 1], [43, 13, 1], [45, 14, 1], [38, 15, 1],
+  ].map(([note, t, dur]) => ({ fn: 'cello', t, note, dur })),
+  pad: [
+    { fn: 'strings', t: 0, notes: [50, 53, 57, 62, 65], dur: 4, vol: 0.07 },
+    { fn: 'strings', t: 4, notes: [53, 57, 60, 65, 69], dur: 4, vol: 0.07 },
+    { fn: 'strings', t: 8, notes: [58, 62, 65, 70, 74], dur: 4, vol: 0.07 },
+    { fn: 'strings', t: 12, notes: [50, 53, 57, 62, 65], dur: 4, vol: 0.07 },
+  ],
+  lead: [
+    [62, 0, 0.5], [65, 0.5, 0.5], [69, 1, 1], [72, 2, 1], [70, 3, 1],
+    [69, 4, 0.5], [67, 4.5, 0.5], [65, 5, 1], [69, 6, 2],
+    [72, 8, 0.5], [74, 8.5, 0.5], [77, 9, 1], [74, 10, 1], [72, 11, 1],
+    [70, 12, 1], [69, 13, 1], [67, 14, 1], [62, 15, 1],
+  ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.14 })),
+  high: [
+    // brassHigh doublant la mélodie
+    ...[
+      [62, 0, 0.5], [65, 0.5, 0.5], [69, 1, 1], [72, 2, 1], [70, 3, 1],
+      [69, 4, 0.5], [67, 4.5, 0.5], [65, 5, 1], [69, 6, 2],
+      [72, 8, 0.5], [74, 8.5, 0.5], [77, 9, 1], [74, 10, 1], [72, 11, 1],
+      [70, 12, 1], [69, 13, 1], [67, 14, 1], [62, 15, 1],
+    ].map(([note, t, dur]) => ({ fn: 'brassHigh', t, note, dur, vol: 0.05 })),
+    // Harpe rapide (16th notes)
+    ...[74, 70, 67, 65, 62, 65, 67, 70, 72, 69, 65, 62, 58, 62, 65, 69,
+        74, 72, 69, 67, 65, 67, 69, 72, 70, 67, 65, 62, 58, 62, 65, 67]
+      .map((n, i) => ({ fn: 'harp', t: i * 0.5, note: n, dur: 0.4 })),
+  ],
+};
+
+const DARK_OUTRO = {
+  drums: [
+    ...Array.from({ length: 8 }, (_, i) => ({ fn: 'timpani', t: i * 2, note: 38, vol: 0.3 })),
+    ...[0, 4, 8, 12].map(t => ({ fn: 'cymbal', t, vol: 0.05 })),
+  ],
+  bass: [
+    [38, 0, 2], [41, 2, 2], [43, 4, 2], [45, 6, 2],
+    [43, 8, 2], [41, 10, 2], [38, 12, 4],
+  ].map(([note, t, dur]) => ({ fn: 'cello', t, note, dur })),
+  pad: [
+    { fn: 'strings', t: 0, notes: [50, 53, 57, 62], dur: 4, vol: 0.06 },
+    { fn: 'strings', t: 4, notes: [53, 57, 60, 65], dur: 4, vol: 0.06 },
+    { fn: 'strings', t: 8, notes: [55, 57, 60, 65], dur: 4, vol: 0.05 },
+    { fn: 'strings', t: 12, notes: [50, 53, 57, 62], dur: 4, vol: 0.04 },
+  ],
+  lead: [
+    [69, 0, 2], [72, 2, 2], [70, 4, 2], [67, 6, 2],
+    [65, 8, 2], [67, 10, 2], [62, 12, 4],
+  ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.1 })),
+  high: [],
+};
+
+// =============================================
+// === SCHEDULING (data-driven) ===
+// =============================================
+
+const SECTIONS = {
+  main: {
+    intro: MAIN_INTRO, verse: MAIN_VERSE, chorus: MAIN_CHORUS,
+    bridge: MAIN_BRIDGE, breakdown: MAIN_BREAKDOWN,
+    climax: MAIN_CLIMAX, outro: MAIN_OUTRO,
+  },
+  dark: {
+    intro: DARK_INTRO, verse: DARK_VERSE, chorus: DARK_CHORUS,
+    bridge: DARK_BRIDGE, breakdown: DARK_BREAKDOWN,
+    climax: DARK_CLIMAX, outro: DARK_OUTRO,
+  },
+};
+
+const TRACK_NAMES = ['main', 'dark'];
+let currentTrack = 'main';
+
+export function setTrack(name) {
+  if (TRACK_NAMES.includes(name)) currentTrack = name;
+}
+export function getTrack() { return currentTrack; }
+export { TRACK_NAMES };
 
 const FULL_LOOP_NAMES = [
   'intro', 'verse', 'chorus', 'verse',
@@ -482,7 +852,7 @@ const SECTION_LEN = 16 * BEAT;
 let adaptiveMode = false;
 let nextRequestedSection = null;
 let currentSectionName = null;
-let currentSectionStartTime = 0; // AudioContext time
+let currentSectionStartTime = 0;
 let loopIndex = 0;
 
 export function enableAdaptiveMode() { adaptiveMode = true; }
@@ -515,8 +885,9 @@ function scheduleNextSection() {
     loopIndex++;
   }
 
-  const fn = SECTION_MAP[sectionName];
-  if (fn) fn(now);
+  const map = SECTIONS[currentTrack] || SECTIONS.main;
+  const config = map[sectionName];
+  if (config) playSectionConfig(config, now);
   currentSectionName = sectionName;
   currentSectionStartTime = now;
 
@@ -595,18 +966,12 @@ function stingerGain(vol, dur) {
 export function playWinStinger() {
   const c = getCtx();
   const t = c.currentTime;
-  const tempo = 0.14; // durée d'une croche
+  const tempo = 0.14;
 
   // --- Fanfare mélodique (square, brillant) ---
-  // Motif montant rapide puis accord final tenu
   const melody = [
-    [64, 0, 1],    // E4
-    [67, 1, 1],    // G4
-    [71, 2, 1],    // B4
-    [76, 3, 1],    // E5
-    [79, 4, 1],    // G5
-    [83, 5, 1.5],  // B5 (légèrement tenu)
-    [88, 7, 5],    // E6 — note finale longue
+    [64, 0, 1], [67, 1, 1], [71, 2, 1], [76, 3, 1],
+    [79, 4, 1], [83, 5, 1.5], [88, 7, 5],
   ];
   for (const [n, beat, dur] of melody) {
     const osc = c.createOscillator();
@@ -655,7 +1020,7 @@ export function playWinStinger() {
   // --- Accord final majeur tenu (nappe brillante) ---
   const chordStart = t + 7 * tempo;
   const chordDur = 5 * tempo;
-  const chord = [64, 68, 71, 76, 80]; // E major large
+  const chord = [64, 68, 71, 76, 80];
   for (const n of chord) {
     const osc = c.createOscillator();
     const g = c.createGain();
@@ -755,8 +1120,8 @@ export function playGameOverStinger() {
   }
 
   // --- Mélodie de mort (3 notes lentes, descendantes) ---
-  const melody = [[64, 0.2, 0.6], [62, 0.9, 0.6], [59, 1.6, 1.0]];
-  for (const [n, start, dur] of melody) {
+  const deathMelody = [[64, 0.2, 0.6], [62, 0.9, 0.6], [59, 1.6, 1.0]];
+  for (const [n, start, dur] of deathMelody) {
     const osc = c.createOscillator();
     const g = c.createGain();
     const f = c.createBiquadFilter();
@@ -797,15 +1162,15 @@ export function playSectionByName(name) {
   const c = getCtx();
   if (c.state === 'suspended') c.resume();
   const t = c.currentTime + 0.05;
-  const map = { intro: sectionIntro, verse: sectionVerse, chorus: sectionChorus, bridge: sectionBridge, breakdown: sectionBreakdown, climax: sectionClimax, outro: sectionOutro };
-  if (map[name]) map[name](t);
+  const map = SECTIONS[currentTrack] || SECTIONS.main;
+  if (map[name]) playSectionConfig(map[name], t);
 }
 
 export function playInstrumentDemo(name) {
   const c = getCtx();
   if (c.state === 'suspended') c.resume();
   const t = c.currentTime + 0.05;
-  const demos = {
+  const demosMain = {
     kick:  () => kick(t),
     snare: () => snare(t),
     hihat: () => hihat(t, 0.12),
@@ -814,13 +1179,22 @@ export function playInstrumentDemo(name) {
     pad:   () => pad(t, [52, 55, 59], BEAT * 8),
     arp:   () => { [64, 67, 71, 74].forEach((n, i) => arp(t + i * BEAT * 0.5, n, BEAT * 0.5)); },
   };
+  const demosDark = {
+    timpani: () => timpani(t, 38, 0.4),
+    cymbal:  () => cymbal(t, 0.1),
+    cello:   () => cello(t, 38, BEAT * 2),
+    brass:   () => brass(t, 62, BEAT * 2, 0.12),
+    strings: () => strings(t, [50, 53, 57], BEAT * 6, 0.06),
+    harp:    () => { [62, 65, 69, 74].forEach((n, i) => harp(t + i * BEAT * 0.4, n, BEAT * 0.8)); },
+    brassHi: () => brassHigh(t, 62, BEAT * 2, 0.08),
+  };
+  const demos = currentTrack === 'dark' ? demosDark : demosMain;
   if (demos[name]) demos[name]();
 }
 
 export function playPowerUpAccent() {
   const c = getCtx();
   const t = c.currentTime;
-  // Petit arpège rapide montant : B5 → D6 → E6
   const notes = [83, 86, 88];
   for (let i = 0; i < notes.length; i++) {
     const osc = c.createOscillator();

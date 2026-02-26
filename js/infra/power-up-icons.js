@@ -74,6 +74,16 @@ const ICONS = {
     ctx.fillText('×2', 0, 0);
   },
 
+  // Drone supplémentaire : deux cercles
+  droneMulti(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(-s * 0.35, 0, s * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(s * 0.35, 0, s * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
   // Fragilisation : éclairs / fissures
   weaken(ctx, s) {
     ctx.beginPath();

@@ -3,7 +3,6 @@ import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler
 import { handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
 import { isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
-import { isDevOverlayActive, handleOverlayTap } from '../infra/dev-overlay/index.js';
 import { G, gameScale, pauseBtnLayout, startGame } from './init.js';
 
 /** Lance tous les drones non lancés en éventail.
@@ -26,8 +25,6 @@ setupTouch();
 // --- Handlers tactiles ---
 setTapHandler((x, y) => {
   if (G.session.state === 'playing') {
-    // Dev overlay intercepte les taps
-    if (isDevOverlayActive() && handleOverlayTap(x, y)) return;
     // Tap sur bouton pause
     const pb = pauseBtnLayout();
     if (x >= pb.x && x <= pb.x + pb.size &&

@@ -5,6 +5,8 @@
 import { MusicDirector } from './music-director.js';
 import { EffectDirector } from './effect-director.js';
 
+const COMBO_DECAY_INTERVAL = 3000; // ms entre chaque -1 combo
+
 export class GameIntensityDirector {
   constructor() {
     this.music = new MusicDirector();
@@ -15,6 +17,8 @@ export class GameIntensityDirector {
     this.powerUpActive = false;
     this.lastLife = false;
     this.enabled = false;
+    this._lastEventTime = 0; // timestamp du dernier événement
+    this._lastDecayTime = 0; // timestamp du dernier decay
   }
 
   // === Lifecycle ===
@@ -26,9 +30,14 @@ export class GameIntensityDirector {
     this.remainingRatio = 1.0;
     this.powerUpActive = false;
     this.lastLife = false;
+    this._lastEventTime = Date.now();
+    this._lastDecayTime = 0;
     this.music.enable();
     this.effects.setIntensity(0);
   }
+
+  /** Marque un événement → reset le timer de decay */
+  _touch() { this._lastEventTime = Date.now(); }
 
   disable() {
     this.enabled = false;
@@ -41,6 +50,7 @@ export class GameIntensityDirector {
   onBounce() {
     this.music.onBounce();
     if (!this.enabled) return;
+    this._touch();
     this.combo = 0;
     this._recalculate();
   }
@@ -52,6 +62,7 @@ export class GameIntensityDirector {
   onAsteroidDestroyed(remaining, total, combo) {
     this.music.onAsteroidHit();
     if (!this.enabled) return;
+    this._touch();
     this.combo++;
     if (combo >= 2) this.music.onCombo(combo);
     this.remainingRatio = total > 0 ? remaining / total : 0;
@@ -67,6 +78,7 @@ export class GameIntensityDirector {
   onPowerUpActivated() {
     this.music.onPowerUp();
     if (!this.enabled) return;
+    this._touch();
     this.powerUpActive = true;
     this._recalculate();
   }
@@ -97,7 +109,17 @@ export class GameIntensityDirector {
 
   // === Frame update ===
 
-  update() { this.effects.update(); }
+  update(now = Date.now()) {
+    this.effects.update();
+    if (!this.enabled || this.combo <= 0) return;
+    // Combo decay : -1 toutes les COMBO_DECAY_INTERVAL ms sans événement
+    if (now - this._lastEventTime >= COMBO_DECAY_INTERVAL
+        && now - this._lastDecayTime >= COMBO_DECAY_INTERVAL) {
+      this.combo = Math.max(0, this.combo - 1);
+      this._lastDecayTime = now;
+      this._recalculate();
+    }
+  }
 
   getEffects() { return this.effects.getEffects(); }
 

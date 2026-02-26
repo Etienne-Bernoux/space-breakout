@@ -175,11 +175,11 @@ describe('PowerUpManager', () => {
       expect(gs.drones[1].piercing).to.be.true;
     });
 
-    it('le nouveau drone est non lancé', () => {
+    it('le nouveau drone est lancé immédiatement', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('droneMulti', gs, 0);
-      expect(gs.drones[1].launched).to.be.false;
+      expect(gs.drones[1].launched).to.be.true;
     });
   });
 

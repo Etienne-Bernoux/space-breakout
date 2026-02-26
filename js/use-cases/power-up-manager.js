@@ -127,9 +127,10 @@ export class PowerUpManager {
           { radius: ref.radius, speed: ref.speed, color: ref.color },
           gs.ship,
         );
-        // Copier les flags actifs (piercing, sticky…)
         d.piercing = ref.piercing;
         d.sticky = ref.sticky;
+        // Lancer immédiatement avec un angle aléatoire léger
+        d.launchAtAngle(gs.ship, (Math.random() - 0.5) * 0.6);
         gs.drones.push(d);
       }
     } else if (effect.action === 'weakenAll') {

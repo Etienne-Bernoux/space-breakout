@@ -7,7 +7,7 @@ import { updateShake, setAmbientShake } from '../infra/screenshake.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
-import { isDevOverlayActive, drawDevOverlay, handleOverlayHover } from '../infra/dev-overlay/index.js';
+import { updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { G, SLOW_MO_DURATION } from './init.js';
 import { handleCollisions } from './collisions.js';
 import { drawHUD, drawCombo, drawDeathLine, drawPauseButton, drawPauseScreen, drawEndScreen } from './hud.js';
@@ -134,11 +134,7 @@ export function loop() {
   drawPowerUpHUD(G.ctx, G.puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();
   if (G.comboFadeTimer > 0) drawCombo();
-  if (isDevOverlayActive()) {
-    const mouse = getMousePos();
-    handleOverlayHover(mouse.x, mouse.y);
-    drawDevOverlay(G.ctx);
-  }
+  updateDevOverlay();
 
   requestAnimationFrame(loop);
 }

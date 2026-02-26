@@ -23,6 +23,12 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 | ~~GameIntensityDirector~~ | ~~Chef d'orchestre : centralise intensité, dispatch vers MusicDirector + EffectDirector~~ | ~~M~~ | ✅ |
 | ~~MusicDirector centralise les sons~~ | ~~Tous les sons (SFX + musique + stingers) passent par le director, plus d'import direct~~ | ~~S~~ | ✅ |
 | ~~Tests e2e Playwright~~ | ~~Smoke, flow, modes ?dev et ?mus~~ | ~~S~~ | ✅ |
+| ~~Décroissance d'intensité~~ | ~~L'intensité redescend automatiquement quand il ne se passe rien (combo decay)~~ | ~~S~~ | ✅ |
+| Couleur combo max | La couleur combo atteint son max à ×5, à améliorer (progression plus étalée) | S |
+| Stinger combo rond | Bruit spécial aux paliers de combo ronds (×5, ×10, ×15…) | S |
+| Multiplicateur score combo | Les combos multiplient les points : ×2 à combo 5, ×3 à combo 10, etc. | S |
+| Animation victoire | Le vaisseau traverse l'écran vers le haut (décollage) à la victoire | S |
+| Animation défaite | Le vaisseau explose (particules + screenshake) au game over | S |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |
 | Décor parallaxe v2 | Plus de diversité : gazeuses géantes, planètes rocheuses, lunes, comètes, amas d'étoiles | M |
 
@@ -54,6 +60,9 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 | Power-up | Description | Effort | Type |
 |---|---|---|---|
 | ~~Multi-drone~~ | ~~+1 drone supplémentaire (éventail, game over si tous perdus)~~ | ~~L~~ | ~~Bonus~~ | ✅ |
+| Cumul taille vaisseau | Les effets shipWide/shipNarrow se cumulent (×1.5 puis ×1.5 = ×2.25) au lieu de reset timer | S | Mécanique |
+| Drone large | Drone radius ×1.8 pendant 15s | S | Bonus |
+| Drone mini | Drone radius ×0.5 pendant 10s (plus dur à suivre) | S | Malus |
 | Filet de sécurité | 1 rebond gratuit en bas de l'écran (ligne visible, disparaît après usage) | M | Bonus |
 | Onde de choc | Détruit tous les astéroïdes dans un rayon autour du point d'impact | M | Bonus |
 | Missiles | Tap pour tirer 2 missiles verticaux (3 charges) | L | Bonus |

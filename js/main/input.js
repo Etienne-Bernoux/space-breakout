@@ -1,7 +1,8 @@
 import { CONFIG } from '../config.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
 import { handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
-import { playLaunch, muffle, unmuffle } from '../infra/audio.js';
+import { playLaunch } from '../infra/audio.js';
+import { muffle, unmuffle } from '../infra/music/index.js';
 import { isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
 import { G, gameScale, pauseBtnLayout, startGame } from './init.js';

@@ -1,6 +1,6 @@
 import { loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from '../infra/menu/index.js';
 import { loadDevConfig, isDevMode, showDevPanel } from '../infra/dev-panel/index.js';
-import { setMusicVolume } from '../infra/music/index.js';
+import { setVolume as setMusicVolume } from '../infra/music/index.js';
 import { setSfxVolume } from '../infra/audio.js';
 import { isMusicLab, showMusicLab } from '../infra/music-lab/index.js';
 import { setupResize } from '../infra/resize.js';

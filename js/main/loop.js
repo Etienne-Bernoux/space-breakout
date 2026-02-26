@@ -1,10 +1,10 @@
 import { CONFIG } from '../config.js';
 import { updateStars } from '../infra/stars.js';
-import { updateMenu, updateMenuHover, getMousePos } from '../infra/touch.js';
+import { getMousePos, getTouchX } from '../infra/touch.js';
+import { updateMenu, updateMenuHover } from '../infra/menu/index.js';
 import { spawnTrail, updateParticles } from '../infra/particles.js';
 import { updateShake } from '../infra/screenshake.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
-import { getTouchX } from '../infra/touch.js';
 import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
 import { G, SLOW_MO_DURATION } from './init.js';

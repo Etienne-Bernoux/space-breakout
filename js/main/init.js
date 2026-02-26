@@ -7,7 +7,8 @@ import { DropSystem } from '../use-cases/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up-manager.js';
 import { MusicDirector } from '../use-cases/music-director.js';
 import { Capsule } from '../domain/capsule.js';
-import { startMusic, isPlaying, setVolume as setMusicVolume, getMusicVolume } from '../infra/music/index.js';
+import { startMusic, isPlaying, setVolume as setMusicVolume } from '../infra/music/index.js';
+import { getMusicVolume } from '../infra/menu/index.js';
 import { setSfxVolume, unlockAudio } from '../infra/audio.js';
 import { setupResize } from '../infra/resize.js';
 import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
@@ -29,6 +30,12 @@ export const G = {
   dropSystem: new DropSystem(CONFIG.drop),
   puManager: new PowerUpManager(),
   musicDirector: new MusicDirector(),
+  // Combo counter
+  combo: 0,
+  comboDisplay: 0,
+  comboFadeTimer: 0,
+  // Slow-motion
+  slowMoTimer: 0,
 };
 
 // --- Scale responsive pour le jeu (HUD, boutons, overlays) ---
@@ -37,22 +44,18 @@ export function gameScale() {
 }
 
 // --- Slow-motion ---
-export let slowMoTimer = 0;
 export const SLOW_MO_DURATION = 30; // frames (~0.5s à 60fps)
 export const SLOW_MO_FACTOR = 0.3;
 
 export function triggerSlowMo() {
-  slowMoTimer = SLOW_MO_DURATION;
+  G.slowMoTimer = SLOW_MO_DURATION;
 }
 
 export function getSlowMoFactor() {
-  return slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;
+  return G.slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;
 }
 
 // --- Combo counter ---
-export let combo = 0;
-export let comboDisplay = 0; // valeur affichée (garde la dernière valeur pendant le fade)
-export let comboFadeTimer = 0;
 export const COMBO_FADE_DURATION = 90; // frames (~1.5s)
 
 // --- Bouton pause (responsive) ---
@@ -98,10 +101,10 @@ export function startGame() {
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
   G.field = new AsteroidField(astConfig);
   G.capsules = [];
-  combo = 0;
-  comboDisplay = 0;
-  comboFadeTimer = 0;
-  slowMoTimer = 0;
+  G.combo = 0;
+  G.comboDisplay = 0;
+  G.comboFadeTimer = 0;
+  G.slowMoTimer = 0;
   G.puManager.clear({ ship: G.ship, drone: G.drone, session: G.session, field: G.field });
   G.totalAsteroids = G.field.remaining;
   G.musicDirector.enable();

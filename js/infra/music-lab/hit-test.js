@@ -1,6 +1,6 @@
 // Hit testing functions
 
-import { CONFIG } from '../config.js';
+import { CONFIG } from '../../config.js';
 import { LAYER_NAMES } from '../music/index.js';
 import { getScrollY, getCurrentTab } from './state.js';
 import { HEADER_H } from './draw-header.js';

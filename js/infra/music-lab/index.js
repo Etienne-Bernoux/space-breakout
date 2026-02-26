@@ -1,6 +1,6 @@
 // Music Lab - Main module with public API re-exports
 
-import { CONFIG } from '../config.js';
+import { CONFIG } from '../../config.js';
 import { isActive, setActive, getScrollY, getCurrentTab, setScrollY } from './state.js';
 import { drawHeader, HEADER_H } from './draw-header.js';
 import { drawFooter, FOOTER_H } from './draw-footer.js';

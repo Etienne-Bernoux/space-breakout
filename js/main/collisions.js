@@ -2,10 +2,10 @@ import { CONFIG } from '../config.js';
 import { Capsule } from '../domain/capsule.js';
 import { getPowerUp } from '../domain/power-ups.js';
 import { spawnExplosion } from '../infra/particles.js';
-import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playPowerUpAccent } from '../infra/audio.js';
-import { fadeOutMusic, playWinStinger, playGameOverStinger } from '../infra/music/index.js';
+import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver } from '../infra/audio.js';
+import { fadeOutMusic, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../infra/music/index.js';
 import { triggerShake } from '../infra/screenshake.js';
-import { G, triggerSlowMo, combo as getCombo, COMBO_FADE_DURATION } from './init.js';
+import { G, triggerSlowMo, COMBO_FADE_DURATION } from './init.js';
 
 export function handleCollisions() {
   const ev1 = G.session.checkShipCollision(G.drone, G.ship);

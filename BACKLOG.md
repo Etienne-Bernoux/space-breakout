@@ -19,7 +19,6 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 
 | Feature | Description | Effort |
 |---|---|---|
-| Screenshake | Tremblement léger du canvas sur destruction d'astéroïde (intensité selon taille) | S |
 | Slow-motion final | Ralenti 0.5s sur le dernier astéroïde du niveau | S |
 | Combo counter | Affichage ×2, ×3… avec feedback visuel croissant (taille, couleur) | M |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |

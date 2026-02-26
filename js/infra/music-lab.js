@@ -11,7 +11,7 @@ import {
   setLayerVolume, getLayerVolumes, LAYER_NAMES, getCurrentSection,
   enableAdaptiveMode, requestNextSection,
   setTrack, getTrack, TRACK_NAMES,
-} from './music.js';
+} from './music/index.js';
 
 let active = false;
 let muffled = false;

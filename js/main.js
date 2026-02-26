@@ -9,7 +9,7 @@ import { setupResize } from './infra/resize.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from './infra/touch.js';
 import { spawnExplosion, spawnTrail, updateParticles } from './infra/particles.js';
 import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './infra/audio.js';
-import { startMusic, isPlaying, setVolume as setMusicVolume, muffle, unmuffle, fadeOutMusic, playWinStinger, playGameOverStinger, playPowerUpAccent } from './infra/music.js';
+import { startMusic, isPlaying, setVolume as setMusicVolume, muffle, unmuffle, fadeOutMusic, playWinStinger, playGameOverStinger, playPowerUpAccent } from './infra/music/index.js';
 import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel.js';
 import { Capsule } from './domain/capsule.js';
 import { DropSystem } from './use-cases/drop-system.js';

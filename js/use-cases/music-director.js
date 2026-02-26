@@ -4,7 +4,7 @@
 import {
   enableAdaptiveMode, requestNextSection, setLayerVolume,
   getCurrentSection, getTimeToNextSection,
-} from '../infra/music.js';
+} from '../infra/music/index.js';
 
 // === Niveaux d'intensité ===
 // 0 = calm    (début, >80% restants)  → pad seul, section intro/verse

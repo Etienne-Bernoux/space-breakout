@@ -85,16 +85,24 @@ export function isDevOverlayActive() {
   return isDevMode() && !('ontouchstart' in window);
 }
 
+let wasActive = false;
+
 /** Affiche/masque les panels selon l'état du jeu */
 export function updateDevOverlay() {
   if (!isDevOverlayActive()) {
     container.classList.remove('active');
+    wasActive = false;
     return;
   }
   buildButtons();
   const playing = G.session.state === 'playing' || G.session.state === 'paused';
   container.classList.toggle('active', playing);
   updateDevStats(playing);
+  // Trigger resize quand les panels apparaissent/disparaissent
+  if (playing !== wasActive) {
+    wasActive = playing;
+    window.dispatchEvent(new Event('resize'));
+  }
 }
 
 function hexToRgba(hex, alpha) {

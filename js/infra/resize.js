@@ -6,7 +6,11 @@ export let scale = 1;
 
 export function setupResize(onResize) {
   function resize() {
-    const maxW = window.innerWidth;
+    // Déduire l'espace des panels dev s'ils sont visibles
+    const devLeft = document.getElementById('dev-overlay');
+    const devRight = document.getElementById('dev-stats');
+    const panelW = (devLeft?.offsetWidth || 0) + (devRight?.offsetWidth || 0);
+    const maxW = window.innerWidth - panelW;
     const maxH = window.innerHeight;
     const screenRatio = maxW / maxH;
     const gameRatio = CONFIG.canvas.width / CONFIG.canvas.baseHeight;

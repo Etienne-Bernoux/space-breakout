@@ -98,10 +98,8 @@ js/
       handlers.js       → input panel
       index.js          → façade publique
     dev-overlay/        → overlay in-game (?dev, desktop only)
-      state.js          → layout boutons
-      draw.js           → rendu overlay
-      handlers.js       → tap/click sur boutons
-      index.js          → façade publique
+      index.js          → panel DOM gauche (boutons power-ups, vie +/-, win, ast -1)
+      dev-stats.js      → panel DOM droit (timer, intensité, combo)
 e2e/                    → tests end-to-end (Playwright)
   smoke.spec.js         → démarrage sans erreur console
   flow.spec.js          → menu → lancer → pause → resume
@@ -227,20 +225,47 @@ npx serve .              # serveur statique → http://localhost:3000
 
 Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`) :
 ```bash
-npx vitest run --globals --exclude 'e2e/**'   # une passe
-npx vitest --globals --exclude 'e2e/**'       # mode watch
+npm test                          # une passe (vitest run)
+npx vitest                        # mode watch
 ```
 
 Tests e2e (Playwright, dossier `e2e/`) :
 ```bash
-npx playwright test                # lance tous les tests e2e
+npm run test:e2e                  # lance tous les tests e2e
 npx playwright test e2e/smoke.spec.js   # un fichier spécifique
+npm run test:all                  # unit + e2e
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 
 Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`.
 
 Modes spéciaux : `?dev` (dev panel pré-partie + overlay in-game), `?mus` ou `?music` (music lab).
+
+### Validation visuelle avec Playwright (norme)
+
+Pour tout changement UI/CSS/layout, **toujours valider visuellement via Playwright** avant de considérer le fix terminé :
+```bash
+# Pattern standard : lancer un serveur + prendre un screenshot
+npx serve -l 3333 &
+node -e "
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+  await page.goto('http://localhost:3333/?dev');
+  await page.waitForTimeout(1500);
+  // Naviguer vers l'état voulu (Enter pour lancer, click, etc.)
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'screenshot.png' });
+  await browser.close();
+})();
+"
+```
+- Prendre des screenshots à chaque étape (menu, playing, pause, game over)
+- Vérifier les viewports étroits (1000x700) en plus du standard (1200x800)
+- Itérer fix → screenshot → vérifier jusqu'à ce que le rendu soit bon
+- Ne jamais livrer un fix CSS sans l'avoir vu en screenshot
 
 ## Multi-drone
 
@@ -254,9 +279,13 @@ La logique multi-drone est dans `collisions.js` (boucle inversée pour splice). 
 
 ## Dev overlay (?dev, desktop)
 
-Overlay in-game dessiné par-dessus la partie. Boutons pour chaque power-up + vie +/-.
+Deux panels DOM (pas canvas) de part et d'autre du jeu :
+- **Panel gauche** (`#dev-overlay`) : boutons power-ups avec icônes, vie +/-, Win instant, Asteroid HP -1
+- **Panel droit** (`#dev-stats`) : timer, niveau d'intensité (barre colorée), combo
+
 Activé seulement en mode `?dev` + desktop (pas mobile).
-Intercepte les clics avant le handler de jeu.
+Cliquer un bouton power-up = exactement comme ramasser la capsule en jeu.
+Le resize du canvas tient compte des panels (`resize.js` déduit leur largeur).
 
 ## Power-ups
 

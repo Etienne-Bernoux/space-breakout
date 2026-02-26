@@ -21,7 +21,8 @@ const PANEL = {
   // Colonne droite : patterns + grille + presets
   rightX: 490, rightW: 280,
   patternStartY: 135, patternH: 22, patternSpacing: PATTERN_SPACING,
-  gridStartY: 410, gridH: 22, gridSpacing: GRID_SPACING,
+  get gridStartY() { return this.patternStartY + PATTERN_KEYS.length * this.patternSpacing + 20; },
+  gridH: 22, gridSpacing: GRID_SPACING,
   // Bas
   launchY: 530,
 };

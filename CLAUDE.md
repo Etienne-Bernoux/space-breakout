@@ -1,5 +1,7 @@
 # Space Breakout
 
+> **Règle doc** : après tout changement structurel (nouveau fichier, nouveau pattern, nouvelle commande), mettre à jour ce fichier, `README.md` et `BACKLOG.md` si pertinent.
+
 Casse-briques spatial inspiré d'Adibou, publié sur GitHub Pages.
 
 ## Concept
@@ -11,7 +13,8 @@ Le thème spatial influence le gameplay (prévu : récolte de matière, power-up
 
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
-- Tests : Mocha + Chai (specs co-localisées avec le code)
+- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`)
+- Tests e2e : Playwright (dossier `e2e/`)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
 
@@ -45,7 +48,9 @@ js/
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic.js       → GameSession : état, score, vies
     power-up-manager.js → application/revert des power-ups
-    music-director.js   → musique adaptative (intensité 0-4)
+    game-intensity-director.js → chef d'orchestre (intensité 0-4 → music + effects)
+    music-director.js   → gère TOUS les sons/musique (reçoit events du GID)
+    effect-director.js  → effets visuels par intensité (lerp entre presets)
     drop-system.js      → probabilité de drop
   infra/                → DOM, Canvas, Audio, Input
     stars.js            → fond étoilé parallaxe
@@ -64,7 +69,8 @@ js/
       sections-dark.js  → 7 configs sections Ré mineur (LOTR style)
       section-engine.js → registre instruments + dispatch data-driven
       scheduler.js      → boucle sections, mode adaptatif, contrôle lecture
-      stingers.js       → motifs courts (win, game over, power-up)
+      fills.js          → fills de transition (snare roll, arp rise)
+      stingers.js       → motifs courts (win, game over, power-up, combo)
       demos.js          → démos instruments (music lab)
       index.js          → façade publique
     music-lab/          → panel test musical (?mus)
@@ -86,11 +92,16 @@ js/
       draw-credits.js   → écran crédits
       handlers.js       → input menu
       index.js          → façade publique
-    dev-panel/          → panel dev (?dev=1)
+    dev-panel/          → panel dev (?dev)
       state.js          → config + presets + persistence
       draw.js           → rendu panel
       handlers.js       → input panel
       index.js          → façade publique
+e2e/                    → tests end-to-end (Playwright)
+  smoke.spec.js         → démarrage sans erreur console
+  flow.spec.js          → menu → lancer → pause → resume
+  modes.spec.js         → ?dev et ?mus/?music
+playwright.config.js    → config Playwright (serve sur :3333)
 ```
 
 ## Règles de structure
@@ -170,16 +181,29 @@ const scale = Math.min(1.0, Math.max(0.6, canvasWidth / 500));
 - Sliders : 60% de la largeur
 - Score positionné relativement au bouton pause (pas de position absolue)
 
-### Musique adaptative
-`music/` génère la musique procédurale avec 5 layers (drums, bass, pad, lead, high) sur des GainNodes séparés.
-`music-director.js` (use-case) calcule un niveau d'intensité 0-4 basé sur :
+### GameIntensityDirector (chef d'orchestre)
+Point d'entrée unique pour tous les événements gameplay. Les fichiers `main/` (collisions, input) n'importent jamais directement audio/music — tout passe par `G.intensityDirector.onXxx()`.
+
+`GameIntensityDirector` calcule l'intensité 0-4 et dispatch vers :
+- `MusicDirector` — gère TOUS les sons (SFX + musique + stingers)
+- `EffectDirector` — effets visuels (vitesse étoiles, vignette, micro-shake, couleur death line, glow score)
+
+Calcul d'intensité :
 - Ratio astéroïdes restants (>80%→0, 50-80%→1, 30-50%→2, <30%→3, <10%→4)
 - Combo boost (+1 à ≥3, +2 à ≥6)
 - Power-up actif → min 2
 - Dernière vie → min 3
 
-L'intensité contrôle les layers (fade in/out) et sélectionne la section suivante.
+### Musique adaptative
+`music/` génère la musique procédurale avec 5 layers (drums, bass, pad, lead, high) sur des GainNodes séparés.
+L'intensité contrôle les layers (fade in/out), le BPM (110→128), et sélectionne la section suivante.
 Scheduling section-par-section (pas en bulk) pour permettre le mode adaptatif.
+Fills de transition (snare roll, arp rise) 2 beats avant les changements de section.
+Accents combo par paliers (×2: 1 note, ×3: 2 notes, ×5+: 3 notes).
+
+### EffectDirector
+5 presets visuels (calm → climax), lerp progressif chaque frame (speed 0.06).
+Effets pilotés : starSpeed, vignetteAlpha/Hue, microShake, deathLine RGB, scoreGlow/Color.
 
 `music-lab/` (?mus) : panel de test avec 3 onglets :
 - **Sons** : sections, instruments, stingers isolés + sélecteur piste (prêt multi-pistes)
@@ -193,15 +217,25 @@ Scheduling section-par-section (pas en bulk) pour permettre le mode adaptatif.
 
 Serveur local requis (ES modules) :
 ```bash
-npx serve .
+npx serve .              # serveur statique → http://localhost:3000
 ```
 
-Tests :
+Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`) :
 ```bash
-npm test
+npx vitest run --globals           # une passe
+npx vitest --globals               # mode watch
 ```
-Les specs sont co-localisées avec le code (`js/**/*.spec.js`).
-Mocha + Chai, ES modules natifs.
+
+Tests e2e (Playwright, dossier `e2e/`) :
+```bash
+npx playwright test                # lance tous les tests e2e
+npx playwright test e2e/smoke.spec.js   # un fichier spécifique
+```
+Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
+
+Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`.
+
+Modes spéciaux : `?dev` (dev panel), `?mus` ou `?music` (music lab).
 
 ## Power-ups
 

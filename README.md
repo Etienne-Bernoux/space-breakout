@@ -22,6 +22,9 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 - Responsive : s'adapte à toutes les tailles d'écran (portrait et paysage)
 - Menu, réglages audio (volume musique/sons), pause, crédits
 - Souris, clavier et tactile supportés
+- Musique adaptative pilotée par l'intensité gameplay (5 layers, tempo progressif, fills)
+- Effets visuels dynamiques (vignette, micro-shake, glow) liés à l'intensité
+- 7 power-ups (élargi, collant, perçant, vie+, affaiblir, vitesse, slow-mo)
 - Clean Architecture : entités pures, logique métier isolée, infra séparée
 - Zéro dépendance runtime, 100% vanilla JS + Canvas
 
@@ -30,12 +33,13 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 ```bash
 git clone https://github.com/etienne-bernoux/space-breakout.git
 cd space-breakout
-npm install     # installe les devDependencies (tests)
-npx serve .     # lance le serveur local
-npm test        # lance les tests (Mocha + Chai)
+npm install                        # installe les devDependencies
+npx serve .                        # serveur local → http://localhost:3000
+npx vitest run --globals           # tests unitaires (Vitest + Chai)
+npx playwright test                # tests e2e (Playwright + Chromium)
 ```
 
-Puis ouvrir `http://localhost:3000` dans le navigateur.
+Modes spéciaux : `?dev` (dev panel), `?mus` (music lab).
 
 ## Crédits
 

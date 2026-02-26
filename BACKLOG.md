@@ -9,9 +9,9 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 | ~~Layers dynamiques~~ | ~~Drums/bass/lead/pad sur des gains séparés, intensité pilotée par le gameplay (nb astéroïdes, combo, power-up)~~ | ~~L~~ | ✅ |
 | ~~Sections contextuelles~~ | ~~Bridge/breakdown quand il reste peu d'astéroïdes, chorus quand c'est chaud~~ | ~~M~~ | ✅ |
 | Variations mélodiques | 2-3 variantes du chorus/verse tirées aléatoirement pour casser la répétition | M |
-| Fills de transition | Roulements snare, montée arp entre les sections | S |
-| Accents musicaux | Étendre aux combos (pas seulement power-ups) | S |
-| Tempo progressif | BPM qui monte légèrement avec les niveaux | S |
+| ~~Fills de transition~~ | ~~Roulements snare, montée arp entre les sections~~ | ~~S~~ | ✅ |
+| ~~Accents combos~~ | ~~Accents musicaux par paliers (×2, ×3, ×5+)~~ | ~~S~~ | ✅ |
+| ~~Tempo progressif~~ | ~~BPM 110→128 piloté par l'intensité gameplay~~ | ~~S~~ | ✅ |
 
 ## Game feel / Polish
 
@@ -19,6 +19,10 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 |---|---|---|
 | ~~Slow-motion final~~ | ~~Ralenti 0.5s sur le dernier astéroïde du niveau~~ | ~~S~~ | ✅ |
 | ~~Combo counter~~ | ~~Affichage ×2, ×3… avec feedback visuel croissant (taille, couleur)~~ | ~~M~~ | ✅ |
+| ~~Effets visuels intensité~~ | ~~Vignette, micro-shake, étoiles rapides, glow score, death line colorée (EffectDirector)~~ | ~~M~~ | ✅ |
+| ~~GameIntensityDirector~~ | ~~Chef d'orchestre : centralise intensité, dispatch vers MusicDirector + EffectDirector~~ | ~~M~~ | ✅ |
+| ~~MusicDirector centralise les sons~~ | ~~Tous les sons (SFX + musique + stingers) passent par le director, plus d'import direct~~ | ~~S~~ | ✅ |
+| ~~Tests e2e Playwright~~ | ~~Smoke, flow, modes ?dev et ?mus~~ | ~~S~~ | ✅ |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |
 | Décor parallaxe v2 | Plus de diversité : gazeuses géantes, planètes rocheuses, lunes, comètes, amas d'étoiles | M |
 

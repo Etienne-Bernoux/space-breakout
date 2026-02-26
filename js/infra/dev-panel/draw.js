@@ -2,7 +2,7 @@
 
 import { CONFIG } from '../../config.js';
 import { MATERIALS } from '../../domain/materials.js';
-import { PATTERNS, PATTERN_KEYS } from '../../domain/patterns.js';
+import { PATTERNS, PATTERN_KEYS, GRID_PRESETS } from '../../domain/patterns.js';
 import state, { MAT_KEYS, GRID_KEYS, PRESETS } from './state.js';
 
 // --- Layout Constants (2 colonnes : gauche = sliders, droite = patterns/grille/presets) ---

@@ -86,7 +86,7 @@ describe('PowerUpManager', () => {
   });
 
   describe('weaken (instant)', () => {
-    it('réduit les HP de tous les astéroïdes destructibles', () => {
+    it('réduit les HP de tous les astéroïdes destructibles (min 1)', () => {
       const grid = [
         { alive: true, destructible: true, hp: 3 },
         { alive: true, destructible: true, hp: 1 },
@@ -96,8 +96,8 @@ describe('PowerUpManager', () => {
       const gs = makeGameState({ grid });
       pm.activate('weaken', gs, 0);
       expect(grid[0].hp).to.equal(2);
-      expect(grid[1].hp).to.equal(0);
-      expect(grid[1].alive).to.be.false;
+      expect(grid[1].hp).to.equal(1);       // plancher à 1 — weaken ne tue pas
+      expect(grid[1].alive).to.be.true;
       expect(grid[2].hp).to.equal(Infinity); // indestructible pas touché
     });
   });

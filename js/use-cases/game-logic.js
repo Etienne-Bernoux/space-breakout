@@ -45,8 +45,7 @@ export class GameSession {
         drone.launched = false;
         drone._stickyOffset = drone.x - ship.x;
         drone.y = ship.y - drone.radius;
-        drone.dx = drone.speed;
-        drone.dy = -drone.speed;
+        // L'angle sera recalculé au lancement via _launchAngle
         return { type: 'sticky' };
       }
       drone.dy = -drone.dy;

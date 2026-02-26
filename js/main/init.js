@@ -7,9 +7,6 @@ import { DropSystem } from '../use-cases/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up-manager.js';
 import { GameIntensityDirector } from '../use-cases/game-intensity-director.js';
 import { Capsule } from '../domain/capsule.js';
-import { startMusic, isPlaying, setVolume as setMusicVolume } from '../infra/music/index.js';
-import { getMusicVolume } from '../infra/menu/index.js';
-import { setSfxVolume, unlockAudio } from '../infra/audio.js';
 import { setupResize } from '../infra/resize.js';
 import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
 
@@ -84,16 +81,7 @@ export function perceptualVolume(v) {
   return v * v;
 }
 
-export function ensureMusic() {
-  if (!isPlaying()) {
-    startMusic();
-    setMusicVolume(perceptualVolume(getMusicVolume()) * 0.3);
-  }
-}
-
 export function startGame() {
-  unlockAudio();
-  ensureMusic();
   const isMobile = 'ontouchstart' in window;
   G.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
   G.drone = new Drone(CONFIG.drone, G.ship, isMobile, CONFIG.canvas.width);

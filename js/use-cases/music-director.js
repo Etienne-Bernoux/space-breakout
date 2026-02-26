@@ -1,10 +1,18 @@
-// --- MusicDirector : pilote la musique en fonction de l'intensité ---
-// Reçoit un niveau d'intensité du GameIntensityDirector, contrôle sections + layers + BPM.
+// --- MusicDirector : gère TOUS les sons et la musique du jeu ---
+// Reçoit un niveau d'intensité + des événements ponctuels du GameIntensityDirector.
 
 import {
   enableAdaptiveMode, requestNextSection, setLayerVolume,
   getCurrentSection, setBPM,
+  startMusic, isPlaying, fadeOutMusic,
+  muffle, unmuffle,
+  playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent,
 } from '../infra/music/index.js';
+
+import {
+  playBounce, playAsteroidHit, playLoseLife,
+  playWin, playGameOver, playLaunch, unlockAudio,
+} from '../infra/audio.js';
 
 // BPM par niveau d'intensité : calm→climax
 const INTENSITY_BPM = [110, 114, 118, 122, 128];
@@ -31,11 +39,15 @@ export class MusicDirector {
     this.enabled = false;
   }
 
+  // === Lifecycle ===
+
   enable() {
     this.enabled = true;
     this.intensity = 0;
+    unlockAudio();
     enableAdaptiveMode();
     this._applyLayers();
+    this._ensureMusic();
   }
 
   disable() {
@@ -50,13 +62,6 @@ export class MusicDirector {
     setBPM(INTENSITY_BPM[level]);
   }
 
-  _applyLayers() {
-    const config = INTENSITY_LAYERS[this.intensity];
-    for (const [layer, vol] of Object.entries(config)) {
-      setLayerVolume(layer, vol, 0.8);
-    }
-  }
-
   /** Demande un changement de section musicale. */
   requestSectionChange() {
     if (!this.enabled) return;
@@ -65,5 +70,48 @@ export class MusicDirector {
     const filtered = candidates.filter(s => s !== current);
     const pick = filtered.length > 0 ? filtered : candidates;
     requestNextSection(pick[Math.floor(Math.random() * pick.length)]);
+  }
+
+  // === Événements ponctuels ===
+
+  onBounce() { playBounce(); }
+
+  onAsteroidHit() { playAsteroidHit(); }
+
+  onCombo(combo) { playComboAccent(combo); }
+
+  onPowerUp() { playPowerUpAccent(); }
+
+  onLoseLife() { playLoseLife(); }
+
+  onLaunch() { playLaunch(); }
+
+  onPause() { muffle(); }
+
+  onResume() { unmuffle(); }
+
+  onWin() {
+    this.disable();
+    playWin();
+    fadeOutMusic(0.8, () => playWinStinger());
+  }
+
+  onGameOver() {
+    this.disable();
+    playGameOver();
+    fadeOutMusic(0.8, () => playGameOverStinger());
+  }
+
+  // === Interne ===
+
+  _applyLayers() {
+    const config = INTENSITY_LAYERS[this.intensity];
+    for (const [layer, vol] of Object.entries(config)) {
+      setLayerVolume(layer, vol, 0.8);
+    }
+  }
+
+  _ensureMusic() {
+    if (!isPlaying()) startMusic();
   }
 }

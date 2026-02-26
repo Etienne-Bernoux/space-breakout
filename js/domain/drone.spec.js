@@ -54,13 +54,12 @@ describe('Drone', () => {
     it('se déplace selon dx/dy une fois lancé', () => {
       const ship = makeShip(100, 500, 100);
       const drone = makeDrone(ship);
-      drone.launched = true;
-      const startX = drone.x;
+      drone.launch(ship);
       const startY = drone.y;
 
       drone.update(ship, 800);
 
-      expect(drone.x).to.not.equal(startX);
+      // dy est toujours < 0 → y diminue
       expect(drone.y).to.not.equal(startY);
     });
   });

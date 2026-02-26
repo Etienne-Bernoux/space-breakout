@@ -103,7 +103,7 @@ export class PowerUpManager {
       gs.drone[effect.prop] = false;
       if (effect.prop === 'sticky') {
         gs.drone._stickyOffset = undefined;
-        if (!gs.drone.launched) gs.drone.launched = true;
+        if (!gs.drone.launched) gs.drone.launch(gs.ship);
       }
     } else if (effect.target === 'session' && effect.factor) {
       gs.session[effect.prop] = Math.max(1, (gs.session[effect.prop] || effect.factor) / effect.factor);

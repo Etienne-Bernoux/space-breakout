@@ -1,4 +1,6 @@
 // --- GameIntensityDirector : calcule l'intensité, dispatch vers Music + Effects ---
+// Point d'entrée unique pour TOUS les événements gameplay.
+// Les consommateurs (collisions, input) n'appellent jamais directement audio/music.
 
 import { MusicDirector } from './music-director.js';
 import { EffectDirector } from './effect-director.js';
@@ -14,6 +16,8 @@ export class GameIntensityDirector {
     this.lastLife = false;
     this.enabled = false;
   }
+
+  // === Lifecycle ===
 
   enable() {
     this.enabled = true;
@@ -32,11 +36,24 @@ export class GameIntensityDirector {
     this.effects.setIntensity(0);
   }
 
-  // === Événements gameplay ===
+  // === Événements gameplay → dispatch vers tous les directors ===
 
-  onAsteroidDestroyed(remaining, total) {
+  onBounce() {
+    this.music.onBounce();
+    if (!this.enabled) return;
+    this.combo = 0;
+    this._recalculate();
+  }
+
+  onAsteroidHit() {
+    this.music.onAsteroidHit();
+  }
+
+  onAsteroidDestroyed(remaining, total, combo) {
+    this.music.onAsteroidHit();
     if (!this.enabled) return;
     this.combo++;
+    if (combo >= 2) this.music.onCombo(combo);
     this.remainingRatio = total > 0 ? remaining / total : 0;
     this._recalculate();
   }
@@ -48,6 +65,7 @@ export class GameIntensityDirector {
   }
 
   onPowerUpActivated() {
+    this.music.onPowerUp();
     if (!this.enabled) return;
     this.powerUpActive = true;
     this._recalculate();
@@ -60,50 +78,51 @@ export class GameIntensityDirector {
   }
 
   onLifeChanged(lives) {
+    this.music.onLoseLife();
     if (!this.enabled) return;
+    this.combo = 0;
     this.lastLife = lives <= 1;
     this._recalculate();
   }
 
-  /** Appelé chaque frame pour le lerp des effets visuels. */
-  update() {
-    this.effects.update();
-  }
+  onLaunch() { this.music.onLaunch(); }
 
-  /** Raccourci pour récupérer les effets visuels courants. */
-  getEffects() {
-    return this.effects.getEffects();
-  }
+  onPause() { this.music.onPause(); }
 
-  // === Calcul interne (extrait de l'ancien MusicDirector) ===
+  onResume() { this.music.onResume(); }
+
+  onWin() { this.music.onWin(); }
+
+  onGameOver() { this.music.onGameOver(); }
+
+  // === Frame update ===
+
+  update() { this.effects.update(); }
+
+  getEffects() { return this.effects.getEffects(); }
+
+  // === Calcul interne ===
 
   _recalculate() {
     const prev = this.intensity;
     let level = 0;
 
-    // Ratio-based
     if (this.remainingRatio <= 0.10) level = 4;
     else if (this.remainingRatio <= 0.30) level = 3;
     else if (this.remainingRatio <= 0.50) level = 2;
     else if (this.remainingRatio <= 0.80) level = 1;
 
-    // Combo boost
     if (this.combo >= 6) level = Math.min(4, level + 2);
     else if (this.combo >= 3) level = Math.min(4, level + 1);
 
-    // Power-up boost
     if (this.powerUpActive) level = Math.min(4, Math.max(level, 2));
-
-    // Last life — tension max
     if (this.lastLife) level = Math.min(4, Math.max(level, 3));
 
     this.intensity = Math.min(4, Math.max(0, level));
 
-    // Dispatch vers les sous-directors
     this.music.setIntensity(this.intensity);
     this.effects.setIntensity(this.intensity);
 
-    // Changement de section musicale si l'intensité a bougé
     if (this.intensity !== prev) {
       this.music.requestSectionChange();
     }

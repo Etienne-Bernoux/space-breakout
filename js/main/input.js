@@ -1,8 +1,6 @@
 import { CONFIG } from '../config.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
 import { handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
-import { playLaunch } from '../infra/audio.js';
-import { muffle, unmuffle } from '../infra/music/index.js';
 import { isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
 import { G, gameScale, pauseBtnLayout, startGame } from './init.js';
@@ -18,10 +16,10 @@ setTapHandler((x, y) => {
     if (x >= pb.x && x <= pb.x + pb.size &&
         y >= pb.y && y <= pb.y + pb.size) {
       G.session.pause();
-      muffle();
+      G.intensityDirector.onPause();
       return;
     }
-    if (!G.drone.launched) { G.drone.launched = true; playLaunch(); }
+    if (!G.drone.launched) { G.drone.launch(G.ship); G.intensityDirector.onLaunch(); }
   }
   if (G.session.state === 'gameOver' || G.session.state === 'won') {
     resetMenu();
@@ -59,7 +57,7 @@ setMenuTapHandler((x, y) => {
     // Bouton REPRENDRE
     if (x >= cx - halfW && x <= cx + halfW && y >= cy && y <= cy + btnH) {
       G.session.resume();
-      unmuffle();
+      G.intensityDirector.onResume();
     }
     // Bouton MENU
     if (x >= cx - halfW && x <= cx + halfW && y >= cy + btnH + gap && y <= cy + btnH * 2 + gap) {
@@ -98,12 +96,12 @@ document.addEventListener('keydown', (e) => {
   if (G.session.state === 'playing') {
     if (e.key === 'ArrowLeft') G.ship.movingLeft = true;
     if (e.key === 'ArrowRight') G.ship.movingRight = true;
-    if (e.key === ' ' && !G.drone.launched) { G.drone.launched = true; playLaunch(); }
-    if (e.key === 'Escape') { G.session.pause(); muffle(); return; }
+    if (e.key === ' ' && !G.drone.launched) { G.drone.launch(G.ship); G.intensityDirector.onLaunch(); }
+    if (e.key === 'Escape') { G.session.pause(); G.intensityDirector.onPause(); return; }
   }
 
   if (G.session.state === 'paused') {
-    if (e.key === 'Escape') { G.session.resume(); unmuffle(); }
+    if (e.key === 'Escape') { G.session.resume(); G.intensityDirector.onResume(); }
     if (e.key === 'r') { resetMenu(); G.session.backToMenu(); if (isDevMode()) showDevPanel(); }
     return;
   }

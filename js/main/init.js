@@ -5,7 +5,7 @@ import { AsteroidField } from '../domain/asteroid/index.js';
 import { GameSession } from '../use-cases/game-logic.js';
 import { DropSystem } from '../use-cases/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up-manager.js';
-import { MusicDirector } from '../use-cases/music-director.js';
+import { GameIntensityDirector } from '../use-cases/game-intensity-director.js';
 import { Capsule } from '../domain/capsule.js';
 import { startMusic, isPlaying, setVolume as setMusicVolume } from '../infra/music/index.js';
 import { getMusicVolume } from '../infra/menu/index.js';
@@ -29,7 +29,7 @@ export const G = {
   totalAsteroids: 0,
   dropSystem: new DropSystem(CONFIG.drop),
   puManager: new PowerUpManager(),
-  musicDirector: new MusicDirector(),
+  intensityDirector: new GameIntensityDirector(),
   // Combo counter
   combo: 0,
   comboDisplay: 0,
@@ -107,6 +107,6 @@ export function startGame() {
   G.slowMoTimer = 0;
   G.puManager.clear({ ship: G.ship, drone: G.drone, session: G.session, field: G.field });
   G.totalAsteroids = G.field.remaining;
-  G.musicDirector.enable();
+  G.intensityDirector.enable();
   G.session.start();
 }

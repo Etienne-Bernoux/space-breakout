@@ -3,7 +3,7 @@ import { updateStars } from '../infra/stars.js';
 import { getMousePos, getTouchX } from '../infra/touch.js';
 import { updateMenu, updateMenuHover } from '../infra/menu/index.js';
 import { spawnTrail, updateParticles } from '../infra/particles.js';
-import { updateShake } from '../infra/screenshake.js';
+import { updateShake, setAmbientShake } from '../infra/screenshake.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
@@ -11,9 +11,25 @@ import { G, SLOW_MO_DURATION } from './init.js';
 import { handleCollisions } from './collisions.js';
 import { drawHUD, drawCombo, drawDeathLine, drawPauseButton, drawPauseScreen, drawEndScreen } from './hud.js';
 
+function drawVignette(ctx, fx) {
+  if (!fx || fx.vignetteAlpha <= 0.005) return;
+  const w = CONFIG.canvas.width, h = CONFIG.canvas.height;
+  const [r, g, b] = fx.vignetteHue;
+  const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.8);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, `rgba(${r|0},${g|0},${b|0},${fx.vignetteAlpha})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+}
+
 export function loop() {
+  // Update intensity effects (lerp)
+  G.intensityDirector.update();
+  const fx = G.intensityDirector.getEffects();
+  setAmbientShake(fx.microShake);
+
   G.ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
-  updateStars();
+  updateStars(fx.starSpeed);
 
   // Curseur adapté à l'état
   document.body.classList.toggle('menu', G.session.state === 'menu' || G.session.state === 'paused');
@@ -46,7 +62,7 @@ export function loop() {
     G.field.draw(G.ctx);
     G.ship.draw(G.ctx);
     G.drone.draw(G.ctx);
-    drawHUD();
+    drawHUD(fx);
     drawPauseScreen();
     requestAnimationFrame(loop);
     return;
@@ -75,11 +91,12 @@ export function loop() {
       G.field.draw(G.ctx);
       updateParticles(G.ctx);
       for (const c of G.capsules) drawCapsule(G.ctx, c);
-      if (G.ship.isMobile) drawDeathLine(G.ship);
+      if (G.ship.isMobile) drawDeathLine(G.ship, fx);
       G.ship.draw(G.ctx);
       G.drone.draw(G.ctx);
       G.ctx.restore();
-      drawHUD();
+      drawVignette(G.ctx, fx);
+      drawHUD(fx);
       drawPowerUpHUD(G.ctx, G.puManager.getActive(), CONFIG.canvas.width);
       drawPauseButton();
       if (G.comboFadeTimer > 0) drawCombo();
@@ -103,13 +120,14 @@ export function loop() {
   G.field.draw(G.ctx);
   updateParticles(G.ctx);
   for (const c of G.capsules) drawCapsule(G.ctx, c);
-  if (G.ship.isMobile) drawDeathLine(G.ship);
+  if (G.ship.isMobile) drawDeathLine(G.ship, fx);
   G.ship.draw(G.ctx);
   G.drone.draw(G.ctx);
 
   G.ctx.restore();
 
-  drawHUD();
+  drawVignette(G.ctx, fx);
+  drawHUD(fx);
   drawPowerUpHUD(G.ctx, G.puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();
   if (G.comboFadeTimer > 0) drawCombo();

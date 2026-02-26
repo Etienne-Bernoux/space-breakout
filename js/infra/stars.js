@@ -251,11 +251,11 @@ function updateBodies() {
 }
 
 // === Boucle de rendu ===
-export function updateStars() {
+export function updateStars(speedMultiplier = 1) {
   bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
 
   for (const s of stars) {
-    s.y += s.speed;
+    s.y += s.speed * speedMultiplier;
     if (s.y > bgCanvas.height) {
       s.y = -2;
       s.x = Math.random() * bgCanvas.width;

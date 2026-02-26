@@ -2,18 +2,25 @@ import { CONFIG } from '../config.js';
 import { drawPowerUpHUD } from '../infra/power-up-render.js';
 import { G, gameScale, pauseBtnLayout, COMBO_FADE_DURATION } from './init.js';
 
-export function drawHUD() {
+export function drawHUD(fx) {
   const s = gameScale();
   const fontSize = Math.round(18 * s);
   const pad = Math.round(15 * s);
   const pb = pauseBtnLayout();
-  G.ctx.fillStyle = '#ffffff';
+  const color = fx ? fx.scoreColor : '#ffffff';
+  const glow = fx ? fx.scoreGlow : 0;
+  G.ctx.save();
+  G.ctx.fillStyle = color;
   G.ctx.font = `${fontSize}px monospace`;
+  if (glow > 0) {
+    G.ctx.shadowColor = color;
+    G.ctx.shadowBlur = glow;
+  }
   G.ctx.fillText(`VIES: ${G.session.lives}`, pad, pad + fontSize * 0.6);
   const scoreText = `SCORE: ${G.session.score}`;
   const scoreW = G.ctx.measureText(scoreText).width;
-  // Placer le score à gauche du bouton pause
   G.ctx.fillText(scoreText, pb.x - scoreW - 8, pad + fontSize * 0.6);
+  G.ctx.restore();
 }
 
 export function drawCombo() {
@@ -51,24 +58,26 @@ export function drawCombo() {
   G.ctx.restore();
 }
 
-export function drawDeathLine(ship) {
+export function drawDeathLine(ship, fx) {
   const lineY = ship.y + ship.height + ship.bottomMargin * 0.4;
   const w = CONFIG.canvas.width;
+  const [r, g, b] = fx ? fx.deathLine : [0, 212, 255];
+  const glowAlpha = fx ? fx.deathLineGlow : 0.07;
 
-  // Lueur diffuse statique
+  // Lueur diffuse
   const glow = G.ctx.createLinearGradient(0, lineY - 15, 0, lineY + 15);
-  glow.addColorStop(0, 'rgba(0, 212, 255, 0)');
-  glow.addColorStop(0.5, 'rgba(0, 212, 255, 0.07)');
-  glow.addColorStop(1, 'rgba(0, 212, 255, 0)');
+  glow.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+  glow.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${glowAlpha})`);
+  glow.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
   G.ctx.fillStyle = glow;
   G.ctx.fillRect(0, lineY - 15, w, 30);
 
-  // Ligne continue avec grésillement (segments d'opacité variable)
+  // Ligne avec grésillement
   G.ctx.save();
   const segW = 6;
   for (let x = 0; x < w; x += segW) {
     const a = 0.25 + Math.random() * 0.35;
-    G.ctx.strokeStyle = `rgba(0, 212, 255, ${a})`;
+    G.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
     G.ctx.lineWidth = 0.8 + Math.random() * 0.8;
     G.ctx.beginPath();
     G.ctx.moveTo(x, lineY + (Math.random() - 0.5) * 1.2);

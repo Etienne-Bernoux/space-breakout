@@ -4,18 +4,27 @@
 
 let intensity = 0;
 let decay = 0.85;
+let ambientAmount = 0;
 
 export function triggerShake(amount) {
   intensity = Math.max(intensity, amount);
 }
 
+/** Micro-shake constant piloté par l'intensité gameplay. */
+export function setAmbientShake(amount) {
+  ambientAmount = amount;
+}
+
 export function updateShake() {
-  if (intensity < 0.5) {
+  let total = ambientAmount;
+  if (intensity >= 0.5) {
+    total += intensity;
+    intensity *= decay;
+  } else {
     intensity = 0;
-    return { x: 0, y: 0 };
   }
-  const x = (Math.random() * 2 - 1) * intensity;
-  const y = (Math.random() * 2 - 1) * intensity;
-  intensity *= decay;
+  if (total < 0.01) return { x: 0, y: 0 };
+  const x = (Math.random() * 2 - 1) * total;
+  const y = (Math.random() * 2 - 1) * total;
   return { x, y };
 }

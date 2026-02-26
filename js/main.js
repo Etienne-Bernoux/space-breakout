@@ -10,14 +10,14 @@ import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler
 import { spawnExplosion, spawnTrail, updateParticles } from './infra/particles.js';
 import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './infra/audio.js';
 import { startMusic, isPlaying, setVolume as setMusicVolume, muffle, unmuffle, fadeOutMusic, playWinStinger, playGameOverStinger, playPowerUpAccent } from './infra/music/index.js';
-import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel.js';
+import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel/index.js';
 import { Capsule } from './domain/capsule.js';
 import { DropSystem } from './use-cases/drop-system.js';
 import { triggerShake, updateShake } from './infra/screenshake.js';
 import { PowerUpManager } from './use-cases/power-up-manager.js';
 import { getPowerUp } from './domain/power-ups.js';
 import { drawCapsule, drawPowerUpHUD } from './infra/power-up-render.js';
-import { isMusicLab, isMusicLabActive, showMusicLab, drawMusicLab, handleMusicLabTap, handleMusicLabHover, handleMusicLabScroll } from './infra/music-lab.js';
+import { isMusicLab, isMusicLabActive, showMusicLab, drawMusicLab, handleMusicLabTap, handleMusicLabHover, handleMusicLabScroll } from './infra/music-lab/index.js';
 import { MusicDirector } from './use-cases/music-director.js';
 
 // --- Canvas setup ---

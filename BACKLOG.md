@@ -23,7 +23,7 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 | Slow-motion final | Ralenti 0.5s sur le dernier astéroïde du niveau | S |
 | Combo counter | Affichage ×2, ×3… avec feedback visuel croissant (taille, couleur) | M |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |
-| Décor parallaxe | Planètes, étoiles brillantes, nébuleuses procédurales sur couche intermédiaire (lent, opacité basse, ne gêne pas la lisibilité) | M |
+| Décor parallaxe v2 | Plus de diversité : gazeuses géantes, planètes rocheuses, lunes, comètes, amas d'étoiles | M |
 
 ## Astéroïdes habités (nouveau matériau)
 

@@ -68,118 +68,139 @@ function drawFloatingRocks(ctx) {
 }
 
 function drawTitle(ctx) {
-  const w = CONFIG.canvas.width;
-  const cx = w / 2;
+  const { cx, h, scale } = layout();
+  const titleY = h * 0.22;
+  const titleSize = Math.round(48 * scale);
+  const subSize = Math.round(14 * scale);
 
-  // Titre principal
   ctx.save();
   ctx.textAlign = 'center';
 
   // Ombre
   ctx.fillStyle = 'rgba(0, 100, 200, 0.3)';
-  ctx.font = 'bold 48px monospace';
-  ctx.fillText('SPACE BREAKOUT', cx + 3, 153);
+  ctx.font = `bold ${titleSize}px monospace`;
+  ctx.fillText('SPACE BREAKOUT', cx + 3, titleY + 3);
 
   // Texte
-  const titleGrad = ctx.createLinearGradient(cx - 200, 120, cx + 200, 160);
+  const titleGrad = ctx.createLinearGradient(cx - 200 * scale, titleY - 30, cx + 200 * scale, titleY + 10);
   titleGrad.addColorStop(0, '#00d4ff');
   titleGrad.addColorStop(0.5, '#ffffff');
   titleGrad.addColorStop(1, '#00d4ff');
   ctx.fillStyle = titleGrad;
-  ctx.fillText('SPACE BREAKOUT', cx, 150);
+  ctx.fillText('SPACE BREAKOUT', cx, titleY);
 
   // Sous-titre
-  ctx.font = '14px monospace';
+  ctx.font = `${subSize}px monospace`;
   ctx.fillStyle = '#667788';
-  ctx.fillText('MISSION : NETTOYAGE DE ZONE', cx, 180);
+  ctx.fillText('MISSION : NETTOYAGE DE ZONE', cx, titleY + titleSize * 0.7);
 
   ctx.restore();
 }
 
-function drawMenu(ctx) {
-  const w = CONFIG.canvas.width;
-  const cx = w / 2;
+/** Calcule la position Y et la hauteur d'un item de menu. */
+function menuItemLayout(i) {
+  const { w, h, scale } = layout();
+  const startY = h * 0.42;
+  const spacing = Math.round(60 * scale);
+  const itemH = Math.round(48 * scale);
+  const halfW = Math.round(w * 0.4); // 80% de largeur totale
+  return { y: startY + i * spacing, itemH, halfW, scale };
+}
 
-  if (showSettings) {
-    drawSettingsScreen(ctx);
-    return;
-  }
-  if (showCredits) {
-    drawCreditsScreen(ctx);
-    return;
-  }
+function drawMenu(ctx) {
+  const { cx, h, scale } = layout();
+
+  if (showSettings) { drawSettingsScreen(ctx); return; }
+  if (showCredits) { drawCreditsScreen(ctx); return; }
 
   drawTitle(ctx);
 
-  // Items du menu
   ctx.save();
   ctx.textAlign = 'center';
 
+  const fontSize = Math.round(26 * scale);
+  const fontSmall = Math.round(22 * scale);
+
   for (let i = 0; i < menuItems.length; i++) {
-    const itemY = 280 + i * 50;
+    const { y: itemY, itemH, halfW } = menuItemLayout(i);
     const isSelected = i === selected;
 
     if (isSelected) {
-      // Fond sélection
       ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
-      ctx.fillRect(cx - 120, itemY - 20, 240, 36);
+      ctx.fillRect(cx - halfW, itemY - itemH * 0.55, halfW * 2, itemH);
       ctx.strokeStyle = '#00d4ff';
       ctx.lineWidth = 1;
-      ctx.strokeRect(cx - 120, itemY - 20, 240, 36);
+      ctx.strokeRect(cx - halfW, itemY - itemH * 0.55, halfW * 2, itemH);
 
-      // Curseur
       ctx.fillStyle = '#ffcc00';
-      ctx.font = '16px monospace';
-      ctx.fillText('▸', cx - 100, itemY);
+      ctx.font = `${fontSmall}px monospace`;
+      ctx.fillText('▸', cx - halfW * 0.83, itemY);
     }
 
     ctx.fillStyle = isSelected ? '#ffffff' : '#556677';
-    ctx.font = isSelected ? 'bold 20px monospace' : '18px monospace';
+    ctx.font = isSelected ? `bold ${fontSize}px monospace` : `${fontSmall}px monospace`;
     ctx.fillText(menuItems[i].label, cx, itemY);
   }
 
-  // Instructions (adaptées au device)
-  ctx.font = '12px monospace';
+  // Instructions
+  ctx.font = `${Math.round(12 * scale)}px monospace`;
   ctx.fillStyle = '#445566';
   const isMobile = 'ontouchstart' in window;
   ctx.fillText(
     isMobile ? 'APPUIE POUR SÉLECTIONNER' : '↑↓ NAVIGUER  ·  ESPACE SÉLECTIONNER',
-    cx, 450
+    cx, h * 0.78
   );
 
   ctx.restore();
 }
 
+// --- Layout responsive ---
+// Scale basé sur la largeur, clampé à [0.6, 1.0].
+// Sur petit écran (400px) : 400/500 = 0.8 → textes lisibles.
+// Sur grand écran (800px+) : clampé à 1.0 → pas de surdimensionnement.
+function layout() {
+  const w = CONFIG.canvas.width;
+  const h = CONFIG.canvas.height;
+  const scale = Math.min(1.0, Math.max(0.6, w / 500));
+  return { w, h, cx: w / 2, scale };
+}
+
 // --- Slider dimensions ---
-const SLIDER = { x: 250, width: 300, trackH: 6, thumbR: 12 };
+const SLIDER_RATIO = { widthPct: 0.6, trackH: 6, thumbR: 12 };
 const sliders = [
-  { label: 'MUSIQUE', y: 220, get: () => musicVolume, set: v => { musicVolume = v; } },
-  { label: 'SONS', y: 300, get: () => sfxVolume, set: v => { sfxVolume = v; } },
+  { label: 'MUSIQUE', yPct: 0.37, get: () => musicVolume, set: v => { musicVolume = v; } },
+  { label: 'SONS', yPct: 0.50, get: () => sfxVolume, set: v => { sfxVolume = v; } },
 ];
 
+/** Retourne les dimensions du slider en px pour l'écran courant. */
+function sliderLayout(s) {
+  const { w, h, cx, scale } = layout();
+  const sliderW = w * SLIDER_RATIO.widthPct;
+  const sx = cx - sliderW / 2;
+  const y = h * s.yPct;
+  const thumbR = Math.round(SLIDER_RATIO.thumbR * scale);
+  return { cx, sx, y, sliderW, thumbR, scale };
+}
+
 function drawSlider(ctx, s) {
-  const cx = CONFIG.canvas.width / 2;
-  const sx = cx - SLIDER.width / 2;
+  const { cx, sx, y, sliderW, thumbR, scale } = sliderLayout(s);
   const val = s.get();
 
-  // Label
   ctx.textAlign = 'center';
   ctx.fillStyle = '#aabbcc';
-  ctx.font = '16px monospace';
-  ctx.fillText(s.label, cx, s.y - 20);
+  ctx.font = `${Math.round(16 * scale)}px monospace`;
+  ctx.fillText(s.label, cx, y - 20 * scale);
 
-  // Track bg
+  // Track
   ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.fillRect(sx, s.y - SLIDER.trackH / 2, SLIDER.width, SLIDER.trackH);
-
-  // Track fill
+  ctx.fillRect(sx, y - 3, sliderW, 6);
   ctx.fillStyle = '#00d4ff';
-  ctx.fillRect(sx, s.y - SLIDER.trackH / 2, SLIDER.width * val, SLIDER.trackH);
+  ctx.fillRect(sx, y - 3, sliderW * val, 6);
 
   // Thumb
-  const tx = sx + SLIDER.width * val;
+  const tx = sx + sliderW * val;
   ctx.beginPath();
-  ctx.arc(tx, s.y, SLIDER.thumbR, 0, Math.PI * 2);
+  ctx.arc(tx, y, thumbR, 0, Math.PI * 2);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.strokeStyle = '#00d4ff';
@@ -188,40 +209,48 @@ function drawSlider(ctx, s) {
 
   // Percentage
   ctx.fillStyle = '#667788';
-  ctx.font = '12px monospace';
-  ctx.fillText(`${Math.round(val * 100)}%`, cx, s.y + 30);
+  ctx.font = `${Math.round(12 * scale)}px monospace`;
+  ctx.fillText(`${Math.round(val * 100)}%`, cx, y + 30 * scale);
+}
+
+function settingsBackBtnLayout() {
+  const { w, cx, h, scale } = layout();
+  const btnW = Math.round(w * 0.5);
+  const btnH = Math.round(42 * scale);
+  const btnY = h * 0.68;
+  return { cx, btnX: cx - btnW / 2, btnY, btnW, btnH, scale };
 }
 
 function drawSettingsScreen(ctx) {
-  const cx = CONFIG.canvas.width / 2;
+  const { cx, h, scale } = layout();
+  const { btnX, btnY, btnW, btnH } = settingsBackBtnLayout();
 
   ctx.save();
   ctx.textAlign = 'center';
 
   ctx.fillStyle = '#00d4ff';
-  ctx.font = 'bold 24px monospace';
-  ctx.fillText('RÉGLAGES', cx, 150);
+  ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
+  ctx.fillText('RÉGLAGES', cx, h * 0.22);
 
   for (const s of sliders) drawSlider(ctx, s);
 
   // Bouton RETOUR
   ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
-  ctx.fillRect(cx - 80, 400, 160, 36);
+  ctx.fillRect(btnX, btnY, btnW, btnH);
   ctx.strokeStyle = '#334455';
   ctx.lineWidth = 1;
-  ctx.strokeRect(cx - 80, 400, 160, 36);
-  ctx.font = '14px monospace';
+  ctx.strokeRect(btnX, btnY, btnW, btnH);
+  ctx.font = `${Math.round(14 * scale)}px monospace`;
   ctx.fillStyle = '#667788';
-  ctx.fillText('RETOUR', cx, 423);
+  ctx.fillText('RETOUR', cx, btnY + btnH * 0.65);
 
   ctx.restore();
 }
 
 function hitSlider(x, y) {
-  const cx = CONFIG.canvas.width / 2;
-  const sx = cx - SLIDER.width / 2;
   for (const s of sliders) {
-    if (y >= s.y - 20 && y <= s.y + 20 && x >= sx - 10 && x <= sx + SLIDER.width + 10) {
+    const { sx, y: sy, sliderW } = sliderLayout(s);
+    if (y >= sy - 20 && y <= sy + 20 && x >= sx - 10 && x <= sx + sliderW + 10) {
       return s;
     }
   }
@@ -229,42 +258,50 @@ function hitSlider(x, y) {
 }
 
 function updateSliderValue(s, x) {
-  const cx = CONFIG.canvas.width / 2;
-  const sx = cx - SLIDER.width / 2;
-  const val = Math.max(0, Math.min(1, (x - sx) / SLIDER.width));
+  const { sx, sliderW } = sliderLayout(s);
+  const val = Math.max(0, Math.min(1, (x - sx) / sliderW));
   s.set(val);
   saveSettings();
   if (onVolumeChange) onVolumeChange(musicVolume, sfxVolume);
 }
 
+function creditsBackBtnLayout() {
+  const { w, cx, h, scale } = layout();
+  const btnW = Math.round(w * 0.5);
+  const btnH = Math.round(42 * scale);
+  const btnY = h * 0.65;
+  return { cx, btnX: cx - btnW / 2, btnY, btnW, btnH, scale };
+}
+
 function drawCreditsScreen(ctx) {
-  const cx = CONFIG.canvas.width / 2;
+  const { cx, h, scale } = layout();
+  const { btnX, btnY, btnW, btnH } = creditsBackBtnLayout();
 
   ctx.save();
   ctx.textAlign = 'center';
 
   ctx.fillStyle = '#00d4ff';
-  ctx.font = 'bold 24px monospace';
-  ctx.fillText('CRÉDITS', cx, 150);
+  ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
+  ctx.fillText('CRÉDITS', cx, h * 0.22);
 
   ctx.fillStyle = '#aabbcc';
-  ctx.font = '16px monospace';
-  ctx.fillText('Développé par Etienne Bernoux', cx, 220);
+  ctx.font = `${Math.round(16 * scale)}px monospace`;
+  ctx.fillText('Développé par Etienne Bernoux', cx, h * 0.37);
 
   ctx.fillStyle = '#667788';
-  ctx.font = '14px monospace';
-  ctx.fillText('Inspiré du casse-briques d\'Adibou', cx, 260);
-  ctx.fillText('Construit avec Canvas API', cx, 290);
+  ctx.font = `${Math.round(14 * scale)}px monospace`;
+  ctx.fillText('Inspiré du casse-briques d\'Adibou', cx, h * 0.44);
+  ctx.fillText('Construit avec Canvas API', cx, h * 0.49);
 
   // Bouton retour
   ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
-  ctx.fillRect(cx - 80, 380, 160, 36);
+  ctx.fillRect(btnX, btnY, btnW, btnH);
   ctx.strokeStyle = '#334455';
   ctx.lineWidth = 1;
-  ctx.strokeRect(cx - 80, 380, 160, 36);
-  ctx.font = '14px monospace';
+  ctx.strokeRect(btnX, btnY, btnW, btnH);
+  ctx.font = `${Math.round(14 * scale)}px monospace`;
   ctx.fillStyle = '#667788';
-  ctx.fillText('RETOUR', cx, 403);
+  ctx.fillText('RETOUR', cx, btnY + btnH * 0.65);
 
   ctx.restore();
 }
@@ -297,26 +334,22 @@ export function handleMenuInput(key) {
 }
 
 export function handleMenuTap(x, y) {
-  const cx = CONFIG.canvas.width / 2;
+  const { cx } = layout();
 
   if (showSettings) {
-    // Bouton retour
-    if (x >= cx - 80 && x <= cx + 80 && y >= 400 && y <= 436) {
+    const { btnX, btnY, btnW, btnH } = settingsBackBtnLayout();
+    if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
       showSettings = false;
       return null;
     }
-    // Clic sur slider → commence le drag
     const s = hitSlider(x, y);
-    if (s) {
-      draggingSlider = s;
-      updateSliderValue(s, x);
-    }
+    if (s) { draggingSlider = s; updateSliderValue(s, x); }
     return null;
   }
 
   if (showCredits) {
-    // Bouton retour
-    if (x >= cx - 80 && x <= cx + 80 && y >= 380 && y <= 416) {
+    const { btnX, btnY, btnW, btnH } = creditsBackBtnLayout();
+    if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
       showCredits = false;
     }
     return null;
@@ -324,8 +357,8 @@ export function handleMenuTap(x, y) {
 
   // Détection tap sur les items
   for (let i = 0; i < menuItems.length; i++) {
-    const itemY = 280 + i * 50;
-    if (x >= cx - 120 && x <= cx + 120 && y >= itemY - 20 && y <= itemY + 16) {
+    const { y: itemY, itemH, halfW } = menuItemLayout(i);
+    if (x >= cx - halfW && x <= cx + halfW && y >= itemY - itemH * 0.55 && y <= itemY + itemH * 0.45) {
       const action = menuItems[i].action;
       if (action === 'settings') { showSettings = true; return null; }
       if (action === 'credits') { showCredits = true; return null; }
@@ -347,10 +380,10 @@ export function handleMenuRelease() {
 
 export function updateMenuHover(mx, my) {
   if (showSettings || showCredits || mx === null || my === null) return;
-  const cx = CONFIG.canvas.width / 2;
+  const { cx } = layout();
   for (let i = 0; i < menuItems.length; i++) {
-    const itemY = 280 + i * 50;
-    if (mx >= cx - 120 && mx <= cx + 120 && my >= itemY - 20 && my <= itemY + 16) {
+    const { y: itemY, itemH, halfW } = menuItemLayout(i);
+    if (mx >= cx - halfW && mx <= cx + halfW && my >= itemY - itemH * 0.55 && my <= itemY + itemH * 0.45) {
       selected = i;
       return;
     }

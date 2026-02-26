@@ -4,11 +4,12 @@
 
 import { POWER_UPS, POWER_UP_IDS } from '../domain/power-ups.js';
 
-const SIZE_MULT = { large: 1.4, medium: 1.0, small: 0.6 };
+const DEFAULT_SIZE_MULT = { large: 1.4, medium: 1.0, small: 0.6 };
 
 export class DropSystem {
   constructor(config = {}) {
     this.baseRate = config.baseRate ?? 0.012;
+    this.sizeMult = config.sizeMult || DEFAULT_SIZE_MULT;
     // Future : config.locked = Set de powerUpId verrouillés
   }
 
@@ -18,7 +19,7 @@ export class DropSystem {
    */
   decideDrop(asteroid) {
     const mat = asteroid.materialKey || 'rock';
-    const sizeMult = SIZE_MULT[asteroid.sizeName] || 1;
+    const sizeMult = this.sizeMult[asteroid.sizeName] || 1;
     const rand = Math.random();
 
     let cumul = 0;

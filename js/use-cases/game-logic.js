@@ -6,6 +6,7 @@ export class GameSession {
   constructor(config) {
     this.canvasHeight = config.canvas.height;
     this.maxLives = config.lives;
+    this.basePoints = config.scoring?.basePoints || { large: 40, medium: 20, small: 10 };
     this.state = 'menu'; // menu | playing | paused | gameOver | won
     this.lives = 0;
     this.score = 0;
@@ -93,7 +94,7 @@ export class GameSession {
         }
 
         // Détruit — scoring
-        const basePoints = a.sizeName === 'large' ? 40 : a.sizeName === 'medium' ? 20 : 10;
+        const basePoints = this.basePoints[a.sizeName] || this.basePoints.small;
         const mult = (a.material?.pointsMult || 1) * (this.scoreMultiplier || 1);
         const points = Math.round(basePoints * mult);
         this.score += points;

@@ -60,22 +60,20 @@ export class PowerUpManager {
     }));
   }
 
-  // --- Apply / Revert ---
+  // --- Apply / Revert (piloté par def.effect) ---
 
   _apply(puId, gs) {
+    const def = getPowerUp(puId);
+    const { effect } = def;
     const saved = {};
-    if (puId === 'shipWide') {
+
+    if (effect.target === 'ship' && effect.prop === 'width') {
       saved.width = gs.ship.width;
-      this._resizeShip(gs, 1.5);
-    } else if (puId === 'shipNarrow') {
-      saved.width = gs.ship.width;
-      this._resizeShip(gs, 0.6);
-    } else if (puId === 'droneSticky') {
-      gs.drone.sticky = true;
-    } else if (puId === 'dronePiercing') {
-      gs.drone.piercing = true;
-    } else if (puId === 'scoreDouble') {
-      gs.session.scoreMultiplier = (gs.session.scoreMultiplier || 1) * 2;
+      this._resizeShip(gs, effect.factor);
+    } else if (effect.target === 'drone') {
+      gs.drone[effect.prop] = true;
+    } else if (effect.target === 'session' && effect.factor) {
+      gs.session[effect.prop] = (gs.session[effect.prop] || 1) * effect.factor;
     }
     return saved;
   }
@@ -85,41 +83,43 @@ export class PowerUpManager {
     const cx = gs.ship.x + gs.ship.width / 2;
     gs.ship.width = Math.round(gs.ship.width * factor);
     gs.ship.x = cx - gs.ship.width / 2;
-    // Recentrer le drone s'il est posé
     if (gs.drone && !gs.drone.launched) {
       gs.drone.x = gs.ship.x + gs.ship.width / 2;
     }
   }
 
   _revert(puId, saved, gs) {
-    if (puId === 'shipWide' || puId === 'shipNarrow') {
+    const def = getPowerUp(puId);
+    const { effect } = def;
+
+    if (effect.target === 'ship' && effect.prop === 'width') {
       const cx = gs.ship.x + gs.ship.width / 2;
       gs.ship.width = saved.width;
       gs.ship.x = cx - gs.ship.width / 2;
       if (gs.drone && !gs.drone.launched) {
         gs.drone.x = gs.ship.x + gs.ship.width / 2;
       }
-    } else if (puId === 'droneSticky') {
-      gs.drone.sticky = false;
-      gs.drone._stickyOffset = undefined;
-      // Si le drone est posé, le relancer automatiquement
-      if (!gs.drone.launched) {
-        gs.drone.launched = true;
+    } else if (effect.target === 'drone') {
+      gs.drone[effect.prop] = false;
+      if (effect.prop === 'sticky') {
+        gs.drone._stickyOffset = undefined;
+        if (!gs.drone.launched) gs.drone.launched = true;
       }
-    } else if (puId === 'dronePiercing') {
-      gs.drone.piercing = false;
-    } else if (puId === 'scoreDouble') {
-      gs.session.scoreMultiplier = Math.max(1, (gs.session.scoreMultiplier || 2) / 2);
+    } else if (effect.target === 'session' && effect.factor) {
+      gs.session[effect.prop] = Math.max(1, (gs.session[effect.prop] || effect.factor) / effect.factor);
     }
   }
 
   _applyInstant(puId, gs) {
-    if (puId === 'extraLife') {
-      gs.session.lives++;
-    } else if (puId === 'weaken') {
+    const def = getPowerUp(puId);
+    const { effect } = def;
+
+    if (effect.target === 'session' && effect.delta) {
+      gs.session[effect.prop] += effect.delta;
+    } else if (effect.action === 'weakenAll') {
       for (const a of gs.field.grid) {
         if (!a.alive || !a.destructible) continue;
-        a.hp = Math.max(0, a.hp - 1);
+        a.hp = Math.max(0, a.hp + effect.delta);
         if (a.hp <= 0) a.alive = false;
       }
     }

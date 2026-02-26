@@ -32,6 +32,23 @@ export const CONFIG = {
     colors: ['#8b4513', '#a0522d', '#6b3a2a', '#7a4530'],
   },
 
+  scoring: {
+    basePoints: { large: 40, medium: 20, small: 10 },
+  },
+
+  capsule: {
+    speedY: 1.5,
+    radius: 10,
+    bobSpeed: 0.06,
+    bobAmplitude: 0.4,
+    rotationSpeed: 0.03,
+  },
+
+  drop: {
+    baseRate: 0.012,
+    sizeMult: { large: 1.4, medium: 1.0, small: 0.6 },
+  },
+
   lives: 3,
   starCount: 120,
 };

@@ -8,6 +8,9 @@ export class Capsule {
     this.y = y;
     this.speedY = config.speedY || 1.5;
     this.radius = config.radius || 10;
+    this.bobSpeed = config.bobSpeed || 0.06;
+    this.bobAmplitude = config.bobAmplitude || 0.4;
+    this.rotationSpeed = config.rotationSpeed || 0.03;
     this.alive = true;
     this.rotation = 0;
     this.bobPhase = Math.random() * Math.PI * 2;
@@ -16,9 +19,9 @@ export class Capsule {
   update(canvasHeight) {
     if (!this.alive) return;
     this.y += this.speedY;
-    this.bobPhase += 0.06;
-    this.x += Math.sin(this.bobPhase) * 0.4;
-    this.rotation += 0.03;
+    this.bobPhase += this.bobSpeed;
+    this.x += Math.sin(this.bobPhase) * this.bobAmplitude;
+    this.rotation += this.rotationSpeed;
 
     if (this.y - this.radius > canvasHeight) {
       this.alive = false;

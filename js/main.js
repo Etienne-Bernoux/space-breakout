@@ -25,7 +25,7 @@ const ctx = canvas.getContext('2d');
 const session = new GameSession(CONFIG);
 let ship = null, drone = null, field;
 let capsules = [];
-const dropSystem = new DropSystem();
+const dropSystem = new DropSystem(CONFIG.drop);
 const puManager = new PowerUpManager();
 
 // --- Bouton pause (mobile) ---
@@ -194,7 +194,7 @@ function handleCollisions() {
     // Drop de power-up sur destruction
     if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
       const puId = dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
-      if (puId) capsules.push(new Capsule(puId, ev2.x, ev2.y));
+      if (puId) capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
     }
   }
 

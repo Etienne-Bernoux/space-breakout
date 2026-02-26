@@ -408,6 +408,82 @@ function cymbal(time, vol = 0.08) {
   src.start(time);
 }
 
+/** Chœur 4 voix (SATB) : formants par registre + vibrato */
+function choir(time, notes, dur, vol = 0.06) {
+  const c = getCtx();
+  const dest = layers.pad || masterGain;
+  // Formants par registre vocal (voyelle "aah")
+  const VOICE = {
+    bass:    [{ f: 600, q: 4, g: 1.3 }, { f: 1000, q: 5, g: 0.7 }, { f: 2400, q: 5, g: 0.2 }],
+    tenor:   [{ f: 700, q: 5, g: 1.1 }, { f: 1100, q: 5, g: 0.8 }, { f: 2600, q: 5, g: 0.3 }],
+    alto:    [{ f: 800, q: 5, g: 1.0 }, { f: 1200, q: 6, g: 0.7 }, { f: 2800, q: 5, g: 0.3 }],
+    soprano: [{ f: 900, q: 5, g: 0.9 }, { f: 1300, q: 6, g: 0.8 }, { f: 3200, q: 4, g: 0.4 }],
+  };
+  function register(midi) {
+    if (midi < 48) return 'bass';
+    if (midi < 60) return 'tenor';
+    if (midi < 72) return 'alto';
+    return 'soprano';
+  }
+  const master = c.createGain();
+  master.gain.setValueAtTime(0, time);
+  master.gain.linearRampToValueAtTime(vol, time + 0.7);
+  if (dur > 1.4) master.gain.setValueAtTime(vol, time + dur - 0.7);
+  master.gain.linearRampToValueAtTime(0, time + dur);
+  master.connect(dest);
+  // Vibrato commun ~5Hz ±8 cents
+  const lfo = c.createOscillator();
+  const lfoG = c.createGain();
+  lfo.type = 'sine';
+  lfo.frequency.value = 5;
+  lfoG.gain.value = 8;
+  lfo.connect(lfoG);
+  lfo.start(time);
+  lfo.stop(time + dur);
+  for (const n of notes) {
+    const fmts = VOICE[register(n)];
+    // 3 chanteurs par voix (detune)
+    for (const det of [0, 8, -8]) {
+      // Sine = corps chaud, saw (filtré) = harmoniques pour formants
+      const sine = c.createOscillator();
+      sine.type = 'sine';
+      sine.frequency.value = freq(n);
+      sine.detune.value = det;
+      lfoG.connect(sine.detune);
+      const sineG = c.createGain();
+      sineG.gain.value = 0.6; // fondamentale chaude
+      sine.connect(sineG);
+      sineG.connect(master);
+      sine.start(time);
+      sine.stop(time + dur);
+      const saw = c.createOscillator();
+      saw.type = 'sawtooth';
+      saw.frequency.value = freq(n);
+      saw.detune.value = det;
+      lfoG.connect(saw.detune);
+      // Lowpass pour dompter les aigus métalliques
+      const lp = c.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 3000;
+      lp.Q.value = 0.5;
+      saw.connect(lp);
+      for (const fm of fmts) {
+        const bp = c.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = fm.f;
+        bp.Q.value = fm.q;
+        const fg = c.createGain();
+        fg.gain.value = fm.g * 0.5; // atténué vs sine
+        lp.connect(bp);
+        bp.connect(fg);
+        fg.connect(master);
+      }
+      saw.start(time);
+      saw.stop(time + dur);
+    }
+  }
+}
+
 // =============================================
 // === DATA-DRIVEN SECTION ENGINE ===
 // =============================================
@@ -418,7 +494,7 @@ const INSTRUMENTS = {
   // Main synth
   kick, snare, hihat, bass, lead, pad, arp, arpFast, leadOctave,
   // Dark orchestral
-  timpani, cymbal, cello, brass, strings, harp, brassHigh,
+  timpani, cymbal, cello, brass, strings, harp, brassHigh, choir,
 };
 
 /**
@@ -646,105 +722,150 @@ const MAIN_OUTRO = {
 // D2=38 F2=41 G2=43 A2=45 Bb2=46 C3=48 D3=50
 // D4=62 F4=65 G4=67 A4=69 Bb4=70 C5=72 D5=74 F5=77
 
+// Style Howard Shore (LOTR) : chœurs graves, brass en quintes/octaves,
+// accords mineurs purs (Dm, Gm, Bb, Am), rythme martial.
+// D2=38 A2=45 D3=50 A3=57 D4=62 A4=69 D5=74
+
 const DARK_INTRO = {
   drums: [
-    { fn: 'timpani', t: 0, note: 38, vol: 0.2 },
-    { fn: 'timpani', t: 8, note: 38, vol: 0.25 },
+    { fn: 'timpani', t: 0, note: 38, vol: 0.25 },
+    { fn: 'timpani', t: 8, note: 38, vol: 0.3 },
   ],
-  bass: [],
+  bass: [
+    { fn: 'cello', t: 0, note: 38, dur: 16 },
+  ],
   pad: [
-    { fn: 'strings', t: 0, notes: [38, 41, 45], dur: 8, vol: 0.04 },
-    { fn: 'strings', t: 8, notes: [38, 41, 44], dur: 8, vol: 0.05 },
+    // Chœur grave Dm power chord — lent, menaçant
+    { fn: 'choir', t: 0, notes: [38, 45, 50], dur: 8, vol: 0.03 },
+    { fn: 'choir', t: 8, notes: [38, 45, 50, 57], dur: 8, vol: 0.04 },
   ],
   lead: [],
-  high: [74, 70, 67, 65, 62, 58, 55, 50, 72, 69, 65, 62, 58, 55, 50, 46]
-    .map((n, i) => ({ fn: 'harp', t: i, note: n, dur: 1.5 })),
+  high: [
+    // Harpe descendante lente (toutes les 2 beats)
+    ...[74, 69, 65, 62, 57, 53, 50, 45]
+      .map((n, i) => ({ fn: 'harp', t: i * 2, note: n, dur: 2.5 })),
+  ],
 };
 
 const DARK_VERSE = {
   drums: [
+    // Timpani martial : temps forts
     ...[0, 4, 8, 12].map(t => ({ fn: 'timpani', t, note: 38, vol: 0.3 })),
-    ...[2, 6, 10, 14].map(t => ({ fn: 'timpani', t, note: 43, vol: 0.15 })),
+    ...[8, 12].map(t => ({ fn: 'timpani', t: t + 2, note: 45, vol: 0.15 })),
   ],
   bass: [
+    // Cello en quintes : D→A→G→A
     { fn: 'cello', t: 0, note: 38, dur: 4 },
-    { fn: 'cello', t: 4, note: 41, dur: 4 },
+    { fn: 'cello', t: 4, note: 45, dur: 4 },
     { fn: 'cello', t: 8, note: 43, dur: 4 },
     { fn: 'cello', t: 12, note: 45, dur: 4 },
   ],
   pad: [
-    { fn: 'strings', t: 0, notes: [50, 53, 57], dur: 4, vol: 0.04 },
-    { fn: 'strings', t: 4, notes: [53, 57, 60], dur: 4, vol: 0.04 },
-    { fn: 'strings', t: 8, notes: [55, 59, 62], dur: 4, vol: 0.04 },
-    { fn: 'strings', t: 12, notes: [53, 57, 60], dur: 4, vol: 0.04 },
+    // Chœur : Dm → Am → Gm → Am
+    { fn: 'choir', t: 0, notes: [38, 45, 50], dur: 4, vol: 0.035 },
+    { fn: 'choir', t: 4, notes: [45, 52, 57], dur: 4, vol: 0.035 },
+    { fn: 'choir', t: 8, notes: [43, 50, 55], dur: 4, vol: 0.035 },
+    { fn: 'choir', t: 12, notes: [45, 52, 57], dur: 4, vol: 0.035 },
   ],
   lead: [
-    [62, 0, 2], [65, 2, 1], [67, 3, 1], [65, 4, 2], [62, 6, 2],
-    [67, 8, 1], [69, 9, 1], [70, 10, 2], [67, 12, 2], [65, 14, 2],
-  ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.07 })),
+    // Brass retenu — grands intervalles (quintes)
+    [62, 0, 3], [69, 3, 1],         // D4 tenu → saut à A4 (quinte)
+    [67, 4, 2], [62, 6, 2],         // G4 → D4 (quinte desc)
+    [65, 8, 1.5], [70, 9.5, 2.5],   // F4 → Bb4 (quinte)
+    [69, 12, 2], [62, 14, 2],       // A4 → D4 (quinte desc, résolution)
+  ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.08 })),
   high: [],
 };
 
 const DARK_CHORUS = {
   drums: [
+    // Timpani martial chaque 2 beats + cymbal sur les 4
     ...Array.from({ length: 8 }, (_, i) => ({ fn: 'timpani', t: i * 2, note: 38, vol: 0.35 })),
     ...[0, 4, 8, 12].map(t => ({ fn: 'cymbal', t, vol: 0.06 })),
   ],
   bass: [
-    [38, 0, 1], [38, 1, 1], [41, 2, 1], [43, 3, 1],
-    [41, 4, 1], [41, 5, 1], [45, 6, 1], [43, 7, 1],
-    [46, 8, 1], [46, 9, 1], [45, 10, 1], [43, 11, 1],
-    [41, 12, 1], [43, 13, 1], [45, 14, 1], [38, 15, 1],
+    // Cello driving en quintes
+    [38, 0, 1], [38, 1, 1], [45, 2, 2],
+    [43, 4, 1], [43, 5, 1], [50, 6, 2],
+    [46, 8, 1], [46, 9, 1], [41, 10, 2],
+    [45, 12, 2], [38, 14, 2],
   ].map(([note, t, dur]) => ({ fn: 'cello', t, note, dur })),
   pad: [
-    { fn: 'strings', t: 0, notes: [50, 53, 57, 62], dur: 4, vol: 0.06 },
-    { fn: 'strings', t: 4, notes: [53, 57, 60, 65], dur: 4, vol: 0.06 },
-    { fn: 'strings', t: 8, notes: [58, 62, 65, 70], dur: 4, vol: 0.06 },
-    { fn: 'strings', t: 12, notes: [53, 57, 60, 65], dur: 4, vol: 0.06 },
+    // Chœur épique : Dm → Gm → Bb → Am (power chords larges)
+    { fn: 'choir', t: 0, notes: [38, 45, 50, 57], dur: 4, vol: 0.05 },
+    { fn: 'choir', t: 4, notes: [43, 50, 55, 62], dur: 4, vol: 0.05 },
+    { fn: 'choir', t: 8, notes: [46, 53, 58, 65], dur: 4, vol: 0.055 },
+    { fn: 'choir', t: 12, notes: [45, 52, 57, 64], dur: 4, vol: 0.05 },
   ],
   lead: [
-    [62, 0, 1], [65, 1, 1], [69, 2, 2], [67, 4, 1], [69, 5, 1], [72, 6, 2],
-    [70, 8, 1], [69, 9, 1], [67, 10, 2], [65, 12, 1], [67, 13, 1], [62, 14, 2],
+    // Brass fanfare — GRANDS intervalles : quintes, octaves
+    [62, 0, 1.5], [69, 1.5, 1],     // D4 → A4 (quinte up)
+    [74, 3, 2],                      // D5 (octave from D4!)
+    [70, 5, 1], [65, 6, 2],         // Bb4 → F4 (quinte down)
+    [67, 8, 1.5], [74, 9.5, 1],     // G4 → D5 (quinte up)
+    [70, 11, 1],                     // Bb4
+    [69, 12, 1.5], [62, 13.5, 2.5], // A4 → D4 (quinte down, résolution)
   ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.12 })),
-  high: [],
+  high: [
+    // brassHigh doublant le thème
+    ...[
+      [62, 0, 1.5], [69, 1.5, 1], [74, 3, 2],
+      [70, 5, 1], [65, 6, 2],
+      [67, 8, 1.5], [74, 9.5, 1], [70, 11, 1],
+      [69, 12, 1.5], [62, 13.5, 2.5],
+    ].map(([note, t, dur]) => ({ fn: 'brassHigh', t, note, dur, vol: 0.04 })),
+  ],
 };
 
 const DARK_BRIDGE = {
   drums: [
+    // Timpani espacé puis buildup
     { fn: 'timpani', t: 0, note: 38, vol: 0.25 },
     { fn: 'timpani', t: 4, note: 38, vol: 0.25 },
-    // Montée chromatique beats 8-15
-    ...Array.from({ length: 8 }, (_, i) => ({ fn: 'timpani', t: 8 + i, note: 38 + i, vol: 0.2 })),
+    // Build : de plus en plus dense
+    { fn: 'timpani', t: 8, note: 38, vol: 0.2 },
+    { fn: 'timpani', t: 10, note: 38, vol: 0.25 },
+    { fn: 'timpani', t: 12, note: 38, vol: 0.3 },
+    { fn: 'timpani', t: 13, note: 45, vol: 0.25 },
+    { fn: 'timpani', t: 14, note: 38, vol: 0.35 },
+    { fn: 'timpani', t: 15, note: 45, vol: 0.3 },
   ],
   bass: [
     { fn: 'cello', t: 0, note: 38, dur: 4 },
-    { fn: 'cello', t: 4, note: 41, dur: 4 },
+    { fn: 'cello', t: 4, note: 45, dur: 4 },
     { fn: 'cello', t: 8, note: 43, dur: 4 },
-    { fn: 'cello', t: 12, note: 41, dur: 4 },
+    { fn: 'cello', t: 12, note: 45, dur: 4 },
   ],
   pad: [
-    { fn: 'strings', t: 0, notes: [50, 53, 57], dur: 8, vol: 0.03 },
-    { fn: 'strings', t: 8, notes: [53, 57, 62], dur: 8, vol: 0.05 },
+    // Chœur qui monte en intensité
+    { fn: 'choir', t: 0, notes: [38, 45], dur: 8, vol: 0.03 },
+    { fn: 'choir', t: 8, notes: [38, 45, 50, 57], dur: 8, vol: 0.05 },
   ],
   lead: [],
-  high: [50, 53, 57, 62, 53, 57, 62, 65, 57, 62, 65, 69, 62, 65, 69, 74]
-    .map((n, i) => ({ fn: 'harp', t: i, note: n, dur: 0.8 })),
+  high: [
+    // Harpe montante (tension/buildup)
+    ...[50, 53, 57, 62, 53, 57, 62, 69, 57, 62, 69, 74, 62, 69, 74, 81]
+      .map((n, i) => ({ fn: 'harp', t: i, note: n, dur: 0.8 })),
+  ],
 };
 
 const DARK_BREAKDOWN = {
   drums: [
+    // Timpani sourde, lente — pur suspense
     { fn: 'timpani', t: 0, note: 36, vol: 0.3 },
     { fn: 'timpani', t: 4, note: 36, vol: 0.25 },
-    { fn: 'timpani', t: 8, note: 36, vol: 0.2 },
-    ...[12, 13, 14, 15].map((t, i) => ({ fn: 'timpani', t, note: 36, vol: 0.15 + i * 0.08 })),
+    { fn: 'timpani', t: 8, note: 36, vol: 0.3 },
+    // Build final
+    ...[12, 13, 14, 15].map((t, i) => ({ fn: 'timpani', t, note: 38, vol: 0.2 + i * 0.06 })),
   ],
   bass: [
-    { fn: 'cello', t: 0, note: 36, dur: 12 },
-    { fn: 'cello', t: 12, note: 38, dur: 4 },
+    { fn: 'cello', t: 0, note: 38, dur: 8 },
+    { fn: 'cello', t: 8, note: 38, dur: 8 },
   ],
   pad: [
-    { fn: 'strings', t: 0, notes: [50, 51, 55], dur: 8, vol: 0.03 },
-    { fn: 'strings', t: 8, notes: [50, 53, 56], dur: 8, vol: 0.04 },
+    // Chœur seul, grave et menaçant — Dm pur
+    { fn: 'choir', t: 0, notes: [38, 45], dur: 8, vol: 0.03 },
+    { fn: 'choir', t: 8, notes: [38, 45, 50], dur: 8, vol: 0.04 },
   ],
   lead: [],
   high: [],
@@ -752,64 +873,81 @@ const DARK_BREAKDOWN = {
 
 const DARK_CLIMAX = {
   drums: [
-    ...Array.from({ length: 16 }, (_, i) => ({ fn: 'timpani', t: i, note: i % 2 === 0 ? 38 : 43, vol: 0.4 })),
+    // Timpani chaque beat + cymbales
+    ...Array.from({ length: 16 }, (_, i) => ({
+      fn: 'timpani', t: i, note: i % 2 === 0 ? 38 : 45, vol: 0.4,
+    })),
     ...[0, 4, 8, 12].map(t => ({ fn: 'cymbal', t, vol: 0.08 })),
-    ...[1, 3, 5, 7, 9, 11, 13, 15].map(t => ({ fn: 'cymbal', t, vol: 0.04 })),
+    ...[2, 6, 10, 14].map(t => ({ fn: 'cymbal', t, vol: 0.04 })),
   ],
   bass: [
-    [38, 0, 0.5], [38, 0.5, 0.5], [41, 1, 0.5], [43, 1.5, 0.5],
-    [45, 2, 1], [43, 3, 0.5], [41, 3.5, 0.5],
-    [38, 4, 0.5], [41, 4.5, 0.5], [43, 5, 0.5], [45, 5.5, 0.5],
-    [46, 6, 1], [45, 7, 0.5], [43, 7.5, 0.5],
-    [38, 8, 0.5], [41, 8.5, 0.5], [43, 9, 0.5], [45, 9.5, 0.5],
-    [46, 10, 1], [45, 11, 0.5], [43, 11.5, 0.5],
-    [41, 12, 1], [43, 13, 1], [45, 14, 1], [38, 15, 1],
+    // Cello martial agressif
+    [38, 0, 1], [38, 1, 1], [45, 2, 2],
+    [43, 4, 1], [43, 5, 1], [50, 6, 2],
+    [46, 8, 1], [46, 9, 1], [53, 10, 2],
+    [45, 12, 1], [43, 13, 1], [38, 14, 2],
   ].map(([note, t, dur]) => ({ fn: 'cello', t, note, dur })),
   pad: [
-    { fn: 'strings', t: 0, notes: [50, 53, 57, 62, 65], dur: 4, vol: 0.07 },
-    { fn: 'strings', t: 4, notes: [53, 57, 60, 65, 69], dur: 4, vol: 0.07 },
-    { fn: 'strings', t: 8, notes: [58, 62, 65, 70, 74], dur: 4, vol: 0.07 },
-    { fn: 'strings', t: 12, notes: [50, 53, 57, 62, 65], dur: 4, vol: 0.07 },
+    // Chœur massif + cordes ensemble
+    { fn: 'choir', t: 0, notes: [38, 45, 50, 57, 62], dur: 4, vol: 0.06 },
+    { fn: 'choir', t: 4, notes: [43, 50, 55, 62, 67], dur: 4, vol: 0.06 },
+    { fn: 'strings', t: 8, notes: [46, 53, 58, 65, 70], dur: 4, vol: 0.05 },
+    { fn: 'choir', t: 8, notes: [46, 53, 58], dur: 4, vol: 0.06 },
+    { fn: 'strings', t: 12, notes: [45, 52, 57, 64, 69], dur: 4, vol: 0.05 },
+    { fn: 'choir', t: 12, notes: [45, 52, 57], dur: 4, vol: 0.06 },
   ],
   lead: [
-    [62, 0, 0.5], [65, 0.5, 0.5], [69, 1, 1], [72, 2, 1], [70, 3, 1],
-    [69, 4, 0.5], [67, 4.5, 0.5], [65, 5, 1], [69, 6, 2],
-    [72, 8, 0.5], [74, 8.5, 0.5], [77, 9, 1], [74, 10, 1], [72, 11, 1],
-    [70, 12, 1], [69, 13, 1], [67, 14, 1], [62, 15, 1],
+    // Brass thème FULL — octaves et quintes, impérial
+    [62, 0, 0.5], [69, 0.5, 0.5],   // D4→A4 (quinte rapide)
+    [74, 1, 1.5], [81, 2.5, 1.5],   // D5→A5 (octave + quinte!)
+    [74, 4, 1], [70, 5, 1],         // D5→Bb4
+    [65, 6, 1], [62, 7, 1],         // F4→D4 (résolution)
+    [67, 8, 0.5], [74, 8.5, 0.5],   // G4→D5 (quinte rapide)
+    [79, 9, 1.5], [74, 10.5, 1.5],  // G5→D5 (octave desc)
+    [69, 12, 1], [74, 13, 1],       // A4→D5 (quinte up)
+    [62, 14, 2],                     // D4 final tenu
   ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.14 })),
   high: [
-    // brassHigh doublant la mélodie
+    // brassHigh doublant
     ...[
-      [62, 0, 0.5], [65, 0.5, 0.5], [69, 1, 1], [72, 2, 1], [70, 3, 1],
-      [69, 4, 0.5], [67, 4.5, 0.5], [65, 5, 1], [69, 6, 2],
-      [72, 8, 0.5], [74, 8.5, 0.5], [77, 9, 1], [74, 10, 1], [72, 11, 1],
-      [70, 12, 1], [69, 13, 1], [67, 14, 1], [62, 15, 1],
+      [62, 0, 0.5], [69, 0.5, 0.5], [74, 1, 1.5], [81, 2.5, 1.5],
+      [74, 4, 1], [70, 5, 1], [65, 6, 1], [62, 7, 1],
+      [67, 8, 0.5], [74, 8.5, 0.5], [79, 9, 1.5], [74, 10.5, 1.5],
+      [69, 12, 1], [74, 13, 1], [62, 14, 2],
     ].map(([note, t, dur]) => ({ fn: 'brassHigh', t, note, dur, vol: 0.05 })),
-    // Harpe rapide (16th notes)
-    ...[74, 70, 67, 65, 62, 65, 67, 70, 72, 69, 65, 62, 58, 62, 65, 69,
-        74, 72, 69, 67, 65, 67, 69, 72, 70, 67, 65, 62, 58, 62, 65, 67]
+    // Harpe rapide
+    ...[74, 69, 62, 57, 62, 69, 74, 81, 69, 62, 57, 50, 57, 62, 69, 74,
+        74, 69, 62, 57, 62, 69, 74, 81, 69, 62, 57, 50, 57, 62, 69, 74]
       .map((n, i) => ({ fn: 'harp', t: i * 0.5, note: n, dur: 0.4 })),
   ],
 };
 
 const DARK_OUTRO = {
   drums: [
-    ...Array.from({ length: 8 }, (_, i) => ({ fn: 'timpani', t: i * 2, note: 38, vol: 0.3 })),
-    ...[0, 4, 8, 12].map(t => ({ fn: 'cymbal', t, vol: 0.05 })),
+    // Timpani solennel
+    ...[0, 4, 8, 12].map(t => ({ fn: 'timpani', t, note: 38, vol: 0.3 })),
+    ...[0, 8].map(t => ({ fn: 'cymbal', t, vol: 0.04 })),
   ],
   bass: [
-    [38, 0, 2], [41, 2, 2], [43, 4, 2], [45, 6, 2],
-    [43, 8, 2], [41, 10, 2], [38, 12, 4],
-  ].map(([note, t, dur]) => ({ fn: 'cello', t, note, dur })),
+    // Cello résolution vers Dm
+    { fn: 'cello', t: 0, note: 45, dur: 4 },
+    { fn: 'cello', t: 4, note: 43, dur: 4 },
+    { fn: 'cello', t: 8, note: 45, dur: 4 },
+    { fn: 'cello', t: 12, note: 38, dur: 4 },
+  ],
   pad: [
-    { fn: 'strings', t: 0, notes: [50, 53, 57, 62], dur: 4, vol: 0.06 },
-    { fn: 'strings', t: 4, notes: [53, 57, 60, 65], dur: 4, vol: 0.06 },
-    { fn: 'strings', t: 8, notes: [55, 57, 60, 65], dur: 4, vol: 0.05 },
-    { fn: 'strings', t: 12, notes: [50, 53, 57, 62], dur: 4, vol: 0.04 },
+    // Chœur diminuant — résolution Dm
+    { fn: 'choir', t: 0, notes: [45, 52, 57, 64], dur: 4, vol: 0.05 },
+    { fn: 'choir', t: 4, notes: [43, 50, 55, 62], dur: 4, vol: 0.045 },
+    { fn: 'choir', t: 8, notes: [45, 52, 57], dur: 4, vol: 0.04 },
+    { fn: 'choir', t: 12, notes: [38, 45, 50], dur: 4, vol: 0.03 },
   ],
   lead: [
-    [69, 0, 2], [72, 2, 2], [70, 4, 2], [67, 6, 2],
-    [65, 8, 2], [67, 10, 2], [62, 12, 4],
+    // Brass reprise du thème, plus lent
+    [69, 0, 2], [74, 2, 2],         // A4 → D5 (quinte)
+    [70, 4, 2], [65, 6, 2],         // Bb4 → F4 (quinte desc)
+    [69, 8, 2], [62, 10, 2],        // A4 → D4 (quinte desc)
+    [62, 12, 4],                     // D4 final tenu
   ].map(([note, t, dur]) => ({ fn: 'brass', t, note, dur, vol: 0.1 })),
   high: [],
 };
@@ -1185,6 +1323,7 @@ export function playInstrumentDemo(name) {
     cello:   () => cello(t, 38, BEAT * 2),
     brass:   () => brass(t, 62, BEAT * 2, 0.12),
     strings: () => strings(t, [50, 53, 57], BEAT * 6, 0.06),
+    choir:   () => choir(t, [38, 45, 50, 57], BEAT * 8, 0.05),
     harp:    () => { [62, 65, 69, 74].forEach((n, i) => harp(t + i * BEAT * 0.4, n, BEAT * 0.8)); },
     brassHi: () => brassHigh(t, 62, BEAT * 2, 0.08),
   };

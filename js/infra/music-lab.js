@@ -151,6 +151,7 @@ const INSTRUMENTS_DARK = [
   { id: 'cello',   label: 'CELLO',   color: '#44aaff' },
   { id: 'brass',   label: 'BRASS',   color: '#ff44aa' },
   { id: 'strings', label: 'STRINGS', color: '#aa88ff' },
+  { id: 'choir',   label: 'CHOIR',   color: '#cc66aa' },
   { id: 'harp',    label: 'HARP',    color: '#44ffaa' },
   { id: 'brassHi', label: 'BRASS HI', color: '#ffee44' },
 ];

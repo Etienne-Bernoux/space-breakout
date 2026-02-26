@@ -10,9 +10,7 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 | Sections contextuelles | Bridge/breakdown quand il reste peu d'astéroïdes, chorus quand c'est chaud | M |
 | Variations mélodiques | 2-3 variantes du chorus/verse tirées aléatoirement pour casser la répétition | M |
 | Fills de transition | Roulements snare, montée arp entre les sections | S |
-| Low-pass en pause | La musique s'assourdit progressivement en pause | S |
-| Stingers victoire/défaite | Motif mélodique dédié sur game over et win (pas juste couper) | S |
-| Accents musicaux | Petit motif par-dessus la musique sur combo/power-up ramassé | S |
+| Accents musicaux | Étendre aux combos (pas seulement power-ups) | S |
 | Tempo progressif | BPM qui monte légèrement avec les niveaux | S |
 
 ## Game feel / Polish

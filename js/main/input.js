@@ -3,7 +3,22 @@ import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler
 import { handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
 import { isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
+import { isDevOverlayActive, handleOverlayTap } from '../infra/dev-overlay/index.js';
 import { G, gameScale, pauseBtnLayout, startGame } from './init.js';
+
+/** Lance tous les drones non lancés en éventail.
+ *  1 drone → centre (0), 2 → [-0.4, +0.4], 3 → [-0.5, 0, +0.5], etc. */
+function launchAllDrones() {
+  const unlaunched = G.drones.filter(d => !d.launched);
+  if (unlaunched.length === 0) return false;
+  const n = unlaunched.length;
+  const spread = 0.8; // amplitude totale de l'éventail (-0.4 .. +0.4 pour 2)
+  unlaunched.forEach((d, i) => {
+    const angle = n === 1 ? 0 : -spread / 2 + (spread * i) / (n - 1);
+    d.launchAtAngle(G.ship, angle);
+  });
+  return true;
+}
 
 // Setup touch system
 setupTouch();
@@ -11,6 +26,8 @@ setupTouch();
 // --- Handlers tactiles ---
 setTapHandler((x, y) => {
   if (G.session.state === 'playing') {
+    // Dev overlay intercepte les taps
+    if (isDevOverlayActive() && handleOverlayTap(x, y)) return;
     // Tap sur bouton pause
     const pb = pauseBtnLayout();
     if (x >= pb.x && x <= pb.x + pb.size &&
@@ -19,7 +36,7 @@ setTapHandler((x, y) => {
       G.intensityDirector.onPause();
       return;
     }
-    if (!G.drone.launched) { G.drone.launch(G.ship); G.intensityDirector.onLaunch(); }
+    if (launchAllDrones()) G.intensityDirector.onLaunch();
   }
   if (G.session.state === 'gameOver' || G.session.state === 'won') {
     resetMenu();
@@ -96,7 +113,7 @@ document.addEventListener('keydown', (e) => {
   if (G.session.state === 'playing') {
     if (e.key === 'ArrowLeft') G.ship.movingLeft = true;
     if (e.key === 'ArrowRight') G.ship.movingRight = true;
-    if (e.key === ' ' && !G.drone.launched) { G.drone.launch(G.ship); G.intensityDirector.onLaunch(); }
+    if (e.key === ' ') { if (launchAllDrones()) G.intensityDirector.onLaunch(); }
     if (e.key === 'Escape') { G.session.pause(); G.intensityDirector.onPause(); return; }
   }
 

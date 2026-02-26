@@ -25,9 +25,13 @@ export class Drone {
   /** Lance la balle depuis le vaisseau. Angle basé sur la position relative.
    *  Centre → tout droit, bords → angle max (~60°) */
   launch(ship) {
-    this.launched = true;
     const hit = (this.x - ship.x) / ship.width;   // 0..1
-    const angle = (hit - 0.5) * 2;                 // -1..1
+    this.launchAtAngle(ship, (hit - 0.5) * 2);
+  }
+
+  /** Lance avec un angle explicite (-1..1). 0 = tout droit. */
+  launchAtAngle(ship, angle) {
+    this.launched = true;
     this.dx = this.speed * angle;
     this.dy = -this.speed;
   }

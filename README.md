@@ -24,7 +24,8 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 - Souris, clavier et tactile supportés
 - Musique adaptative pilotée par l'intensité gameplay (5 layers, tempo progressif, fills)
 - Effets visuels dynamiques (vignette, micro-shake, glow) liés à l'intensité
-- 7 power-ups (élargi, collant, perçant, vie+, affaiblir, vitesse, slow-mo)
+- 8 power-ups (élargi, collant, perçant, vie+, affaiblir, vitesse, slow-mo, multi-drone)
+- Multi-drone : drone supplémentaire, lancement en éventail, game over quand tous perdus
 - Clean Architecture : entités pures, logique métier isolée, infra séparée
 - Zéro dépendance runtime, 100% vanilla JS + Canvas
 
@@ -35,11 +36,11 @@ git clone https://github.com/etienne-bernoux/space-breakout.git
 cd space-breakout
 npm install                        # installe les devDependencies
 npx serve .                        # serveur local → http://localhost:3000
-npx vitest run --globals           # tests unitaires (Vitest + Chai)
+npx vitest run --globals --exclude 'e2e/**'  # tests unitaires (Vitest + Chai)
 npx playwright test                # tests e2e (Playwright + Chromium)
 ```
 
-Modes spéciaux : `?dev` (dev panel), `?mus` (music lab).
+Modes spéciaux : `?dev` (dev panel + overlay in-game), `?mus` (music lab).
 
 ## Crédits
 

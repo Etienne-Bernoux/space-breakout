@@ -38,7 +38,7 @@ js/
     drone.js            → drone de minage (balle)
     capsule.js          → capsule de power-up
     materials.js        → 6 matériaux (roche, glace, lave, métal, cristal, obsidienne)
-    power-ups.js        → 7 power-ups déclaratifs
+    power-ups.js        → 8 power-ups déclaratifs (dont droneMulti)
     patterns.js         → patterns ASCII de niveaux
     asteroid-render.js  → rendu visuel par matériau
     asteroid/           → génération procédurale d'astéroïdes
@@ -92,10 +92,15 @@ js/
       draw-credits.js   → écran crédits
       handlers.js       → input menu
       index.js          → façade publique
-    dev-panel/          → panel dev (?dev)
+    dev-panel/          → panel dev pré-partie (?dev)
       state.js          → config + presets + persistence
       draw.js           → rendu panel
       handlers.js       → input panel
+      index.js          → façade publique
+    dev-overlay/        → overlay in-game (?dev, desktop only)
+      state.js          → layout boutons
+      draw.js           → rendu overlay
+      handlers.js       → tap/click sur boutons
       index.js          → façade publique
 e2e/                    → tests end-to-end (Playwright)
   smoke.spec.js         → démarrage sans erreur console
@@ -222,8 +227,8 @@ npx serve .              # serveur statique → http://localhost:3000
 
 Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`) :
 ```bash
-npx vitest run --globals           # une passe
-npx vitest --globals               # mode watch
+npx vitest run --globals --exclude 'e2e/**'   # une passe
+npx vitest --globals --exclude 'e2e/**'       # mode watch
 ```
 
 Tests e2e (Playwright, dossier `e2e/`) :
@@ -235,9 +240,25 @@ Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 
 Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`.
 
-Modes spéciaux : `?dev` (dev panel), `?mus` ou `?music` (music lab).
+Modes spéciaux : `?dev` (dev panel pré-partie + overlay in-game), `?mus` ou `?music` (music lab).
+
+## Multi-drone
+
+`G.drones` est un array. `G.drone` est un getter pour le premier (compatibilité).
+Le power-up `droneMulti` ajoute un drone supplémentaire (instant, duration 0).
+Tous les drones non lancés partent en éventail (angles répartis uniformément).
+Un drone bonus perdu est simplement retiré (splice). Seul le dernier drone déclenche une perte de vie.
+Game over uniquement quand le dernier drone est perdu ET vies à 0.
+
+La logique multi-drone est dans `collisions.js` (boucle inversée pour splice). `isDroneLost(drone)` est un check pur dans `GameSession`, `loseLife()` est séparé.
+
+## Dev overlay (?dev, desktop)
+
+Overlay in-game dessiné par-dessus la partie. Boutons pour chaque power-up + vie +/-.
+Activé seulement en mode `?dev` + desktop (pas mobile).
+Intercepte les clics avant le handler de jeu.
 
 ## Power-ups
 
-7 power-ups P1 implémentés (voir `power-ups.js` pour les définitions).
+8 power-ups P1 implémentés (voir `power-ups.js` pour les définitions).
 Roadmap, backlog P2/P3 et idées d'upgrades dans `BACKLOG.md`.

@@ -237,44 +237,40 @@ describe('GameSession — matériaux', () => {
 
 // --- Drone lost ---
 
-describe('GameSession — checkDroneLost', () => {
-  it('perd une vie quand le drone sort en bas', () => {
+describe('GameSession — isDroneLost + loseLife', () => {
+  it('détecte un drone tombé en bas', () => {
     const s = makeSession();
     s.start();
-    const ship = makeShip();
     const drone = makeDrone({ y: 610 });
-    const ev = s.checkDroneLost(drone, ship);
-    expect(ev).to.deep.equal({ type: 'loseLife', livesLeft: 2 });
+    expect(s.isDroneLost(drone)).to.be.true;
+  });
+
+  it('false si drone encore dans le canvas', () => {
+    const s = makeSession();
+    s.start();
+    const drone = makeDrone({ y: 400 });
+    expect(s.isDroneLost(drone)).to.be.false;
+  });
+
+  it('false si drone non lancé', () => {
+    const s = makeSession();
+    s.start();
+    const drone = makeDrone({ y: 610, launched: false });
+    expect(s.isDroneLost(drone)).to.be.false;
+  });
+
+  it('loseLife décrémente les vies', () => {
+    const s = makeSession();
+    s.start();
+    expect(s.loseLife()).to.equal(2);
     expect(s.lives).to.equal(2);
   });
 
-  it('gameOver à 0 vies', () => {
+  it('loseLife ne descend pas sous 0', () => {
     const s = makeSession();
     s.start();
-    s.lives = 1;
-    const ship = makeShip();
-    const drone = makeDrone({ y: 610 });
-    const ev = s.checkDroneLost(drone, ship);
-    expect(ev).to.deep.equal({ type: 'gameOver' });
-    expect(s.state).to.equal('gameOver');
-  });
-
-  it('null si drone encore dans le canvas', () => {
-    const s = makeSession();
-    s.start();
-    const ship = makeShip();
-    const drone = makeDrone({ y: 400 });
-    const ev = s.checkDroneLost(drone, ship);
-    expect(ev).to.be.null;
-  });
-
-  it('reset le drone après perte de vie', () => {
-    const s = makeSession();
-    s.start();
-    const ship = makeShip();
-    const drone = makeDrone({ y: 610 });
-    s.checkDroneLost(drone, ship);
-    expect(drone.launched).to.be.false;
+    s.lives = 0;
+    expect(s.loseLife()).to.equal(0);
   });
 });
 

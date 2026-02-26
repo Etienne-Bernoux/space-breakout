@@ -72,6 +72,16 @@ export const POWER_UPS = {
     effect: { target: 'field', action: 'weakenAll', delta: -1 },
     dropWeight: { rock: 1, ice: 1, lava: 2, metal: 3, crystal: 2, obsidian: 0 },
   },
+  droneMulti: {
+    id: 'droneMulti',
+    name: 'Drone supplémentaire',
+    short: '+1 Drone',
+    type: 'bonus',
+    duration: 0,
+    color: '#cc00ff',
+    effect: { target: 'drones', action: 'spawn' },
+    dropWeight: { rock: 1, ice: 1, lava: 1, metal: 2, crystal: 3, obsidian: 0 },
+  },
 };
 
 export const POWER_UP_IDS = Object.keys(POWER_UPS);

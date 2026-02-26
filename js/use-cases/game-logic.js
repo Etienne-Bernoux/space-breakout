@@ -113,18 +113,16 @@ export class GameSession {
     return firstEvent;
   }
 
-  /** Drone perdu en bas de l'écran */
-  checkDroneLost(drone, ship) {
-    if (drone.y - drone.radius > this.canvasHeight) {
-      this.lives--;
-      if (this.lives <= 0) {
-        this.state = 'gameOver';
-        return { type: 'gameOver' };
-      }
-      drone.reset(ship);
-      return { type: 'loseLife', livesLeft: this.lives };
-    }
-    return null;
+  /** Drone perdu en bas de l'écran — retourne true si tombé.
+   *  La logique de vies/game over est gérée par collisions.js (multi-drone). */
+  isDroneLost(drone) {
+    return drone.launched && drone.y - drone.radius > this.canvasHeight;
+  }
+
+  /** Perd une vie. Retourne le nombre restant. */
+  loseLife() {
+    this.lives = Math.max(0, this.lives - 1);
+    return this.lives;
   }
 
   /** Capsule ramassée par le vaisseau */

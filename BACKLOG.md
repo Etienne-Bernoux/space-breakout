@@ -53,7 +53,7 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 
 | Power-up | Description | Effort | Type |
 |---|---|---|---|
-| Multi-drone | +2 drones supplémentaires (perdus = pas de vie perdue, game over si tous perdus) | L | Bonus |
+| ~~Multi-drone~~ | ~~+1 drone supplémentaire (éventail, game over si tous perdus)~~ | ~~L~~ | ~~Bonus~~ | ✅ |
 | Filet de sécurité | 1 rebond gratuit en bas de l'écran (ligne visible, disparaît après usage) | M | Bonus |
 | Onde de choc | Détruit tous les astéroïdes dans un rayon autour du point d'impact | M | Bonus |
 | Missiles | Tap pour tirer 2 missiles verticaux (3 charges) | L | Bonus |

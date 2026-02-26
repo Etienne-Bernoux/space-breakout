@@ -1,10 +1,16 @@
 import { expect } from 'chai';
 import { PowerUpManager } from './power-up-manager.js';
 
+function makeDrone(overrides = {}) {
+  return { sticky: false, piercing: false, launched: true, launch() { this.launched = true; }, ...overrides };
+}
+
 function makeGameState(overrides = {}) {
+  const drone = makeDrone(overrides.drone);
   return {
-    ship: { width: 100, ...overrides.ship },
-    drone: { sticky: false, piercing: false, launched: true, ...overrides.drone },
+    ship: { width: 100, x: 0, ...overrides.ship },
+    drones: [drone],
+    get drone() { return this.drones[0]; },
     session: { lives: 3, scoreMultiplier: 1, ...overrides.session },
     field: { grid: overrides.grid || [] },
   };
@@ -149,6 +155,52 @@ describe('PowerUpManager', () => {
       expect(list).to.have.length(1);
       expect(list[0].id).to.equal('shipWide');
       expect(list[0].remaining).to.equal(15000);
+    });
+  });
+
+  describe('droneMulti (spawn)', () => {
+    it('ajoute un drone dans gs.drones', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      expect(gs.drones).to.have.length(1);
+      pm.activate('droneMulti', gs, 0);
+      expect(gs.drones).to.have.length(2);
+      expect(pm.active.size).to.equal(0); // instant, pas stocké
+    });
+
+    it('le nouveau drone copie les flags du premier', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState({ drone: { piercing: true } });
+      pm.activate('droneMulti', gs, 0);
+      expect(gs.drones[1].piercing).to.be.true;
+    });
+
+    it('le nouveau drone est non lancé', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneMulti', gs, 0);
+      expect(gs.drones[1].launched).to.be.false;
+    });
+  });
+
+  describe('multi-drone : apply/revert boucle sur drones', () => {
+    it('piercing s\'applique à tous les drones', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneMulti', gs, 0); // 2 drones
+      pm.activate('dronePiercing', gs, 0);
+      expect(gs.drones[0].piercing).to.be.true;
+      expect(gs.drones[1].piercing).to.be.true;
+    });
+
+    it('revert piercing sur tous les drones', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneMulti', gs, 0);
+      pm.activate('dronePiercing', gs, 0);
+      pm.update(gs, 15001);
+      expect(gs.drones[0].piercing).to.be.false;
+      expect(gs.drones[1].piercing).to.be.false;
     });
   });
 });

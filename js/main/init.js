@@ -20,7 +20,8 @@ export const G = {
   ctx,
   session: new GameSession(CONFIG),
   ship: null,
-  drone: null,
+  drones: [],
+  get drone() { return this.drones[0] || null; },
   field: null,
   capsules: [],
   totalAsteroids: 0,
@@ -71,7 +72,7 @@ setupResize(() => {
     }
     G.ship.y = CONFIG.canvas.height - G.ship.height - G.ship.bottomMargin;
     G.ship.canvasWidth = CONFIG.canvas.width;
-    if (G.drone && !G.drone.launched) G.drone.reset(G.ship);
+    for (const d of G.drones) { if (!d.launched) d.reset(G.ship); }
   }
 });
 
@@ -84,7 +85,7 @@ export function perceptualVolume(v) {
 export function startGame() {
   const isMobile = 'ontouchstart' in window;
   G.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
-  G.drone = new Drone(CONFIG.drone, G.ship, isMobile, CONFIG.canvas.width);
+  G.drones = [new Drone(CONFIG.drone, G.ship, isMobile, CONFIG.canvas.width)];
   // En mode dev, utiliser la config enrichie (matériaux + densité)
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
   G.field = new AsteroidField(astConfig);
@@ -93,7 +94,7 @@ export function startGame() {
   G.comboDisplay = 0;
   G.comboFadeTimer = 0;
   G.slowMoTimer = 0;
-  G.puManager.clear({ ship: G.ship, drone: G.drone, session: G.session, field: G.field });
+  G.puManager.clear({ ship: G.ship, drones: G.drones, session: G.session, field: G.field });
   G.totalAsteroids = G.field.remaining;
   G.intensityDirector.enable();
   G.session.start();

@@ -7,6 +7,7 @@ import { updateShake, setAmbientShake } from '../infra/screenshake.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
+import { isDevOverlayActive, drawDevOverlay, handleOverlayHover } from '../infra/dev-overlay/index.js';
 import { G, SLOW_MO_DURATION } from './init.js';
 import { handleCollisions } from './collisions.js';
 import { drawHUD, drawCombo, drawDeathLine, drawPauseButton, drawPauseScreen, drawEndScreen } from './hud.js';
@@ -61,7 +62,7 @@ export function loop() {
   if (G.session.state === 'paused') {
     G.field.draw(G.ctx);
     G.ship.draw(G.ctx);
-    G.drone.draw(G.ctx);
+    for (const d of G.drones) d.draw(G.ctx);
     drawHUD(fx);
     drawPauseScreen();
     requestAnimationFrame(loop);
@@ -93,7 +94,7 @@ export function loop() {
       for (const c of G.capsules) drawCapsule(G.ctx, c);
       if (G.ship.isMobile) drawDeathLine(G.ship, fx);
       G.ship.draw(G.ctx);
-      G.drone.draw(G.ctx);
+      for (const d of G.drones) d.draw(G.ctx);
       G.ctx.restore();
       drawVignette(G.ctx, fx);
       drawHUD(fx);
@@ -107,8 +108,10 @@ export function loop() {
 
   G.field.update();
   G.ship.update(getTouchX());
-  G.drone.update(G.ship, CONFIG.canvas.width);
-  if (G.drone.launched) spawnTrail(G.drone.x, G.drone.y);
+  for (const d of G.drones) {
+    d.update(G.ship, CONFIG.canvas.width);
+    if (d.launched) spawnTrail(d.x, d.y);
+  }
   for (const c of G.capsules) c.update(CONFIG.canvas.height);
   G.capsules = G.capsules.filter(c => c.alive);
   handleCollisions();
@@ -122,7 +125,7 @@ export function loop() {
   for (const c of G.capsules) drawCapsule(G.ctx, c);
   if (G.ship.isMobile) drawDeathLine(G.ship, fx);
   G.ship.draw(G.ctx);
-  G.drone.draw(G.ctx);
+  for (const d of G.drones) d.draw(G.ctx);
 
   G.ctx.restore();
 
@@ -131,6 +134,11 @@ export function loop() {
   drawPowerUpHUD(G.ctx, G.puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();
   if (G.comboFadeTimer > 0) drawCombo();
+  if (isDevOverlayActive()) {
+    const mouse = getMousePos();
+    handleOverlayHover(mouse.x, mouse.y);
+    drawDevOverlay(G.ctx);
+  }
 
   requestAnimationFrame(loop);
 }

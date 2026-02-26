@@ -1,8 +1,9 @@
 // --- Power-Up Manager ---
 // Gère les effets actifs, timers, apply/revert.
-// gameState = { ship, drone, session, field }
+// gameState = { ship, drones, session, field }
 
 import { getPowerUp } from '../domain/power-ups.js';
+import { Drone } from '../domain/drone.js';
 
 export class PowerUpManager {
   constructor() {
@@ -71,7 +72,7 @@ export class PowerUpManager {
       saved.width = gs.ship.width;
       this._resizeShip(gs, effect.factor);
     } else if (effect.target === 'drone') {
-      gs.drone[effect.prop] = true;
+      for (const d of gs.drones) d[effect.prop] = true;
     } else if (effect.target === 'session' && effect.factor) {
       gs.session[effect.prop] = (gs.session[effect.prop] || 1) * effect.factor;
     }
@@ -83,8 +84,8 @@ export class PowerUpManager {
     const cx = gs.ship.x + gs.ship.width / 2;
     gs.ship.width = Math.round(gs.ship.width * factor);
     gs.ship.x = cx - gs.ship.width / 2;
-    if (gs.drone && !gs.drone.launched) {
-      gs.drone.x = gs.ship.x + gs.ship.width / 2;
+    for (const d of gs.drones) {
+      if (!d.launched) d.x = gs.ship.x + gs.ship.width / 2;
     }
   }
 
@@ -96,14 +97,16 @@ export class PowerUpManager {
       const cx = gs.ship.x + gs.ship.width / 2;
       gs.ship.width = saved.width;
       gs.ship.x = cx - gs.ship.width / 2;
-      if (gs.drone && !gs.drone.launched) {
-        gs.drone.x = gs.ship.x + gs.ship.width / 2;
+      for (const d of gs.drones) {
+        if (!d.launched) d.x = gs.ship.x + gs.ship.width / 2;
       }
     } else if (effect.target === 'drone') {
-      gs.drone[effect.prop] = false;
-      if (effect.prop === 'sticky') {
-        gs.drone._stickyOffset = undefined;
-        if (!gs.drone.launched) gs.drone.launch(gs.ship);
+      for (const d of gs.drones) {
+        d[effect.prop] = false;
+        if (effect.prop === 'sticky') {
+          d._stickyOffset = undefined;
+          if (!d.launched) d.launch(gs.ship);
+        }
       }
     } else if (effect.target === 'session' && effect.factor) {
       gs.session[effect.prop] = Math.max(1, (gs.session[effect.prop] || effect.factor) / effect.factor);
@@ -116,6 +119,19 @@ export class PowerUpManager {
 
     if (effect.target === 'session' && effect.delta) {
       gs.session[effect.prop] += effect.delta;
+    } else if (effect.action === 'spawn') {
+      // Ajouter un drone supplémentaire (copie config du premier)
+      const ref = gs.drones[0];
+      if (ref) {
+        const d = new Drone(
+          { radius: ref.radius, speed: ref.speed, color: ref.color },
+          gs.ship,
+        );
+        // Copier les flags actifs (piercing, sticky…)
+        d.piercing = ref.piercing;
+        d.sticky = ref.sticky;
+        gs.drones.push(d);
+      }
     } else if (effect.action === 'weakenAll') {
       for (const a of gs.field.grid) {
         if (!a.alive || !a.destructible) continue;

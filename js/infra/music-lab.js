@@ -713,7 +713,7 @@ export function handleMusicLabTap(x, y) {
   }
   if (id.startsWith('stinger-')) {
     const s = STINGERS.find(s => `stinger-${s.id}` === id);
-    if (s) { resetAudio(); muffled = false; s.fn(); const durs = { win: 1.0, gameover: 2.0, powerup: 0.4 }; setActivity(`Stinger: ${s.label}`, durs[s.id] || 1); }
+    if (s) { resetAudio(); muffled = false; s.fn(); const durs = { win: 2.0, gameover: 3.0, powerup: 0.4 }; setActivity(`Stinger: ${s.label}`, durs[s.id] || 1); }
     return;
   }
 

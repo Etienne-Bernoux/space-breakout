@@ -9,7 +9,7 @@ import { setupResize } from './infra/resize.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from './infra/touch.js';
 import { spawnExplosion, spawnTrail, updateParticles } from './infra/particles.js';
 import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './infra/audio.js';
-import { startMusic, isPlaying, setVolume as setMusicVolume, muffle, unmuffle, playWinStinger, playGameOverStinger, playPowerUpAccent } from './infra/music.js';
+import { startMusic, isPlaying, setVolume as setMusicVolume, muffle, unmuffle, fadeOutMusic, playWinStinger, playGameOverStinger, playPowerUpAccent } from './infra/music.js';
 import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel.js';
 import { Capsule } from './domain/capsule.js';
 import { DropSystem } from './use-cases/drop-system.js';
@@ -274,13 +274,13 @@ function handleCollisions() {
   }
 
   const ev3 = session.checkDroneLost(drone, ship);
-  if (ev3 && ev3.type === 'gameOver') { playGameOver(); playGameOverStinger(); musicDirector.disable(); }
+  if (ev3 && ev3.type === 'gameOver') { playGameOver(); musicDirector.disable(); fadeOutMusic(0.8, () => playGameOverStinger()); }
   if (ev3 && ev3.type === 'loseLife') { playLoseLife(); combo = 0; musicDirector.onComboReset(); musicDirector.onLifeChanged(ev3.livesLeft); }
 
   // Retarder le win pendant le slow-mo pour qu'il soit visible
   if (slowMoTimer <= 0) {
     const ev4 = session.checkWin(field);
-    if (ev4) { playWin(); playWinStinger(); musicDirector.disable(); }
+    if (ev4) { playWin(); musicDirector.disable(); fadeOutMusic(0.8, () => playWinStinger()); }
   }
 }
 

@@ -1,17 +1,24 @@
 let ctx = null;
 let masterGain = null;
+let masterFilter = null;
 let playing = false;
 let loopTimer = null;
 
 const BPM = 110;
 const BEAT = 60 / BPM;
+const FILTER_OPEN = 20000;
+const FILTER_MUFFLED = 350;
 
 function getCtx() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = ctx.createGain();
     masterGain.gain.value = 0.3;
-    masterGain.connect(ctx.destination);
+    masterFilter = ctx.createBiquadFilter();
+    masterFilter.type = 'lowpass';
+    masterFilter.frequency.value = FILTER_OPEN;
+    masterGain.connect(masterFilter);
+    masterFilter.connect(ctx.destination);
   }
   return ctx;
 }
@@ -359,4 +366,97 @@ export function isPlaying() {
 
 export function setVolume(v) {
   if (masterGain) masterGain.gain.value = v;
+}
+
+// --- Low-pass pour la pause ---
+export function muffle() {
+  if (!masterFilter) return;
+  const c = getCtx();
+  masterFilter.frequency.cancelScheduledValues(c.currentTime);
+  masterFilter.frequency.setValueAtTime(masterFilter.frequency.value, c.currentTime);
+  masterFilter.frequency.exponentialRampToValueAtTime(FILTER_MUFFLED, c.currentTime + 0.4);
+}
+
+export function unmuffle() {
+  if (!masterFilter) return;
+  const c = getCtx();
+  masterFilter.frequency.cancelScheduledValues(c.currentTime);
+  masterFilter.frequency.setValueAtTime(masterFilter.frequency.value, c.currentTime);
+  masterFilter.frequency.exponentialRampToValueAtTime(FILTER_OPEN, c.currentTime + 0.3);
+}
+
+// --- Stingers (motifs courts, connectés directement à destination) ---
+function stingerGain(vol, dur) {
+  const c = getCtx();
+  const g = c.createGain();
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.linearRampToValueAtTime(0, c.currentTime + dur);
+  g.connect(c.destination);
+  return g;
+}
+
+export function playWinStinger() {
+  const c = getCtx();
+  const t = c.currentTime;
+  // Arpège majeur montant : E5 → G#5 → B5 → E6
+  const notes = [76, 80, 83, 88];
+  for (let i = 0; i < notes.length; i++) {
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq(notes[i]);
+    g.gain.setValueAtTime(0, t + i * 0.12);
+    g.gain.linearRampToValueAtTime(0.15, t + i * 0.12 + 0.03);
+    g.gain.setValueAtTime(0.15, t + i * 0.12 + 0.15);
+    g.gain.linearRampToValueAtTime(0, t + i * 0.12 + 0.4);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t + i * 0.12);
+    osc.stop(t + i * 0.12 + 0.5);
+  }
+}
+
+export function playGameOverStinger() {
+  const c = getCtx();
+  const t = c.currentTime;
+  // Descente mineure : E4 → D4 → C4 → B3
+  const notes = [64, 62, 60, 59];
+  for (let i = 0; i < notes.length; i++) {
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'sawtooth';
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 800;
+    osc.frequency.value = freq(notes[i]);
+    g.gain.setValueAtTime(0, t + i * 0.2);
+    g.gain.linearRampToValueAtTime(0.12, t + i * 0.2 + 0.03);
+    g.gain.setValueAtTime(0.12, t + i * 0.2 + 0.25);
+    g.gain.linearRampToValueAtTime(0, t + i * 0.2 + (i === 3 ? 1.0 : 0.4));
+    osc.connect(filter);
+    filter.connect(g);
+    g.connect(c.destination);
+    osc.start(t + i * 0.2);
+    osc.stop(t + i * 0.2 + 1.2);
+  }
+}
+
+export function playPowerUpAccent() {
+  const c = getCtx();
+  const t = c.currentTime;
+  // Petit arpège rapide montant : B5 → D6 → E6
+  const notes = [83, 86, 88];
+  for (let i = 0; i < notes.length; i++) {
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq(notes[i]);
+    g.gain.setValueAtTime(0, t + i * 0.06);
+    g.gain.linearRampToValueAtTime(0.1, t + i * 0.06 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.2);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t + i * 0.06);
+    osc.stop(t + i * 0.06 + 0.25);
+  }
 }

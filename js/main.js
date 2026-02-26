@@ -9,7 +9,7 @@ import { setupResize } from './infra/resize.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from './infra/touch.js';
 import { spawnExplosion, spawnTrail, updateParticles } from './infra/particles.js';
 import { playBounce, playAsteroidHit, playLoseLife, playWin, playGameOver, playLaunch, unlockAudio, setSfxVolume } from './infra/audio.js';
-import { startMusic, isPlaying, setVolume as setMusicVolume } from './infra/music.js';
+import { startMusic, isPlaying, setVolume as setMusicVolume, muffle, unmuffle, playWinStinger, playGameOverStinger, playPowerUpAccent } from './infra/music.js';
 import { isDevMode, isDevPanelActive, showDevPanel, hideDevPanel, loadDevConfig, getDevAsteroidConfig, drawDevPanel, handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './infra/dev-panel.js';
 import { Capsule } from './domain/capsule.js';
 import { DropSystem } from './use-cases/drop-system.js';
@@ -98,6 +98,7 @@ setTapHandler((x, y) => {
     if (x >= pb.x && x <= pb.x + pb.size &&
         y >= pb.y && y <= pb.y + pb.size) {
       session.pause();
+      muffle();
       return;
     }
     if (!drone.launched) { drone.launched = true; playLaunch(); }
@@ -134,6 +135,7 @@ setMenuTapHandler((x, y) => {
     // Bouton REPRENDRE
     if (x >= cx - halfW && x <= cx + halfW && y >= cy && y <= cy + btnH) {
       session.resume();
+      unmuffle();
     }
     // Bouton MENU
     if (x >= cx - halfW && x <= cx + halfW && y >= cy + btnH + gap && y <= cy + btnH * 2 + gap) {
@@ -172,11 +174,11 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') ship.movingLeft = true;
     if (e.key === 'ArrowRight') ship.movingRight = true;
     if (e.key === ' ' && !drone.launched) { drone.launched = true; playLaunch(); }
-    if (e.key === 'Escape') { session.pause(); return; }
+    if (e.key === 'Escape') { session.pause(); muffle(); return; }
   }
 
   if (session.state === 'paused') {
-    if (e.key === 'Escape') session.resume();
+    if (e.key === 'Escape') { session.resume(); unmuffle(); }
     if (e.key === 'r') { resetMenu(); session.backToMenu(); if (isDevMode()) showDevPanel(); }
     return;
   }
@@ -218,6 +220,7 @@ function handleCollisions() {
   for (const ce of capEvts) {
     const gs = { ship, drone, session, field };
     puManager.activate(ce.powerUpId, gs);
+    playPowerUpAccent();
     spawnExplosion(ce.x, ce.y, getPowerUp(ce.powerUpId)?.color || '#fff');
   }
 
@@ -225,11 +228,11 @@ function handleCollisions() {
   puManager.update({ ship, drone, session, field });
 
   const ev3 = session.checkDroneLost(drone, ship);
-  if (ev3 && ev3.type === 'gameOver') playGameOver();
+  if (ev3 && ev3.type === 'gameOver') { playGameOver(); playGameOverStinger(); }
   if (ev3 && ev3.type === 'loseLife') playLoseLife();
 
   const ev4 = session.checkWin(field);
-  if (ev4) playWin();
+  if (ev4) { playWin(); playWinStinger(); }
 }
 
 // --- HUD ---

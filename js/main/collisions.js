@@ -11,7 +11,7 @@ export function handleCollisions() {
     if (!drone.launched) continue; // sticky / en attente → pas de collision
     const ev1 = G.session.checkShipCollision(drone, G.ship);
     if (ev1) {
-      G.combo = 0;
+      G.ui.combo = 0;
       G.intensityDirector.onBounce();
     }
 
@@ -20,23 +20,23 @@ export function handleCollisions() {
       spawnExplosion(ev2.x, ev2.y, ev2.color);
       G.intensityDirector.onAsteroidHit();
       if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
-        G.combo++;
-        if (G.combo >= 2) {
-          G.comboDisplay = G.combo;
-          G.comboFadeTimer = COMBO_FADE_DURATION;
+        G.ui.combo++;
+        if (G.ui.combo >= 2) {
+          G.ui.comboDisplay = G.ui.combo;
+          G.ui.comboFadeTimer = COMBO_FADE_DURATION;
         }
         const shakeAmount = CONFIG.screenshake.intensity[ev2.sizeName] || CONFIG.screenshake.intensity.small;
         triggerShake(shakeAmount);
         const puId = G.dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
         if (puId) G.capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
-        G.intensityDirector.onAsteroidDestroyed(G.field.remaining, G.totalAsteroids, G.combo);
+        G.intensityDirector.onAsteroidDestroyed(G.field.remaining, G.totalAsteroids, G.ui.combo);
         if (G.field.remaining === 0) triggerSlowMo();
       }
     }
   }
 
   // --- Capsules ramassées ---
-  const gs = { ship: G.ship, drones: G.drones, session: G.session, field: G.field };
+  const gs = G.gs;
   const capEvts = G.session.checkCapsuleCollision(G.capsules, G.ship);
   for (const ce of capEvts) {
     G.puManager.activate(ce.powerUpId, gs);
@@ -62,7 +62,7 @@ export function handleCollisions() {
     } else {
       // Dernier drone perdu → perte de vie
       const livesLeft = G.session.loseLife();
-      G.combo = 0;
+      G.ui.combo = 0;
       if (livesLeft <= 0) {
         G.session.state = 'gameOver';
         G.intensityDirector.onGameOver();
@@ -74,7 +74,7 @@ export function handleCollisions() {
   }
 
   // Retarder le win pendant le slow-mo pour qu'il soit visible
-  if (G.slowMoTimer <= 0) {
+  if (G.ui.slowMoTimer <= 0) {
     const ev4 = G.session.checkWin(G.field);
     if (ev4) { G.intensityDirector.onWin(); }
   }

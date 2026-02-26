@@ -4,7 +4,9 @@
   "description": "Un casse-briques spatial inspiré du jeu Adibou. Pilote un vaisseau de nettoyage et envoie ton drone de minage détruire les astéroïdes qui bloquent la zone !",
   "type": "module",
   "scripts": {
-    "test": "mocha 'js/**/*.spec.js'"
+    "test": "vitest run",
+    "test:e2e": "npx playwright test",
+    "test:all": "vitest run && npx playwright test"
   },
   "repository": {
     "type": "git",
@@ -20,7 +22,8 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "chai": "^6.2.2",
-    "mocha": "^11.7.5",
-    "serve": "^14.2.5"
+    "mocha": "^11.3.0",
+    "serve": "^13.0.4",
+    "vitest": "^4.0.18"
   }
 }

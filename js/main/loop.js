@@ -8,7 +8,7 @@ import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
-import { G, SLOW_MO_DURATION } from './init.js';
+import { G } from './init.js';
 import { handleCollisions } from './collisions.js';
 import { drawHUD, drawCombo, drawDeathLine, drawPauseButton, drawPauseScreen, drawEndScreen } from './hud.js';
 
@@ -23,13 +23,31 @@ function drawVignette(ctx, fx) {
   ctx.fillRect(0, 0, w, h);
 }
 
+function drawScene(fx) {
+  const shake = updateShake();
+  G.render.ctx.save();
+  G.render.ctx.translate(shake.x, shake.y);
+  G.field.draw(G.render.ctx);
+  updateParticles(G.render.ctx);
+  for (const c of G.capsules) drawCapsule(G.render.ctx, c);
+  if (G.ship.isMobile) drawDeathLine(G.ship, fx);
+  G.ship.draw(G.render.ctx);
+  for (const d of G.drones) d.draw(G.render.ctx);
+  G.render.ctx.restore();
+  drawVignette(G.render.ctx, fx);
+  drawHUD(fx);
+  drawPowerUpHUD(G.render.ctx, G.puManager.getActive(), CONFIG.canvas.width);
+  drawPauseButton();
+  if (G.ui.comboFadeTimer > 0) drawCombo();
+}
+
 export function loop() {
   // Update intensity effects (lerp)
   G.intensityDirector.update();
   const fx = G.intensityDirector.getEffects();
   setAmbientShake(fx.microShake);
 
-  G.ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+  G.render.ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
   updateStars(fx.starSpeed);
 
   // Curseur adapté à l'état
@@ -38,7 +56,7 @@ export function loop() {
   if (isMusicLabActive()) {
     const mouse = getMousePos();
     handleMusicLabHover(mouse.x, mouse.y);
-    drawMusicLab(G.ctx);
+    drawMusicLab(G.render.ctx);
     requestAnimationFrame(loop);
     return;
   }
@@ -46,7 +64,7 @@ export function loop() {
   if (isDevPanelActive()) {
     const mouse = getMousePos();
     handleDevHover(mouse.x, mouse.y);
-    drawDevPanel(G.ctx);
+    drawDevPanel(G.render.ctx);
     requestAnimationFrame(loop);
     return;
   }
@@ -54,15 +72,15 @@ export function loop() {
   if (G.session.state === 'menu') {
     const mouse = getMousePos();
     updateMenuHover(mouse.x, mouse.y);
-    updateMenu(G.ctx);
+    updateMenu(G.render.ctx);
     requestAnimationFrame(loop);
     return;
   }
 
   if (G.session.state === 'paused') {
-    G.field.draw(G.ctx);
-    G.ship.draw(G.ctx);
-    for (const d of G.drones) d.draw(G.ctx);
+    G.field.draw(G.render.ctx);
+    G.ship.draw(G.render.ctx);
+    for (const d of G.drones) d.draw(G.render.ctx);
     drawHUD(fx);
     drawPauseScreen();
     requestAnimationFrame(loop);
@@ -81,26 +99,12 @@ export function loop() {
   }
 
   // Slow-motion : on skip des frames pour ralentir le gameplay
-  if (G.slowMoTimer > 0) {
-    G.slowMoTimer--;
+  if (G.ui.slowMoTimer > 0) {
+    G.ui.slowMoTimer--;
     // En slow-mo, on n'update qu'1 frame sur 3
-    if (G.slowMoTimer % 3 !== 0) {
+    if (G.ui.slowMoTimer % 3 !== 0) {
       // Mais on dessine quand même (pour l'effet visuel)
-      const shake = updateShake();
-      G.ctx.save();
-      G.ctx.translate(shake.x, shake.y);
-      G.field.draw(G.ctx);
-      updateParticles(G.ctx);
-      for (const c of G.capsules) drawCapsule(G.ctx, c);
-      if (G.ship.isMobile) drawDeathLine(G.ship, fx);
-      G.ship.draw(G.ctx);
-      for (const d of G.drones) d.draw(G.ctx);
-      G.ctx.restore();
-      drawVignette(G.ctx, fx);
-      drawHUD(fx);
-      drawPowerUpHUD(G.ctx, G.puManager.getActive(), CONFIG.canvas.width);
-      drawPauseButton();
-      if (G.comboFadeTimer > 0) drawCombo();
+      drawScene(fx);
       requestAnimationFrame(loop);
       return;
     }
@@ -116,24 +120,7 @@ export function loop() {
   G.capsules = G.capsules.filter(c => c.alive);
   handleCollisions();
 
-  const shake = updateShake();
-  G.ctx.save();
-  G.ctx.translate(shake.x, shake.y);
-
-  G.field.draw(G.ctx);
-  updateParticles(G.ctx);
-  for (const c of G.capsules) drawCapsule(G.ctx, c);
-  if (G.ship.isMobile) drawDeathLine(G.ship, fx);
-  G.ship.draw(G.ctx);
-  for (const d of G.drones) d.draw(G.ctx);
-
-  G.ctx.restore();
-
-  drawVignette(G.ctx, fx);
-  drawHUD(fx);
-  drawPowerUpHUD(G.ctx, G.puManager.getActive(), CONFIG.canvas.width);
-  drawPauseButton();
-  if (G.comboFadeTimer > 0) drawCombo();
+  drawScene(fx);
   updateDevOverlay();
 
   requestAnimationFrame(loop);

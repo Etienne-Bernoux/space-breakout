@@ -16,24 +16,36 @@ const ctx = canvas.getContext('2d');
 
 // --- Shared game state ---
 export const G = {
-  canvas,
-  ctx,
+  // --- Rendering ---
+  render: { canvas, ctx },
+  get canvas() { return this.render.canvas; },
+  get ctx() { return this.render.ctx; },
+
+  // --- Game entities ---
   session: new GameSession(CONFIG),
   ship: null,
   drones: [],
   get drone() { return this.drones[0] || null; },
+  get gs() { return { ship: this.ship, drones: this.drones, session: this.session, field: this.field }; },
   field: null,
   capsules: [],
   totalAsteroids: 0,
+
+  // --- Systems ---
   dropSystem: new DropSystem(CONFIG.drop),
   puManager: new PowerUpManager(),
   intensityDirector: new GameIntensityDirector(),
-  // Combo counter
-  combo: 0,
-  comboDisplay: 0,
-  comboFadeTimer: 0,
-  // Slow-motion
-  slowMoTimer: 0,
+
+  // --- UI state ---
+  ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },
+  get combo() { return this.ui.combo; },
+  set combo(v) { this.ui.combo = v; },
+  get comboDisplay() { return this.ui.comboDisplay; },
+  set comboDisplay(v) { this.ui.comboDisplay = v; },
+  get comboFadeTimer() { return this.ui.comboFadeTimer; },
+  set comboFadeTimer(v) { this.ui.comboFadeTimer = v; },
+  get slowMoTimer() { return this.ui.slowMoTimer; },
+  set slowMoTimer(v) { this.ui.slowMoTimer = v; },
 };
 
 // --- Scale responsive pour le jeu (HUD, boutons, overlays) ---
@@ -46,11 +58,11 @@ export const SLOW_MO_DURATION = 30; // frames (~0.5s à 60fps)
 export const SLOW_MO_FACTOR = 0.3;
 
 export function triggerSlowMo() {
-  G.slowMoTimer = SLOW_MO_DURATION;
+  G.ui.slowMoTimer = SLOW_MO_DURATION;
 }
 
 export function getSlowMoFactor() {
-  return G.slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;
+  return G.ui.slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;
 }
 
 // --- Combo counter ---
@@ -90,11 +102,8 @@ export function startGame() {
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
   G.field = new AsteroidField(astConfig);
   G.capsules = [];
-  G.combo = 0;
-  G.comboDisplay = 0;
-  G.comboFadeTimer = 0;
-  G.slowMoTimer = 0;
-  G.puManager.clear({ ship: G.ship, drones: G.drones, session: G.session, field: G.field });
+  Object.assign(G.ui, { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 });
+  G.puManager.clear(G.gs);
   G.totalAsteroids = G.field.remaining;
   G.intensityDirector.enable();
   G.session.start();

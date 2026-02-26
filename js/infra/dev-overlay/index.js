@@ -2,9 +2,10 @@
 // ?dev + desktop only. Boutons power-ups + vie +/-
 
 import { isDevMode } from '../dev-panel/index.js';
-import { POWER_UPS, POWER_UP_IDS, getPowerUp } from '../../domain/power-ups.js';
+import { POWER_UP_IDS, getPowerUp } from '../../domain/power-ups.js';
 import { drawIcon } from '../power-up-icons.js';
 import { G } from '../../main/init.js';
+import { updateDevStats } from './dev-stats.js';
 
 const container = document.getElementById('dev-overlay');
 let built = false;
@@ -33,8 +34,7 @@ function buildButtons() {
 
     btn.appendChild(document.createTextNode(def.short));
     btn.addEventListener('click', () => {
-      const gs = { ship: G.ship, drones: G.drones, session: G.session, field: G.field };
-      G.puManager.activate(puId, gs);
+      G.puManager.activate(puId, G.gs);
     });
     container.appendChild(btn);
   }
@@ -56,6 +56,28 @@ function buildButtons() {
   row.appendChild(btnUp);
   row.appendChild(btnDown);
   container.appendChild(row);
+
+  // Bouton Instant Win
+  const btnWin = document.createElement('button');
+  btnWin.textContent = '🏆 Win';
+  btnWin.style.background = 'rgba(34,197,94,0.55)';
+  btnWin.addEventListener('click', () => {
+    for (const a of G.field.grid) a.alive = false;
+  });
+  container.appendChild(btnWin);
+
+  // Bouton Asteroid HP -1
+  const btnAstHp = document.createElement('button');
+  btnAstHp.textContent = '☄️ Ast -1';
+  btnAstHp.style.background = 'rgba(239,68,68,0.55)';
+  btnAstHp.addEventListener('click', () => {
+    for (const a of G.field.grid) {
+      if (!a.alive || !a.destructible) continue;
+      a.hp = (a.hp ?? 1) - 1;
+      if (a.hp <= 0) a.alive = false;
+    }
+  });
+  container.appendChild(btnAstHp);
 }
 
 /** L'overlay est actif si mode dev + desktop (pas mobile) */
@@ -63,78 +85,16 @@ export function isDevOverlayActive() {
   return isDevMode() && !('ontouchstart' in window);
 }
 
-// --- Dev Stats (panel droit : timer + intensité) ---
-const statsContainer = document.getElementById('dev-stats');
-const INTENSITY_COLORS = ['#4488ff', '#44cc88', '#ffcc00', '#ff6600', '#ff2244'];
-let statsBuilt = false;
-let timerEl, intensityValEl, comboEl, barSegments;
-let gameStartTime = 0;
-let wasPlaying = false;
-
-function buildStats() {
-  if (statsBuilt) return;
-  statsBuilt = true;
-
-  timerEl = document.createElement('div');
-  timerEl.innerHTML = 'Time <span class="val">0:00</span>';
-  statsContainer.appendChild(timerEl);
-
-  const intRow = document.createElement('div');
-  intRow.innerHTML = 'Intensité <span class="val">0</span>';
-  intensityValEl = intRow.querySelector('.val');
-  statsContainer.appendChild(intRow);
-
-  const bar = document.createElement('div');
-  bar.className = 'intensity-bar';
-  barSegments = [];
-  for (let i = 0; i < 5; i++) {
-    const seg = document.createElement('span');
-    seg.style.background = 'transparent';
-    bar.appendChild(seg);
-    barSegments.push(seg);
-  }
-  statsContainer.appendChild(bar);
-
-  comboEl = document.createElement('div');
-  comboEl.innerHTML = 'Combo <span class="val">0</span>';
-  statsContainer.appendChild(comboEl);
-}
-
-function updateStats() {
-  const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
-  const mins = Math.floor(elapsed / 60);
-  const secs = String(elapsed % 60).padStart(2, '0');
-  timerEl.querySelector('.val').textContent = `${mins}:${secs}`;
-
-  const level = G.intensityDirector.intensity;
-  intensityValEl.textContent = level;
-  intensityValEl.style.color = INTENSITY_COLORS[level] || '#fff';
-
-  for (let i = 0; i < 5; i++) {
-    const on = i <= level;
-    barSegments[i].className = on ? 'on' : '';
-    barSegments[i].style.background = on ? INTENSITY_COLORS[i] : 'transparent';
-  }
-
-  comboEl.querySelector('.val').textContent = G.intensityDirector.combo;
-}
-
 /** Affiche/masque les panels selon l'état du jeu */
 export function updateDevOverlay() {
   if (!isDevOverlayActive()) {
     container.classList.remove('active');
-    statsContainer.classList.remove('active');
     return;
   }
   buildButtons();
-  buildStats();
   const playing = G.session.state === 'playing' || G.session.state === 'paused';
-  // Reset timer au démarrage d'une partie
-  if (playing && !wasPlaying) gameStartTime = Date.now();
-  wasPlaying = playing;
   container.classList.toggle('active', playing);
-  statsContainer.classList.toggle('active', playing);
-  if (playing) updateStats();
+  updateDevStats(playing);
 }
 
 function hexToRgba(hex, alpha) {

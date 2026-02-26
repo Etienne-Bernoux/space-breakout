@@ -6,8 +6,8 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 
 | Feature | Description | Effort |
 |---|---|---|
-| Layers dynamiques | Drums/bass/lead/pad sur des gains séparés, intensité pilotée par le gameplay (nb astéroïdes, combo, power-up) | L |
-| Sections contextuelles | Bridge/breakdown quand il reste peu d'astéroïdes, chorus quand c'est chaud | M |
+| ~~Layers dynamiques~~ | ~~Drums/bass/lead/pad sur des gains séparés, intensité pilotée par le gameplay (nb astéroïdes, combo, power-up)~~ | ~~L~~ | ✅ |
+| ~~Sections contextuelles~~ | ~~Bridge/breakdown quand il reste peu d'astéroïdes, chorus quand c'est chaud~~ | ~~M~~ | ✅ |
 | Variations mélodiques | 2-3 variantes du chorus/verse tirées aléatoirement pour casser la répétition | M |
 | Fills de transition | Roulements snare, montée arp entre les sections | S |
 | Accents musicaux | Étendre aux combos (pas seulement power-ups) | S |
@@ -17,8 +17,8 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 
 | Feature | Description | Effort |
 |---|---|---|
-| Slow-motion final | Ralenti 0.5s sur le dernier astéroïde du niveau | S |
-| Combo counter | Affichage ×2, ×3… avec feedback visuel croissant (taille, couleur) | M |
+| ~~Slow-motion final~~ | ~~Ralenti 0.5s sur le dernier astéroïde du niveau~~ | ~~S~~ | ✅ |
+| ~~Combo counter~~ | ~~Affichage ×2, ×3… avec feedback visuel croissant (taille, couleur)~~ | ~~M~~ | ✅ |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |
 | Décor parallaxe v2 | Plus de diversité : gazeuses géantes, planètes rocheuses, lunes, comètes, amas d'étoiles | M |
 

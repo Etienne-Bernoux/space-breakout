@@ -38,6 +38,8 @@ js/
     game-logic.js       → GameSession : état, collisions, score, vies (scoring depuis config)
     game-logic.spec.js  → specs game logic (état, collisions, win/lose)
     power-up-manager.js → application/revert des power-ups, lit def.effect (pas de valeurs hardcodées)
+    music-director.js   → pilote musique adaptative (intensité 0-4 selon remaining%, combo, PU, last-life)
+    music-director.spec.js → 19 tests intensité
     drop-system.js      → probabilité de drop, sizeMult depuis config
   infra/                → DOM, Canvas, Audio, Input
     stars.js            → fond étoilé parallaxe (canvas plein écran)
@@ -46,7 +48,8 @@ js/
     touch.js            → contrôles tactiles + souris + drag sliders
     particles.js        → explosions + traînée drone
     audio.js            → sons procéduraux (Web Audio) + volume SFX
-    music.js            → musique procédurale 110 BPM, 6 sections, ~52s
+    music.js            → musique procédurale 110 BPM, 7 sections, 12-section loop, layers adaptatifs
+    music-lab.js        → panel de test musical (?mus), 3 onglets (Sons/Gameplay/Mix)
     power-up-render.js  → rendu capsules + HUD power-ups actifs, tailles scalées
 ```
 
@@ -105,6 +108,22 @@ const scale = Math.min(1.0, Math.max(0.6, canvasWidth / 500));
 - Boutons menu/pause : 80% de la largeur canvas (`halfW = w * 0.4`)
 - Sliders : 60% de la largeur
 - Score positionné relativement au bouton pause (pas de position absolue)
+
+### Musique adaptative
+`music.js` génère la musique procédurale avec 4 layers (drums, bass, pad, lead) sur des GainNodes séparés.
+`music-director.js` (use-case) calcule un niveau d'intensité 0-4 basé sur :
+- Ratio astéroïdes restants (>80%→0, 50-80%→1, 30-50%→2, <30%→3, <10%→4)
+- Combo boost (+1 à ≥3, +2 à ≥6)
+- Power-up actif → min 2
+- Dernière vie → min 3
+
+L'intensité contrôle les layers (fade in/out) et sélectionne la section suivante.
+Scheduling section-par-section (pas en bulk) pour permettre le mode adaptatif.
+
+`music-lab.js` (?mus) : panel de test avec 3 onglets :
+- **Sons** : sections, instruments, stingers isolés + sélecteur piste (prêt multi-pistes)
+- **Gameplay** : triggers simulés (destroy, combo, lives, PU) + override intensité 0-4
+- **Mix** : toggle layers ON/OFF, effets (muffle)
 
 ### Constantes centralisées
 `config.js` regroupe tout : `scoring.basePoints`, `capsule` (bob/rotation/speed), `drop` (baseRate, sizeMult), ratios mobile. Aucune constante métier dans le code applicatif.

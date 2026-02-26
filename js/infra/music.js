@@ -9,6 +9,10 @@ const BEAT = 60 / BPM;
 const FILTER_OPEN = 20000;
 const FILTER_MUFFLED = 350;
 
+// --- Layers : chaque couche a son propre GainNode ---
+const LAYER_NAMES = ['drums', 'bass', 'pad', 'lead', 'high'];
+const layers = {};
+
 function getCtx() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -19,9 +23,36 @@ function getCtx() {
     masterFilter.frequency.value = FILTER_OPEN;
     masterGain.connect(masterFilter);
     masterFilter.connect(ctx.destination);
+    // Créer un GainNode par layer
+    for (const name of LAYER_NAMES) {
+      const g = ctx.createGain();
+      g.gain.value = name === 'high' ? 0 : 1.0;
+      g.connect(masterGain);
+      layers[name] = g;
+    }
   }
   return ctx;
 }
+
+/** Fade un layer vers un volume cible (0–1) en `dur` secondes. */
+export function setLayerVolume(layerName, vol, dur = 0.5) {
+  if (!layers[layerName] || !ctx) return;
+  const g = layers[layerName].gain;
+  g.cancelScheduledValues(ctx.currentTime);
+  g.setValueAtTime(g.value, ctx.currentTime);
+  g.linearRampToValueAtTime(vol, ctx.currentTime + dur);
+}
+
+/** Retourne les volumes actuels des layers. */
+export function getLayerVolumes() {
+  const vols = {};
+  for (const name of LAYER_NAMES) {
+    vols[name] = layers[name] ? layers[name].gain.value : 1;
+  }
+  return vols;
+}
+
+export { LAYER_NAMES };
 
 function freq(note) {
   return 440 * Math.pow(2, (note - 69) / 12);
@@ -38,7 +69,7 @@ function kick(time) {
   gain.gain.setValueAtTime(0.6, time);
   gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
   osc.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(layers.drums || masterGain);
   osc.start(time);
   osc.stop(time + 0.3);
 }
@@ -59,7 +90,7 @@ function snare(time) {
   gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
   src.connect(bp);
   bp.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(layers.drums || masterGain);
   src.start(time);
 }
 
@@ -79,7 +110,7 @@ function hihat(time, vol = 0.08) {
   gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
   src.connect(hp);
   hp.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(layers.drums || masterGain);
   src.start(time);
 }
 
@@ -98,7 +129,7 @@ function bass(time, note, dur) {
   gain.gain.linearRampToValueAtTime(0, time + dur);
   osc.connect(filter);
   filter.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(layers.bass || masterGain);
   osc.start(time);
   osc.stop(time + dur);
 }
@@ -123,7 +154,7 @@ function lead(time, note, dur, vol = 0.12) {
   osc1.connect(filter);
   osc2.connect(filter);
   filter.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(layers.lead || masterGain);
   osc1.start(time);
   osc2.start(time);
   osc1.stop(time + dur);
@@ -149,7 +180,7 @@ function pad(time, notes, dur) {
     osc.stop(time + dur);
   }
   filter.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(layers.pad || masterGain);
 }
 
 function arp(time, note, dur) {
@@ -162,7 +193,44 @@ function arp(time, note, dur) {
   gain.gain.linearRampToValueAtTime(0.07, time + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
   osc.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(layers.lead || masterGain);
+  osc.start(time);
+  osc.stop(time + dur);
+}
+
+// --- Layer "high" : arp rapide + doublage octave lead ---
+
+function arpFast(time, note, dur) {
+  const c = getCtx();
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.value = freq(note);
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.05, time + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  osc.connect(gain);
+  gain.connect(layers.high || masterGain);
+  osc.start(time);
+  osc.stop(time + dur);
+}
+
+function leadOctave(time, note, dur, vol = 0.06) {
+  const c = getCtx();
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  const filter = c.createBiquadFilter();
+  osc.type = 'square';
+  osc.frequency.value = freq(note + 12); // octave au-dessus
+  filter.type = 'lowpass';
+  filter.frequency.value = 2200;
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(vol, time + 0.02);
+  gain.gain.setValueAtTime(vol, time + dur - 0.04);
+  gain.gain.linearRampToValueAtTime(0, time + dur);
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(layers.high || masterGain);
   osc.start(time);
   osc.stop(time + dur);
 }
@@ -319,25 +387,140 @@ function sectionOutro(t0) {
   for (const [n, t, d] of mel) lead(t0 + t * BEAT, n, d * BEAT, 0.15);
 }
 
-// === SCHEDULING ===
-// Structure : Intro → Couplet → Refrain → Couplet → Pont → Refrain final
-// = 6 × 16 beats = 96 beats ≈ 52s à 110 BPM
+// --- Section F : Breakdown (16 beats) — minimal, tendu, basse + hihats ---
+function sectionBreakdown(t0) {
+  // Drums minimalistes — kick espacés, hihats serrés
+  for (let i = 0; i < 16; i++) {
+    if (i % 8 === 0) kick(t0 + i * BEAT);
+    if (i % 2 === 0) hihat(t0 + i * BEAT, 0.04);
+    hihat(t0 + i * BEAT + BEAT * 0.5, 0.03);
+  }
+  // Snare rolls sur les 4 derniers beats
+  for (let i = 12; i < 16; i++) {
+    snare(t0 + i * BEAT);
+    if (i >= 14) snare(t0 + i * BEAT + BEAT * 0.5);
+  }
 
-function scheduleFullLoop() {
+  // Basse menaçante — notes longues, filtre bas
+  bass(t0, 40, 8 * BEAT);
+  bass(t0 + 8 * BEAT, 43, 4 * BEAT);
+  bass(t0 + 12 * BEAT, 45, 4 * BEAT);
+
+  // Pad très filtré, tension
+  pad(t0, [52, 55, 58], 8 * BEAT);  // Em(b6) → tension
+  pad(t0 + 8 * BEAT, [52, 55, 59], 8 * BEAT);
+}
+
+// --- Section G : Climax (16 beats) — intensité max, double-time hihats ---
+function sectionClimax(t0) {
+  // Drums double-time — kick chaque beat, hihats en croches
+  for (let i = 0; i < 16; i++) {
+    kick(t0 + i * BEAT);
+    hihat(t0 + i * BEAT, 0.08);
+    hihat(t0 + i * BEAT + BEAT * 0.25, 0.05);
+    hihat(t0 + i * BEAT + BEAT * 0.5, 0.07);
+    hihat(t0 + i * BEAT + BEAT * 0.75, 0.04);
+    if (i % 2 === 1) snare(t0 + i * BEAT);
+  }
+
+  // Basse agressive — motif rapide
+  const bassLine = [
+    [40, 0, 0.5], [40, 0.5, 0.5], [43, 1, 0.5], [45, 1.5, 0.5],
+    [47, 2, 1], [45, 3, 0.5], [43, 3.5, 0.5],
+    [40, 4, 0.5], [40, 4.5, 0.5], [43, 5, 0.5], [47, 5.5, 0.5],
+    [45, 6, 1], [43, 7, 0.5], [40, 7.5, 0.5],
+    [40, 8, 0.5], [43, 8.5, 0.5], [45, 9, 0.5], [47, 9.5, 0.5],
+    [48, 10, 1], [47, 11, 0.5], [45, 11.5, 0.5],
+    [43, 12, 1], [45, 13, 1], [47, 14, 1], [40, 15, 1],
+  ];
+  for (const [n, t, d] of bassLine) bass(t0 + t * BEAT, n, d * BEAT);
+
+  // Pad épais
+  pad(t0, [52, 55, 59, 64], 4 * BEAT);
+  pad(t0 + 4 * BEAT, [55, 59, 62, 67], 4 * BEAT);
+  pad(t0 + 8 * BEAT, [57, 60, 64, 69], 4 * BEAT);
+  pad(t0 + 12 * BEAT, [52, 55, 59, 64], 4 * BEAT);
+
+  // Mélodie climax — octave haute, urgente
+  const mel = [
+    [76, 0, 0.5], [79, 0.5, 0.5], [81, 1, 1], [83, 2, 1], [81, 3, 1],
+    [79, 4, 0.5], [81, 4.5, 0.5], [83, 5, 1], [86, 6, 2],
+    [83, 8, 0.5], [81, 8.5, 0.5], [79, 9, 1], [81, 10, 1], [83, 11, 1],
+    [81, 12, 1], [79, 13, 1], [76, 14, 1], [74, 15, 1],
+  ];
+  for (const [n, t, d] of mel) {
+    lead(t0 + t * BEAT, n, d * BEAT, 0.18);
+    leadOctave(t0 + t * BEAT, n, d * BEAT, 0.06);
+  }
+
+  // Arp rapide (16th notes) — layer high
+  const arpNotes = [76, 79, 83, 79, 81, 76, 79, 83,
+                    79, 83, 86, 83, 81, 79, 83, 81,
+                    83, 86, 88, 86, 83, 81, 79, 83,
+                    81, 79, 76, 79, 81, 83, 79, 76];
+  for (let i = 0; i < 32; i++) {
+    arpFast(t0 + i * BEAT * 0.5, arpNotes[i % arpNotes.length], BEAT * 0.35);
+  }
+}
+
+// === SCHEDULING ===
+const SECTION_MAP = {
+  intro: sectionIntro, verse: sectionVerse, chorus: sectionChorus,
+  bridge: sectionBridge, breakdown: sectionBreakdown,
+  climax: sectionClimax, outro: sectionOutro,
+};
+
+const FULL_LOOP_NAMES = [
+  'intro', 'verse', 'chorus', 'verse',
+  'breakdown', 'chorus', 'bridge', 'climax',
+  'verse', 'bridge', 'chorus', 'outro',
+];
+
+const SECTION_LEN = 16 * BEAT;
+
+// --- Mode adaptatif : le MusicDirector peut demander la prochaine section ---
+let adaptiveMode = false;
+let nextRequestedSection = null;
+let currentSectionName = null;
+let currentSectionStartTime = 0; // AudioContext time
+let loopIndex = 0;
+
+export function enableAdaptiveMode() { adaptiveMode = true; }
+export function disableAdaptiveMode() { adaptiveMode = false; }
+
+/** Demande une section pour la prochaine transition. */
+export function requestNextSection(name) { nextRequestedSection = name; }
+
+/** Retourne le nom de la section en cours. */
+export function getCurrentSection() { return currentSectionName; }
+
+/** Retourne le temps restant avant la prochaine transition (en secondes). */
+export function getTimeToNextSection() {
+  if (!ctx || !playing) return 0;
+  const elapsed = ctx.currentTime - currentSectionStartTime;
+  return Math.max(0, SECTION_LEN - elapsed);
+}
+
+function scheduleNextSection() {
   if (!playing) return;
   const c = getCtx();
-  const now = c.currentTime + 0.1;
-  const sectionLen = 16 * BEAT;
+  const now = c.currentTime + 0.05;
 
-  sectionIntro(now);
-  sectionVerse(now + sectionLen);
-  sectionChorus(now + sectionLen * 2);
-  sectionVerse(now + sectionLen * 3);
-  sectionBridge(now + sectionLen * 4);
-  sectionOutro(now + sectionLen * 5);
+  let sectionName;
+  if (adaptiveMode && nextRequestedSection) {
+    sectionName = nextRequestedSection;
+    nextRequestedSection = null;
+  } else {
+    sectionName = FULL_LOOP_NAMES[loopIndex % FULL_LOOP_NAMES.length];
+    loopIndex++;
+  }
 
-  const totalLen = sectionLen * 6;
-  loopTimer = setTimeout(scheduleFullLoop, totalLen * 1000 - 200);
+  const fn = SECTION_MAP[sectionName];
+  if (fn) fn(now);
+  currentSectionName = sectionName;
+  currentSectionStartTime = now;
+
+  loopTimer = setTimeout(scheduleNextSection, SECTION_LEN * 1000 - 100);
 }
 
 export function startMusic() {
@@ -345,7 +528,8 @@ export function startMusic() {
   const c = getCtx();
   if (c.state === 'suspended') c.resume();
   playing = true;
-  scheduleFullLoop();
+  loopIndex = 0;
+  scheduleNextSection();
 }
 
 export function stopMusic() {
@@ -439,6 +623,46 @@ export function playGameOverStinger() {
     osc.start(t + i * 0.2);
     osc.stop(t + i * 0.2 + 1.2);
   }
+}
+
+// --- Exports pour le Music Lab ---
+/** Retourne le contexte audio SANS le créer (peut être null). */
+export function peekAudioContext() { return ctx; }
+
+/** Reset complet : ferme le contexte audio et le recrée. Coupe tout son en cours. */
+export function resetAudio() {
+  playing = false;
+  if (loopTimer) clearTimeout(loopTimer);
+  loopTimer = null;
+  if (ctx) { ctx.close().catch(() => {}); }
+  ctx = null;
+  masterGain = null;
+  masterFilter = null;
+  for (const name of LAYER_NAMES) delete layers[name];
+}
+
+export function playSectionByName(name) {
+  const c = getCtx();
+  if (c.state === 'suspended') c.resume();
+  const t = c.currentTime + 0.05;
+  const map = { intro: sectionIntro, verse: sectionVerse, chorus: sectionChorus, bridge: sectionBridge, breakdown: sectionBreakdown, climax: sectionClimax, outro: sectionOutro };
+  if (map[name]) map[name](t);
+}
+
+export function playInstrumentDemo(name) {
+  const c = getCtx();
+  if (c.state === 'suspended') c.resume();
+  const t = c.currentTime + 0.05;
+  const demos = {
+    kick:  () => kick(t),
+    snare: () => snare(t),
+    hihat: () => hihat(t, 0.12),
+    bass:  () => bass(t, 40, BEAT * 2),
+    lead:  () => lead(t, 71, BEAT * 2, 0.15),
+    pad:   () => pad(t, [52, 55, 59], BEAT * 8),
+    arp:   () => { [64, 67, 71, 74].forEach((n, i) => arp(t + i * BEAT * 0.5, n, BEAT * 0.5)); },
+  };
+  if (demos[name]) demos[name]();
 }
 
 export function playPowerUpAccent() {

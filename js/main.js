@@ -17,6 +17,8 @@ import { triggerShake, updateShake } from './infra/screenshake.js';
 import { PowerUpManager } from './use-cases/power-up-manager.js';
 import { getPowerUp } from './domain/power-ups.js';
 import { drawCapsule, drawPowerUpHUD } from './infra/power-up-render.js';
+import { isMusicLab, isMusicLabActive, showMusicLab, drawMusicLab, handleMusicLabTap, handleMusicLabHover, handleMusicLabScroll } from './infra/music-lab.js';
+import { MusicDirector } from './use-cases/music-director.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -24,10 +26,11 @@ const ctx = canvas.getContext('2d');
 
 // --- Session de jeu (use case) ---
 const session = new GameSession(CONFIG);
-let ship = null, drone = null, field;
+let ship = null, drone = null, field, totalAsteroids = 0;
 let capsules = [];
 const dropSystem = new DropSystem(CONFIG.drop);
 const puManager = new PowerUpManager();
+const musicDirector = new MusicDirector();
 
 // --- Scale responsive pour le jeu (HUD, boutons, overlays) ---
 function gameScale() { return Math.min(1.0, Math.max(0.6, CONFIG.canvas.width / 500)); }
@@ -75,6 +78,8 @@ loadSettings();
 loadDevConfig();
 // En mode dev, afficher le panel avant le menu
 if (isDevMode()) showDevPanel();
+// Music lab : ?music=1
+if (isMusicLab()) showMusicLab();
 
 setVolumeChangeCallback((music, sfx) => {
   setMusicVolume(perceptualVolume(music) * 0.3);
@@ -102,6 +107,8 @@ function startGame() {
   capsules = [];
   combo = 0; comboDisplay = 0; comboFadeTimer = 0; slowMoTimer = 0;
   puManager.clear({ ship, drone, session, field });
+  totalAsteroids = field.remaining;
+  musicDirector.enable();
   session.start();
 }
 
@@ -126,6 +133,11 @@ setTapHandler((x, y) => {
 });
 
 setMenuTapHandler((x, y) => {
+  // Music lab intercepte les taps
+  if (isMusicLabActive()) {
+    handleMusicLabTap(x, y);
+    return;
+  }
   ensureMusic();
   // Dev panel intercepte les taps quand actif
   if (isDevPanelActive()) {
@@ -173,6 +185,7 @@ setReleaseHandler(() => {
 
 // --- Contrôles clavier ---
 document.addEventListener('keydown', (e) => {
+  if (isMusicLabActive()) return;
   ensureMusic();
   // Dev panel : Entrée pour lancer
   if (isDevPanelActive()) {
@@ -212,10 +225,17 @@ document.addEventListener('keyup', (e) => {
   }
 });
 
+document.addEventListener('wheel', (e) => {
+  if (isMusicLabActive()) {
+    e.preventDefault();
+    handleMusicLabScroll(e.deltaY);
+  }
+}, { passive: false });
+
 // --- Collisions (déléguées au use case, dispatch des effets ici) ---
 function handleCollisions() {
   const ev1 = session.checkShipCollision(drone, ship);
-  if (ev1) { playBounce(); combo = 0; }
+  if (ev1) { playBounce(); combo = 0; musicDirector.onComboReset(); }
 
   const ev2 = session.checkAsteroidCollision(drone, field);
   if (ev2) {
@@ -229,6 +249,8 @@ function handleCollisions() {
       triggerShake(shakeAmount);
       const puId = dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
       if (puId) capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
+      // Music director : destruction
+      musicDirector.onAsteroidDestroyed(field.remaining, totalAsteroids);
       // Slow-motion sur le dernier astéroïde
       if (field.remaining === 0) triggerSlowMo();
     }
@@ -239,21 +261,26 @@ function handleCollisions() {
   for (const ce of capEvts) {
     const gs = { ship, drone, session, field };
     puManager.activate(ce.powerUpId, gs);
+    musicDirector.onPowerUpActivated();
     playPowerUpAccent();
     spawnExplosion(ce.x, ce.y, getPowerUp(ce.powerUpId)?.color || '#fff');
   }
 
   // Expiration des power-ups
+  const puCountBefore = puManager.getActive().length;
   puManager.update({ ship, drone, session, field });
+  if (puCountBefore > 0 && puManager.getActive().length === 0) {
+    musicDirector.onPowerUpExpired();
+  }
 
   const ev3 = session.checkDroneLost(drone, ship);
-  if (ev3 && ev3.type === 'gameOver') { playGameOver(); playGameOverStinger(); }
-  if (ev3 && ev3.type === 'loseLife') { playLoseLife(); combo = 0; }
+  if (ev3 && ev3.type === 'gameOver') { playGameOver(); playGameOverStinger(); musicDirector.disable(); }
+  if (ev3 && ev3.type === 'loseLife') { playLoseLife(); combo = 0; musicDirector.onComboReset(); musicDirector.onLifeChanged(ev3.livesLeft); }
 
   // Retarder le win pendant le slow-mo pour qu'il soit visible
   if (slowMoTimer <= 0) {
     const ev4 = session.checkWin(field);
-    if (ev4) { playWin(); playWinStinger(); }
+    if (ev4) { playWin(); playWinStinger(); musicDirector.disable(); }
   }
 }
 
@@ -415,6 +442,14 @@ function loop() {
 
   // Curseur adapté à l'état
   document.body.classList.toggle('menu', session.state === 'menu' || session.state === 'paused');
+
+  if (isMusicLabActive()) {
+    const mouse = getMousePos();
+    handleMusicLabHover(mouse.x, mouse.y);
+    drawMusicLab(ctx);
+    requestAnimationFrame(loop);
+    return;
+  }
 
   if (isDevPanelActive()) {
     const mouse = getMousePos();

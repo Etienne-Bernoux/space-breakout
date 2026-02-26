@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { AsteroidField } from './asteroid.js';
+import { AsteroidField } from './asteroid/index.js';
 import { CONFIG } from '../config.js';
 import { PATTERNS, parsePattern, GRID_PRESETS } from './patterns.js';
 

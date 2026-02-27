@@ -94,6 +94,53 @@ describe('HudRenderer', () => {
       hud.drawCombo();
       expect(d.ctx.fillText).toHaveBeenCalledWith('×5', expect.any(Number), expect.any(Number));
     });
+
+    it('couleur combo progresse de jaune (×2) à rouge (×15)', () => {
+      const d = makeDeps();
+      const hud = new HudRenderer(d);
+      const colors = [];
+      for (const combo of [2, 5, 10, 15]) {
+        d.ui.comboFadeTimer = 50;
+        d.ui.comboDisplay = combo;
+        d.ctx.fillStyle = '';
+        hud.drawCombo();
+        colors.push(d.ctx.fillStyle);
+      }
+      // ×2 → hue 60, ×15 → hue 0
+      expect(colors[0]).toMatch(/hsl\(60,/);
+      expect(colors[3]).toMatch(/hsl\(0,/);
+      // intermédiaires entre 0 et 60
+      const hue5 = parseInt(colors[1].match(/hsl\((\d+)/)[1]);
+      const hue10 = parseInt(colors[2].match(/hsl\((\d+)/)[1]);
+      expect(hue5).toBeGreaterThan(0);
+      expect(hue5).toBeLessThan(60);
+      expect(hue10).toBeGreaterThan(0);
+      expect(hue10).toBeLessThan(hue5);
+    });
+
+    it('glow augmente avec le combo', () => {
+      const d = makeDeps();
+      const hud = new HudRenderer(d);
+      const blurs = [];
+      const origSave = d.ctx.save;
+      d.ctx.save = vi.fn(() => { origSave(); });
+      // Spy on shadowBlur writes
+      let lastBlur = 0;
+      Object.defineProperty(d.ctx, 'shadowBlur', {
+        get() { return lastBlur; },
+        set(v) { lastBlur = v; blurs.push(v); },
+      });
+      d.ui.comboFadeTimer = 50;
+      d.ui.comboDisplay = 2;
+      hud.drawCombo();
+      const maxBlurLow = Math.max(...blurs);
+      blurs.length = 0;
+      d.ui.comboFadeTimer = 50;
+      d.ui.comboDisplay = 15;
+      hud.drawCombo();
+      const maxBlurHigh = Math.max(...blurs);
+      expect(maxBlurHigh).toBeGreaterThan(maxBlurLow);
+    });
   });
 
   describe('drawDeathLine', () => {

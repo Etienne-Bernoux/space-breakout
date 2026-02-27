@@ -60,10 +60,12 @@ export class HudRenderer {
     ctx.font = `bold ${fontSize}px monospace`;
     ctx.textAlign = 'center';
 
-    const hue = Math.max(0, 60 - (this.ui.comboDisplay - 2) * 15);
-    ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
-    ctx.shadowColor = `hsl(${hue}, 100%, 40%)`;
-    ctx.shadowBlur = 12;
+    const t = Math.min(1, (this.ui.comboDisplay - 2) / 13);   // 0 @ ×2 → 1 @ ×15
+    const hue = Math.round(60 - t * 60);                       // 60 (yellow) → 0 (red)
+    const lit = Math.round(60 + t * 15);                       // 60% → 75% (brighter at max)
+    ctx.fillStyle = `hsl(${hue}, 100%, ${lit}%)`;
+    ctx.shadowColor = `hsl(${hue}, 100%, ${lit - 20}%)`;
+    ctx.shadowBlur = Math.round(12 + t * 8);
     ctx.fillText(`×${this.ui.comboDisplay}`, cx, cy);
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;

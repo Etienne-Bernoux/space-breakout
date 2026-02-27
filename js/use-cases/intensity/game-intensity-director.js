@@ -8,9 +8,9 @@ import { EffectDirector } from '../effect/effect-director.js';
 const COMBO_DECAY_INTERVAL = 3000; // ms entre chaque -1 combo
 
 export class GameIntensityDirector {
-  constructor() {
-    this.music = new MusicDirector();
-    this.effects = new EffectDirector();
+  constructor({ music, effects } = {}) {
+    this.music = music ?? new MusicDirector();
+    this.effects = effects ?? new EffectDirector();
     this.intensity = 0;
     this.combo = 0;
     this.remainingRatio = 1.0;

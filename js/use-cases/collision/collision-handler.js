@@ -120,6 +120,7 @@ export class CollisionHandler {
           this.systems.intensity.onGameOver();
         } else {
           drones[0].reset(ship);
+          this.systems.powerUp.clearDroneEffects();
           this.systems.intensity.onLifeChanged(livesLeft);
         }
       }

@@ -161,6 +161,34 @@ describe('PowerUpManager', () => {
     });
   });
 
+  describe('clearDroneEffects', () => {
+    it('supprime les power-ups drone sans toucher aux autres', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('shipWide', gs, 0);
+      pm.activate('dronePiercing', gs, 0);
+      pm.activate('droneFast', gs, 0);
+      pm.activate('droneWarp', gs, 0);
+      expect(pm.active.size).to.equal(4);
+      pm.clearDroneEffects();
+      expect(pm.active.size).to.equal(1); // seul shipWide reste
+      expect(pm.active.has('shipWide')).to.be.true;
+    });
+
+    it('pas de revert obsolète après clear + expire', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneFast', gs, 0);
+      expect(gs.drone.speed).to.be.closeTo(5.4, 0.01);
+      // Simule drone.reset() → remet speed à 3
+      gs.drone.speed = 3;
+      pm.clearDroneEffects();
+      // Le power-up n'est plus dans active → update ne devrait rien casser
+      pm.update(gs, 10001);
+      expect(gs.drone.speed).to.equal(3); // pas de double-revert
+    });
+  });
+
   describe('clear', () => {
     it('revert tout', () => {
       const pm = new PowerUpManager();

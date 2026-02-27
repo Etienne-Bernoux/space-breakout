@@ -4,10 +4,12 @@ export class Drone {
    * @param {object} ship
    */
   constructor(config, ship, isMobile = false, canvasWidth = 800) {
-    this.radius = (isMobile && config.mobileRadiusRatio)
+    this._baseRadius = (isMobile && config.mobileRadiusRatio)
       ? Math.max(config.radius, Math.round(canvasWidth * config.mobileRadiusRatio))
       : config.radius;
-    this.speed = config.speed;
+    this._baseSpeed = config.speed;
+    this.radius = this._baseRadius;
+    this.speed = this._baseSpeed;
     this.color = config.color;
     this.piercing = false;
     this.sticky = false;
@@ -16,6 +18,12 @@ export class Drone {
   }
 
   reset(ship) {
+    this.radius = this._baseRadius;
+    this.speed = this._baseSpeed;
+    this.piercing = false;
+    this.sticky = false;
+    this.warp = false;
+    this._stickyOffset = undefined;
     this.x = ship.x + ship.width / 2;
     this.y = ship.y - this.radius;
     this.dx = 0;

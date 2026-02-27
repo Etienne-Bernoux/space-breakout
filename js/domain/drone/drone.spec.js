@@ -35,6 +35,25 @@ describe('Drone', () => {
       expect(drone.x).to.equal(240);
       expect(drone.launched).to.be.false;
     });
+
+    it('reset restaure radius, speed et flags power-up', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = makeDrone(ship);
+      // Simule des power-ups actifs
+      drone.radius = 20;
+      drone.speed = 10;
+      drone.piercing = true;
+      drone.sticky = true;
+      drone.warp = true;
+
+      drone.reset(ship);
+
+      expect(drone.radius).to.equal(6);   // _baseRadius
+      expect(drone.speed).to.equal(3);     // _baseSpeed
+      expect(drone.piercing).to.be.false;
+      expect(drone.sticky).to.be.false;
+      expect(drone.warp).to.be.false;
+    });
   });
 
   describe('update — non lancé', () => {

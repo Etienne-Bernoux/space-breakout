@@ -49,6 +49,7 @@ function makeDeps(overrides = {}) {
       activate: vi.fn(),
       update: vi.fn(),
       getActive: vi.fn(() => []),
+      clearDroneEffects: vi.fn(),
     },
     ...overrides.systems,
   };

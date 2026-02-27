@@ -55,6 +55,16 @@ export class PowerUpManager {
     this.active.clear();
   }
 
+  /** Supprime les power-ups drone du manager (drone.reset() a déjà nettoyé les props).
+   *  Appelé sur perte de vie pour éviter un revert obsolète à l'expiration. */
+  clearDroneEffects() {
+    for (const [puId, entry] of this.active) {
+      if (entry.def.effect.target === 'drone') {
+        this.active.delete(puId);
+      }
+    }
+  }
+
   /** Liste des effets actifs pour le HUD. */
   getActive(now = Date.now()) {
     return Array.from(this.active.entries()).map(([id, e]) => ({
@@ -140,7 +150,7 @@ export class PowerUpManager {
       const ref = gs.drones[0];
       if (ref) {
         const d = new Drone(
-          { radius: ref.radius, speed: ref.speed, color: ref.color },
+          { radius: ref._baseRadius || ref.radius, speed: ref._baseSpeed || ref.speed, color: ref.color },
           gs.ship,
         );
         d.piercing = ref.piercing;

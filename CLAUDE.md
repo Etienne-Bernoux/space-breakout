@@ -55,13 +55,12 @@ js/
       drone-manager.js  → lifecycle drone centralisé (spawn, remove, reset)
     intensity/
       game-intensity-director.js → chef d'orchestre (intensité 0-4 → music + effects, DI)
-    music/
-      music-director.js → gère TOUS les sons/musique (reçoit events du GID)
-    effect/
-      effect-director.js → effets visuels par intensité (lerp entre presets)
     drop/
       drop-system.js    → probabilité de drop
   infra/                → DOM, Canvas, Audio, Input
+    orchestrators/
+      music-director.js → gère TOUS les sons/musique (reçoit events du GID)
+      effect-director.js → effets visuels par intensité (lerp entre presets)
     input-handler.js    → handlers tactiles/clavier, pause
     stars.js            → fond étoilé parallaxe
     resize.js           → canvas responsive
@@ -205,9 +204,11 @@ Importée partout (menu, HUD, pause, power-up-render). Un seul site à modifier 
 ### GameIntensityDirector (chef d'orchestre)
 Point d'entrée unique pour tous les événements gameplay. Les fichiers `main/` (collisions, input) n'importent jamais directement audio/music — tout passe par `G.intensityDirector.onXxx()`.
 
-`GameIntensityDirector` (DI : `{ music, effects }`) calcule l'intensité 0-4 et dispatch vers :
-- `MusicDirector` — gère TOUS les sons (SFX + musique + stingers)
-- `EffectDirector` — effets visuels (vitesse étoiles, vignette, micro-shake, couleur death line, glow score)
+`GameIntensityDirector` (use-case, DI pure via ports duck-typed : `{ music, effects }`) calcule l'intensité 0-4 et dispatch vers :
+- `MusicDirector` (`infra/orchestrators/`) — gère TOUS les sons (SFX + musique + stingers)
+- `EffectDirector` (`infra/orchestrators/`) — effets visuels (vitesse étoiles, vignette, micro-shake, couleur death line, glow score)
+
+Les orchestrateurs vivent dans `infra/` car ils dépendent de Web Audio / Canvas. Le GID ne les importe pas — il reçoit des ports via DI (NOOP fallbacks si non fournis).
 
 Calcul d'intensité :
 - Ratio astéroïdes restants (>80%→0, 50-80%→1, 30-50%→2, <30%→3, <10%→4)

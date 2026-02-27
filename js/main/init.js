@@ -6,6 +6,8 @@ import { GameSession } from '../use-cases/game-logic/game-session.js';
 import { DropSystem } from '../use-cases/drop/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up/power-up-manager.js';
 import { GameIntensityDirector } from '../use-cases/intensity/game-intensity-director.js';
+import { MusicDirector } from '../infra/orchestrators/music-director.js';
+import { EffectDirector } from '../infra/orchestrators/effect-director.js';
 import { setupResize } from '../infra/resize.js';
 import { spawnExplosion, spawnTrail, updateParticles } from '../infra/particles.js';
 import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
@@ -47,7 +49,10 @@ export const G = {
   systems: {
     drop: new DropSystem(CONFIG.drop),
     powerUp: null, // wired below (circular dep with droneManager)
-    intensity: new GameIntensityDirector(),
+    intensity: new GameIntensityDirector({
+      music: new MusicDirector(),
+      effects: new EffectDirector(),
+    }),
     droneManager: null, // wired below
   },
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },

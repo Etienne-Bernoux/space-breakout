@@ -1,16 +1,33 @@
 // --- GameIntensityDirector : calcule l'intensité, dispatch vers Music + Effects ---
 // Point d'entrée unique pour TOUS les événements gameplay.
 // Les consommateurs (collisions, input) n'appellent jamais directement audio/music.
-
-import { MusicDirector } from '../music/music-director.js';
-import { EffectDirector } from '../effect/effect-director.js';
+//
+// Ports attendus (DI) :
+//   music  : { enable, disable, onBounce, onAsteroidHit, onCombo, onPowerUp,
+//              onLoseLife, onLaunch, onPause, onResume, onWin, onGameOver,
+//              setIntensity, requestSectionChange }
+//   effects: { setIntensity, update, getEffects }
 
 const COMBO_DECAY_INTERVAL = 3000; // ms entre chaque -1 combo
 
+const NOOP_MUSIC = {
+  enable() {}, disable() {}, onBounce() {}, onAsteroidHit() {}, onCombo() {},
+  onPowerUp() {}, onLoseLife() {}, onLaunch() {}, onPause() {}, onResume() {},
+  onWin() {}, onGameOver() {}, setIntensity() {}, requestSectionChange() {},
+};
+const NOOP_EFFECTS = {
+  setIntensity() {}, update() {}, getEffects() { return {}; },
+};
+
 export class GameIntensityDirector {
+  /**
+   * @param {object} deps
+   * @param {object} deps.music   - implémente le port music (voir commentaire)
+   * @param {object} deps.effects - implémente le port effects
+   */
   constructor({ music, effects } = {}) {
-    this.music = music ?? new MusicDirector();
-    this.effects = effects ?? new EffectDirector();
+    this.music = music || NOOP_MUSIC;
+    this.effects = effects || NOOP_EFFECTS;
     this.intensity = 0;
     this.combo = 0;
     this.remainingRatio = 1.0;

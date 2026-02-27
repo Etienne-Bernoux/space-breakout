@@ -7,10 +7,17 @@ import { DropSystem } from '../use-cases/drop/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up/power-up-manager.js';
 import { GameIntensityDirector } from '../use-cases/intensity/game-intensity-director.js';
 import { setupResize } from '../infra/resize.js';
-import { spawnExplosion } from '../infra/particles.js';
-import { triggerShake } from '../infra/screenshake.js';
-import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
-import { initDevOverlay } from '../infra/dev-overlay/index.js';
+import { spawnExplosion, spawnTrail, updateParticles } from '../infra/particles.js';
+import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
+import { isDevMode, getDevAsteroidConfig, isDevPanelActive, drawDevPanel, handleDevHover, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
+import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
+import { updateStars } from '../infra/stars.js';
+import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
+import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
+import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
+import { isMusicLabActive, drawMusicLab, handleMusicLabHover, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
+import { drawShip } from '../infra/renderers/ship-render.js';
+import { drawDrone } from '../infra/renderers/drone-render.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { HudRenderer } from './hud.js';
 import { GameLoop } from './loop.js';
@@ -104,6 +111,26 @@ export function startGame() {
   G.session.start();
 }
 
+// --- Infra adapters (regroupement des dépendances infra pour injection) ---
+const loopInfra = {
+  updateStars, getMousePos, getTouchX,
+  updateMenu, updateMenuHover,
+  spawnTrail, updateParticles,
+  updateShake, setAmbientShake,
+  drawCapsule, drawPowerUpHUD,
+  isDevPanelActive, drawDevPanel, handleDevHover,
+  isMusicLabActive, drawMusicLab, handleMusicLabHover,
+  updateDevOverlay,
+  drawShip, drawDrone,
+};
+
+const inputInfra = {
+  setupTouch, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler,
+  handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu,
+  isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel,
+  isMusicLabActive, handleMusicLabTap, handleMusicLabScroll,
+};
+
 G.gameLoop = new GameLoop({
   render: G.render,
   entities: G.entities,
@@ -113,6 +140,7 @@ G.gameLoop = new GameLoop({
   canvas: CONFIG.canvas,
   hud: G.hud,
   collisionHandler: G.collisionHandler,
+  infra: loopInfra,
 });
 
 G.inputHandler = new InputHandler({
@@ -123,6 +151,7 @@ G.inputHandler = new InputHandler({
   gameScale,
   pauseBtnLayout,
   startGame,
+  infra: inputInfra,
 });
 
 // --- Resize handler ---

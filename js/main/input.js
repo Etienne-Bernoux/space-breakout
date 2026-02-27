@@ -1,21 +1,16 @@
-import { CONFIG } from '../config.js';
-import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
-import { handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
-import { isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel } from '../infra/dev-panel/index.js';
-import { isMusicLabActive, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
-
 export class InputHandler {
   /**
    * @param {object} deps
    * @param {object} deps.entities   - { ship, drones }
    * @param {object} deps.session    - GameSession
    * @param {object} deps.systems    - { intensity }
-   * @param {object} deps.canvas     - CONFIG.canvas
+   * @param {object} deps.canvas     - { width, height }
    * @param {function} deps.gameScale
    * @param {function} deps.pauseBtnLayout
    * @param {function} deps.startGame
+   * @param {object} deps.infra      - infra adapters (touch, menu, devPanel, musicLab)
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, startGame }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, startGame, infra }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -23,8 +18,9 @@ export class InputHandler {
     this.gameScale = gameScale;
     this.pauseBtnLayout = pauseBtnLayout;
     this.startGame = startGame;
+    this.infra = infra;
 
-    setupTouch();
+    infra.setupTouch();
     this.#bindTouchHandlers();
     this.#bindKeyboard();
   }
@@ -43,7 +39,9 @@ export class InputHandler {
   }
 
   #bindTouchHandlers() {
-    setTapHandler((x, y) => {
+    const infra = this.infra;
+
+    infra.setTapHandler((x, y) => {
       if (this.session.state === 'playing') {
         const pb = this.pauseBtnLayout();
         if (x >= pb.x && x <= pb.x + pb.size &&
@@ -55,27 +53,27 @@ export class InputHandler {
         if (this.#launchAllDrones()) this.systems.intensity.onLaunch();
       }
       if (this.session.state === 'gameOver' || this.session.state === 'won') {
-        resetMenu();
+        infra.resetMenu();
         this.session.backToMenu();
-        if (isDevMode()) showDevPanel();
+        if (infra.isDevMode()) infra.showDevPanel();
       }
     });
 
-    setMenuTapHandler((x, y) => {
-      if (isMusicLabActive()) {
-        handleMusicLabTap(x, y);
+    infra.setMenuTapHandler((x, y) => {
+      if (infra.isMusicLabActive()) {
+        infra.handleMusicLabTap(x, y);
         return;
       }
-      if (isDevPanelActive()) {
-        const result = handleDevTap(x, y);
+      if (infra.isDevPanelActive()) {
+        const result = infra.handleDevTap(x, y);
         if (result === 'launch') {
-          hideDevPanel();
+          infra.hideDevPanel();
           this.startGame();
         }
         return;
       }
       if (this.session.state === 'menu') {
-        const action = handleMenuTap(x, y);
+        const action = infra.handleMenuTap(x, y);
         if (action === 'play') this.startGame();
       }
       if (this.session.state === 'paused') {
@@ -90,33 +88,35 @@ export class InputHandler {
           this.systems.intensity.onResume();
         }
         if (x >= cx - halfW && x <= cx + halfW && y >= cy + btnH + gap && y <= cy + btnH * 2 + gap) {
-          resetMenu();
+          infra.resetMenu();
           this.session.backToMenu();
-          if (isDevMode()) showDevPanel();
+          if (infra.isDevMode()) infra.showDevPanel();
         }
       }
     });
 
-    setDragHandler((x, y) => {
-      if (isDevPanelActive()) { handleDevDrag(x, y); return; }
-      if (this.session.state === 'menu') handleMenuDrag(x, y);
+    infra.setDragHandler((x, y) => {
+      if (infra.isDevPanelActive()) { infra.handleDevDrag(x, y); return; }
+      if (this.session.state === 'menu') infra.handleMenuDrag(x, y);
     });
 
-    setReleaseHandler(() => {
-      if (isDevPanelActive()) { handleDevRelease(); return; }
-      handleMenuRelease();
+    infra.setReleaseHandler(() => {
+      if (infra.isDevPanelActive()) { infra.handleDevRelease(); return; }
+      infra.handleMenuRelease();
     });
   }
 
   #bindKeyboard() {
+    const infra = this.infra;
+
     document.addEventListener('keydown', (e) => {
-      if (isMusicLabActive()) return;
-      if (isDevPanelActive()) {
-        if (e.key === 'Enter') { hideDevPanel(); this.startGame(); }
+      if (infra.isMusicLabActive()) return;
+      if (infra.isDevPanelActive()) {
+        if (e.key === 'Enter') { infra.hideDevPanel(); this.startGame(); }
         return;
       }
       if (this.session.state === 'menu') {
-        const action = handleMenuInput(e.key);
+        const action = infra.handleMenuInput(e.key);
         if (action === 'play') this.startGame();
         return;
       }
@@ -130,14 +130,14 @@ export class InputHandler {
 
       if (this.session.state === 'paused') {
         if (e.key === 'Escape') { this.session.resume(); this.systems.intensity.onResume(); }
-        if (e.key === 'r') { resetMenu(); this.session.backToMenu(); if (isDevMode()) showDevPanel(); }
+        if (e.key === 'r') { infra.resetMenu(); this.session.backToMenu(); if (infra.isDevMode()) infra.showDevPanel(); }
         return;
       }
 
       if ((this.session.state === 'gameOver' || this.session.state === 'won') && e.key === 'r') {
-        resetMenu();
+        infra.resetMenu();
         this.session.backToMenu();
-        if (isDevMode()) showDevPanel();
+        if (infra.isDevMode()) infra.showDevPanel();
       }
     });
 
@@ -149,12 +149,10 @@ export class InputHandler {
     });
 
     document.addEventListener('wheel', (e) => {
-      if (isMusicLabActive()) {
+      if (infra.isMusicLabActive()) {
         e.preventDefault();
-        handleMusicLabScroll(e.deltaY);
+        infra.handleMusicLabScroll(e.deltaY);
       }
     }, { passive: false });
   }
 }
-
-export { getMousePos };

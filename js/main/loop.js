@@ -1,16 +1,3 @@
-import { CONFIG } from '../config.js';
-import { updateStars } from '../infra/stars.js';
-import { getMousePos, getTouchX } from '../infra/touch.js';
-import { updateMenu, updateMenuHover } from '../infra/menu/index.js';
-import { spawnTrail, updateParticles } from '../infra/particles.js';
-import { updateShake, setAmbientShake } from '../infra/screenshake.js';
-import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
-import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-panel/index.js';
-import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
-import { updateDevOverlay } from '../infra/dev-overlay/index.js';
-import { drawShip } from '../infra/renderers/ship-render.js';
-import { drawDrone } from '../infra/renderers/drone-render.js';
-
 export class GameLoop {
   /**
    * @param {object} deps
@@ -19,11 +6,12 @@ export class GameLoop {
    * @param {object} deps.session    - GameSession
    * @param {object} deps.systems    - { intensity, powerUp }
    * @param {object} deps.ui         - { slowMoTimer, comboFadeTimer }
-   * @param {object} deps.canvas     - CONFIG.canvas
+   * @param {object} deps.canvas     - { width, height }
    * @param {object} deps.hud        - HudRenderer instance
    * @param {object} deps.collisionHandler - CollisionHandler instance
+   * @param {object} deps.infra      - infra adapters (stars, touch, menu, particles, shake, renderers, panels, devOverlay)
    */
-  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler }) {
+  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra }) {
     this.render = render;
     this.entities = entities;
     this.session = session;
@@ -32,6 +20,7 @@ export class GameLoop {
     this.canvas = canvas;
     this.hud = hud;
     this.collisionHandler = collisionHandler;
+    this.infra = infra;
     this.loop = this.loop.bind(this);
   }
 
@@ -42,44 +31,45 @@ export class GameLoop {
   loop() {
     const ctx = this.render.ctx;
     const { ship, drones, field } = this.entities;
+    const infra = this.infra;
 
     this.systems.intensity.update();
     const fx = this.systems.intensity.getEffects();
-    setAmbientShake(fx.microShake);
+    infra.setAmbientShake(fx.microShake);
 
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    updateStars(fx.starSpeed);
+    infra.updateStars(fx.starSpeed);
 
     document.body.classList.toggle('menu', this.session.state === 'menu' || this.session.state === 'paused');
 
-    if (isMusicLabActive()) {
-      const mouse = getMousePos();
-      handleMusicLabHover(mouse.x, mouse.y);
-      drawMusicLab(ctx);
+    if (infra.isMusicLabActive()) {
+      const mouse = infra.getMousePos();
+      infra.handleMusicLabHover(mouse.x, mouse.y);
+      infra.drawMusicLab(ctx);
       requestAnimationFrame(this.loop);
       return;
     }
 
-    if (isDevPanelActive()) {
-      const mouse = getMousePos();
-      handleDevHover(mouse.x, mouse.y);
-      drawDevPanel(ctx);
+    if (infra.isDevPanelActive()) {
+      const mouse = infra.getMousePos();
+      infra.handleDevHover(mouse.x, mouse.y);
+      infra.drawDevPanel(ctx);
       requestAnimationFrame(this.loop);
       return;
     }
 
     if (this.session.state === 'menu') {
-      const mouse = getMousePos();
-      updateMenuHover(mouse.x, mouse.y);
-      updateMenu(ctx);
+      const mouse = infra.getMousePos();
+      infra.updateMenuHover(mouse.x, mouse.y);
+      infra.updateMenu(ctx);
       requestAnimationFrame(this.loop);
       return;
     }
 
     if (this.session.state === 'paused') {
       field.draw(ctx);
-      drawShip(ctx, ship);
-      for (const d of drones) drawDrone(ctx, d);
+      infra.drawShip(ctx, ship);
+      for (const d of drones) infra.drawDrone(ctx, d);
       this.hud.drawHUD(fx);
       this.hud.drawPauseScreen();
       requestAnimationFrame(this.loop);
@@ -108,17 +98,17 @@ export class GameLoop {
     }
 
     field.update();
-    ship.update(getTouchX());
+    ship.update(infra.getTouchX());
     for (const d of drones) {
       d.update(ship, this.canvas.width);
-      if (d.launched) spawnTrail(d.x, d.y);
+      if (d.launched) infra.spawnTrail(d.x, d.y);
     }
     for (const c of this.entities.capsules) c.update(this.canvas.height);
     this.entities.capsules = this.entities.capsules.filter(c => c.alive);
     this.collisionHandler.update();
 
     this.#drawScene(fx);
-    updateDevOverlay();
+    infra.updateDevOverlay();
 
     requestAnimationFrame(this.loop);
   }
@@ -126,19 +116,20 @@ export class GameLoop {
   #drawScene(fx) {
     const ctx = this.render.ctx;
     const { ship, drones, field, capsules } = this.entities;
-    const shake = updateShake();
+    const infra = this.infra;
+    const shake = infra.updateShake();
     ctx.save();
     ctx.translate(shake.x, shake.y);
     field.draw(ctx);
-    updateParticles(ctx);
-    for (const c of capsules) drawCapsule(ctx, c);
+    infra.updateParticles(ctx);
+    for (const c of capsules) infra.drawCapsule(ctx, c);
     if (ship.isMobile) this.hud.drawDeathLine(ship, fx);
-    drawShip(ctx, ship);
-    for (const d of drones) drawDrone(ctx, d);
+    infra.drawShip(ctx, ship);
+    for (const d of drones) infra.drawDrone(ctx, d);
     ctx.restore();
     this.#drawVignette(ctx, fx);
     this.hud.drawHUD(fx);
-    drawPowerUpHUD(ctx, this.systems.powerUp.getActive(), this.canvas.width);
+    infra.drawPowerUpHUD(ctx, this.systems.powerUp.getActive(), this.canvas.width);
     this.hud.drawPauseButton();
     if (this.ui.comboFadeTimer > 0) this.hud.drawCombo();
   }

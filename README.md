@@ -15,7 +15,8 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 ## Fonctionnalités
 
 - Vaisseau détaillé avec réacteurs animés et lumières clignotantes
-- Astéroïdes générés procéduralement (3 tailles, layout aléatoire à chaque partie)
+- 6 matériaux d'astéroïdes (roche, glace, lave, métal, cristal, obsidienne) avec fragmentation
+- Astéroïdes générés procéduralement (3 tailles, patterns ASCII ou layout aléatoire)
 - Musique et sons procéduraux (Web Audio, zéro fichier audio)
 - Effets de particules (explosions, traînée du drone)
 - Fond étoilé parallaxe à 3 couches
@@ -24,10 +25,10 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 - Souris, clavier et tactile supportés
 - Musique adaptative pilotée par l'intensité gameplay (5 layers, tempo progressif, fills)
 - Effets visuels dynamiques (vignette, micro-shake, glow) liés à l'intensité
-- 8 power-ups (élargi, collant, perçant, vie+, affaiblir, vitesse, slow-mo, multi-drone)
-- Multi-drone : drone supplémentaire, lancement en éventail, game over quand tous perdus
-- Clean Architecture : entités pures, logique métier isolée, infra séparée
-- Zéro dépendance runtime, 100% vanilla JS + Canvas
+- 12 power-ups : élargi, rétréci, collant, perçant, vie+, score ×2, affaiblir, multi-drone, large, mini, rapide, warp
+- Multi-drone : drone supplémentaire, game over quand tous perdus
+- Clean Architecture DDD : entités pures, use-cases isolés, infra séparée, DI systématique
+- 295 tests (280 unit + 15 e2e) — zéro dépendance runtime, 100% vanilla JS + Canvas
 
 ## Développement
 
@@ -36,8 +37,9 @@ git clone https://github.com/etienne-bernoux/space-breakout.git
 cd space-breakout
 npm install                        # installe les devDependencies
 npx serve .                        # serveur local → http://localhost:3000
-npx vitest run --globals --exclude 'e2e/**'  # tests unitaires (Vitest + Chai)
-npx playwright test                # tests e2e (Playwright + Chromium)
+npm test                           # tests unitaires — 280 tests (Vitest + Chai)
+npm run test:e2e                   # tests e2e — 15 tests (Playwright + Chromium)
+npm run test:all                   # unit + e2e
 ```
 
 Modes spéciaux : `?dev` (dev panel + overlay in-game), `?mus` (music lab).

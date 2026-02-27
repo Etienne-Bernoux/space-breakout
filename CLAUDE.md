@@ -13,8 +13,8 @@ Le thème spatial influence le gameplay (prévu : récolte de matière, power-up
 
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
-- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`)
-- Tests e2e : Playwright (dossier `e2e/`)
+- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, 280 tests)
+- Tests e2e : Playwright (dossier `e2e/`, 15 tests)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
 
@@ -26,32 +26,43 @@ style.css               → styles (responsive, touch-action)
 js/
   config.js             → constantes centralisées
   main.js               → bootstrap (import ./main/index.js)
-  main/                 → composition root (game loop, HUD, collisions, input)
-    init.js             → canvas, instances, startGame, état partagé (G)
+  shared/               → utilitaires transverses
+    responsive.js       → gameScale() centralisé (clamp 0.6–1.0)
+  main/                 → composition root (game loop, HUD, input)
+    init.js             → canvas, instances, startGame, état partagé (G), wiring DI
     input.js            → handlers tactiles/clavier, pause
-    collisions.js       → détection collisions, dispatch effets
     hud.js              → HUD, combo, pause screen, end screen
-    loop.js             → boucle principale, slow-motion
+    loop.js             → boucle principale, state dispatch map, slow-motion
     index.js            → point d'entrée, wiring
   domain/               → entités pures (config injectée, 0 dépendance)
-    ship.js             → vaisseau (raquette)
-    drone.js            → drone de minage (balle)
-    capsule.js          → capsule de power-up
+    ship/ship.js        → vaisseau (raquette)
+    drone/drone.js      → drone de minage (balle)
+    capsule/capsule.js  → capsule de power-up
     materials.js        → 6 matériaux (roche, glace, lave, métal, cristal, obsidienne)
     power-ups.js        → 12 power-ups déclaratifs (P1 + P2 drone)
     patterns.js         → patterns ASCII de niveaux
-    asteroid-render.js  → rendu visuel par matériau
     asteroid/           → génération procédurale d'astéroïdes
       shape.js          → géométrie procédurale (polygones, cratères, veines)
-      asteroid-field.js → AsteroidField (grille, collision, fragmentation)
+      asteroid-field.js → AsteroidField (grille, merge glouton, fragmentation)
       index.js          → façade (re-export AsteroidField)
   use-cases/            → logique métier (0 DOM, 0 audio)
-    game-logic.js       → GameSession : état, score, vies
-    power-up-manager.js → application/revert des power-ups
-    game-intensity-director.js → chef d'orchestre (intensité 0-4 → music + effects)
-    music-director.js   → gère TOUS les sons/musique (reçoit events du GID)
-    effect-director.js  → effets visuels par intensité (lerp entre presets)
-    drop-system.js      → probabilité de drop
+    game-logic/
+      game-session.js   → GameSession : état, score, vies (~72 lignes)
+    collision/
+      collision-handler.js → dispatch collisions par frame
+      collision-resolver.js → détection pure (ship, asteroid, capsule, win)
+    power-up/
+      power-up-manager.js → strategy pattern apply/revert/cumul
+    drone/
+      drone-manager.js  → lifecycle drone centralisé (spawn, remove, reset)
+    intensity/
+      game-intensity-director.js → chef d'orchestre (intensité 0-4 → music + effects, DI)
+    music/
+      music-director.js → gère TOUS les sons/musique (reçoit events du GID)
+    effect/
+      effect-director.js → effets visuels par intensité (lerp entre presets)
+    drop/
+      drop-system.js    → probabilité de drop
   infra/                → DOM, Canvas, Audio, Input
     stars.js            → fond étoilé parallaxe
     resize.js           → canvas responsive
@@ -59,8 +70,14 @@ js/
     particles.js        → explosions + traînée
     audio.js            → sons procéduraux (SFX)
     screenshake.js      → tremblement caméra
-    power-up-render.js  → rendu capsules + HUD
-    power-up-icons.js   → icônes canvas power-ups
+    power-up-render.js  → rendu capsules + HUD power-ups actifs
+    power-up-icons.js   → icônes canvas power-ups (12 icônes)
+    renderers/
+      ship-render.js    → rendu vaisseau
+      drone-render.js   → rendu drone
+      field-render.js   → rendu champ d'astéroïdes
+      asteroid-render.js → rendu par matériau (188 lignes)
+      asteroid-render-helpers.js → helpers partagés (couleurs, cratères, veines, rim)
     music/              → musique procédurale (Web Audio)
       audio-core.js     → contexte audio, master gain/filter, layers
       instruments-main.js → instruments piste Space Synth
@@ -145,8 +162,8 @@ Mobile :
 ## Architecture
 
 - **Clean Architecture** : Domain (entités pures) → Use Cases (game logic) → Infra (DOM/Canvas/Audio)
-- Config injectée par constructeur (pas d'import CONFIG dans les entités)
-- GameSession retourne des events, main.js les dispatch vers l'infra (sons, particules)
+- **DI systématique** : config injectée par constructeur, toutes les dépendances via `{ deps }` (pas d'import CONFIG dans les entités)
+- GameSession est pur état (~72 lignes), CollisionResolver gère la détection, CollisionHandler orchestre
 - États du jeu : menu → playing → paused / gameOver / won → menu
 - Canvas interne 800x600 (paysage) ou 800xN (portrait, hauteur dynamique)
 - Fond étoilé parallaxe sur un canvas séparé (bg-canvas, plein écran)
@@ -161,17 +178,18 @@ shipWide:  { effect: { target: 'ship',    prop: 'width',  factor: 1.5 } }
 extraLife: { effect: { target: 'session',  prop: 'lives',  delta: 1 } }
 weaken:    { effect: { target: 'field',    action: 'weakenAll', delta: -1 } }
 ```
-`PowerUpManager` lit `def.effect` pour appliquer/revert — aucune valeur hardcodée dans le manager.
+`PowerUpManager` utilise un **strategy pattern** (STRATEGIES map) pour apply/revert/cumul. Ajouter un nouveau type d'effet = 1 objet strategy, pas 3 méthodes.
 
 ### Responsive Canvas (pas de rem)
 Canvas API ne supporte que des px pour les fonts/tailles. Tout le scaling est manuel.
 
-**Formule commune** (menu + in-game) :
+**Formule commune** centralisée dans `shared/responsive.js` :
 ```js
-const scale = Math.min(1.0, Math.max(0.6, canvasWidth / 500));
+export function gameScale(width = CONFIG.canvas.width) {
+  return Math.min(1.0, Math.max(0.6, width / 500));
+}
 ```
-- `menu.js` → `layout()` retourne scale, positions, tailles de fonts
-- `main.js` → `gameScale()` pour HUD, pause, overlays
+Importée partout (menu, HUD, pause, power-up-render). Un seul site à modifier si les breakpoints changent.
 
 **Mobile vs desktop** : `isMobile = 'ontouchstart' in window`
 - Passé aux constructeurs (`Ship`, `Drone`) pour activer les ratios proportionnels
@@ -187,7 +205,7 @@ const scale = Math.min(1.0, Math.max(0.6, canvasWidth / 500));
 ### GameIntensityDirector (chef d'orchestre)
 Point d'entrée unique pour tous les événements gameplay. Les fichiers `main/` (collisions, input) n'importent jamais directement audio/music — tout passe par `G.intensityDirector.onXxx()`.
 
-`GameIntensityDirector` calcule l'intensité 0-4 et dispatch vers :
+`GameIntensityDirector` (DI : `{ music, effects }`) calcule l'intensité 0-4 et dispatch vers :
 - `MusicDirector` — gère TOUS les sons (SFX + musique + stingers)
 - `EffectDirector` — effets visuels (vitesse étoiles, vignette, micro-shake, couleur death line, glow score)
 
@@ -224,7 +242,7 @@ Serveur local requis (ES modules) :
 npx serve .              # serveur statique → http://localhost:3000
 ```
 
-Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`) :
+Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`, 280 tests / 20 fichiers) :
 ```bash
 npm test                          # une passe (vitest run)
 npx vitest                        # mode watch
@@ -270,13 +288,13 @@ const { chromium } = require('playwright');
 
 ## Multi-drone
 
-`G.drones` est un array. `G.drone` est un getter pour le premier (compatibilité).
-Le power-up `droneMulti` ajoute un drone supplémentaire (instant, duration 0).
+`G.drones` est un array. Le power-up `droneMulti` ajoute un drone supplémentaire (instant, duration 0).
 Tous les drones non lancés partent en éventail (angles répartis uniformément).
-Un drone bonus perdu est simplement retiré (splice). Seul le dernier drone déclenche une perte de vie.
+Un drone bonus perdu est simplement retiré. Seul le dernier drone déclenche une perte de vie.
 Game over uniquement quand le dernier drone est perdu ET vies à 0.
 
-La logique multi-drone est dans `collisions.js` (boucle inversée pour splice). `isDroneLost(drone)` est un check pur dans `GameSession`, `loseLife()` est séparé.
+Le lifecycle drone est centralisé dans `DroneManager` (spawn, removeExtra, resetLast).
+`CollisionHandler` et `PowerUpManager` utilisent le DroneManager via DI — aucune manipulation directe de `drones[]`.
 
 ## Dev overlay (?dev, desktop)
 

@@ -63,7 +63,8 @@ G.systems.droneManager = new DroneManager({
 G.systems.powerUp.droneManager = G.systems.droneManager;
 
 // --- Utilitaires responsive ---
-export { gameScale } from '../shared/responsive.js';
+import { gameScale } from '../shared/responsive.js';
+export { gameScale };
 
 export function pauseBtnLayout() {
   const s = gameScale();

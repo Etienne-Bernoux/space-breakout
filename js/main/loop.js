@@ -25,15 +25,16 @@ function drawVignette(ctx, fx) {
 
 function drawScene(fx) {
   const ctx = G.render.ctx;
+  const { ship, drones, field, capsules } = G.entities;
   const shake = updateShake();
   ctx.save();
   ctx.translate(shake.x, shake.y);
-  G.entities.field.draw(ctx);
+  field.draw(ctx);
   updateParticles(ctx);
-  for (const c of G.entities.capsules) drawCapsule(ctx, c);
-  if (G.entities.ship.isMobile) drawDeathLine(G.entities.ship, fx);
-  G.entities.ship.draw(ctx);
-  for (const d of G.entities.drones) d.draw(ctx);
+  for (const c of capsules) drawCapsule(ctx, c);
+  if (ship.isMobile) drawDeathLine(ship, fx);
+  ship.draw(ctx);
+  for (const d of drones) d.draw(ctx);
   ctx.restore();
   drawVignette(ctx, fx);
   drawHUD(fx);
@@ -44,6 +45,7 @@ function drawScene(fx) {
 
 export function loop() {
   const ctx = G.render.ctx;
+  const { ship, drones, field } = G.entities;
 
   // Update intensity effects (lerp)
   G.intensityDirector.update();
@@ -81,9 +83,9 @@ export function loop() {
   }
 
   if (G.session.state === 'paused') {
-    G.entities.field.draw(ctx);
-    G.entities.ship.draw(ctx);
-    for (const d of G.entities.drones) d.draw(ctx);
+    field.draw(ctx);
+    ship.draw(ctx);
+    for (const d of drones) d.draw(ctx);
     drawHUD(fx);
     drawPauseScreen();
     requestAnimationFrame(loop);
@@ -113,10 +115,10 @@ export function loop() {
     }
   }
 
-  G.entities.field.update();
-  G.entities.ship.update(getTouchX());
-  for (const d of G.entities.drones) {
-    d.update(G.entities.ship, CONFIG.canvas.width);
+  field.update();
+  ship.update(getTouchX());
+  for (const d of drones) {
+    d.update(ship, CONFIG.canvas.width);
     if (d.launched) spawnTrail(d.x, d.y);
   }
   for (const c of G.entities.capsules) c.update(CONFIG.canvas.height);

@@ -8,13 +8,14 @@ import { G, gameScale, pauseBtnLayout, startGame } from './init.js';
 /** Lance tous les drones non lancés en éventail.
  *  1 drone → centre (0), 2 → [-0.4, +0.4], 3 → [-0.5, 0, +0.5], etc. */
 function launchAllDrones() {
-  const unlaunched = G.entities.drones.filter(d => !d.launched);
+  const { ship, drones } = G.entities;
+  const unlaunched = drones.filter(d => !d.launched);
   if (unlaunched.length === 0) return false;
   const n = unlaunched.length;
   const spread = 0.8; // amplitude totale de l'éventail (-0.4 .. +0.4 pour 2)
   unlaunched.forEach((d, i) => {
     const angle = n === 1 ? 0 : -spread / 2 + (spread * i) / (n - 1);
-    d.launchAtAngle(G.entities.ship, angle);
+    d.launchAtAngle(ship, angle);
   });
   return true;
 }

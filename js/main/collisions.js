@@ -6,16 +6,19 @@ import { triggerShake } from '../infra/screenshake.js';
 import { G, triggerSlowMo, COMBO_FADE_DURATION } from './init.js';
 
 export function handleCollisions() {
+  const { ship, field, totalAsteroids } = G.entities;
+  const ent = G.entities; // pour drones/capsules (mutés par splice/push)
+
   // --- Collisions drone/vaisseau + drone/astéroïdes (tous les drones) ---
-  for (const drone of G.entities.drones) {
-    if (!drone.launched) continue; // sticky / en attente → pas de collision
-    const ev1 = G.session.checkShipCollision(drone, G.entities.ship);
+  for (const drone of ent.drones) {
+    if (!drone.launched) continue;
+    const ev1 = G.session.checkShipCollision(drone, ship);
     if (ev1) {
       G.ui.combo = 0;
       G.intensityDirector.onBounce();
     }
 
-    const ev2 = G.session.checkAsteroidCollision(drone, G.entities.field);
+    const ev2 = G.session.checkAsteroidCollision(drone, field);
     if (ev2) {
       spawnExplosion(ev2.x, ev2.y, ev2.color);
       G.intensityDirector.onAsteroidHit();
@@ -28,16 +31,16 @@ export function handleCollisions() {
         const shakeAmount = CONFIG.screenshake.intensity[ev2.sizeName] || CONFIG.screenshake.intensity.small;
         triggerShake(shakeAmount);
         const puId = G.dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
-        if (puId) G.entities.capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
-        G.intensityDirector.onAsteroidDestroyed(G.entities.field.remaining, G.entities.totalAsteroids, G.ui.combo);
-        if (G.entities.field.remaining === 0) triggerSlowMo();
+        if (puId) ent.capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
+        G.intensityDirector.onAsteroidDestroyed(field.remaining, totalAsteroids, G.ui.combo);
+        if (field.remaining === 0) triggerSlowMo();
       }
     }
   }
 
   // --- Capsules ramassées ---
   const gs = G.gs;
-  const capEvts = G.session.checkCapsuleCollision(G.entities.capsules, G.entities.ship);
+  const capEvts = G.session.checkCapsuleCollision(ent.capsules, ship);
   for (const ce of capEvts) {
     G.puManager.activate(ce.powerUpId, gs);
     G.intensityDirector.onPowerUpActivated();
@@ -52,22 +55,19 @@ export function handleCollisions() {
   }
 
   // --- Drones perdus (multi-drone) ---
-  // Itérer en sens inverse pour pouvoir splice sans décaler les indices
-  for (let i = G.entities.drones.length - 1; i >= 0; i--) {
-    if (!G.session.isDroneLost(G.entities.drones[i])) continue;
+  for (let i = ent.drones.length - 1; i >= 0; i--) {
+    if (!G.session.isDroneLost(ent.drones[i])) continue;
 
-    if (G.entities.drones.length > 1) {
-      // Drone bonus perdu → juste le retirer, pas de vie perdue
-      G.entities.drones.splice(i, 1);
+    if (ent.drones.length > 1) {
+      ent.drones.splice(i, 1);
     } else {
-      // Dernier drone perdu → perte de vie
       const livesLeft = G.session.loseLife();
       G.ui.combo = 0;
       if (livesLeft <= 0) {
         G.session.state = 'gameOver';
         G.intensityDirector.onGameOver();
       } else {
-        G.entities.drones[0].reset(G.entities.ship);
+        ent.drones[0].reset(ship);
         G.intensityDirector.onLifeChanged(livesLeft);
       }
     }
@@ -75,7 +75,7 @@ export function handleCollisions() {
 
   // Retarder le win pendant le slow-mo pour qu'il soit visible
   if (G.ui.slowMoTimer <= 0) {
-    const ev4 = G.session.checkWin(G.entities.field);
+    const ev4 = G.session.checkWin(field);
     if (ev4) { G.intensityDirector.onWin(); }
   }
 }

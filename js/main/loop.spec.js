@@ -54,6 +54,7 @@ function mockInfra() {
     updateDevOverlay: vi.fn(),
     drawShip: vi.fn(),
     drawDrone: vi.fn(),
+    drawField: vi.fn(),
   };
 }
 

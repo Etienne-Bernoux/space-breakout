@@ -18,6 +18,7 @@ import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
 import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
+import { drawField } from '../infra/renderers/field-render.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { HudRenderer } from './hud.js';
 import { GameLoop } from './loop.js';
@@ -121,7 +122,7 @@ const loopInfra = {
   isDevPanelActive, drawDevPanel, handleDevHover,
   isMusicLabActive, drawMusicLab, handleMusicLabHover,
   updateDevOverlay,
-  drawShip, drawDrone,
+  drawShip, drawDrone, drawField,
 };
 
 const inputInfra = {

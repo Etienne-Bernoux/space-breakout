@@ -67,7 +67,7 @@ export class GameLoop {
     }
 
     if (this.session.state === 'paused') {
-      field.draw(ctx);
+      infra.drawField(ctx, field);
       infra.drawShip(ctx, ship);
       for (const d of drones) infra.drawDrone(ctx, d);
       this.hud.drawHUD(fx);
@@ -120,7 +120,7 @@ export class GameLoop {
     const shake = infra.updateShake();
     ctx.save();
     ctx.translate(shake.x, shake.y);
-    field.draw(ctx);
+    infra.drawField(ctx, field);
     infra.updateParticles(ctx);
     for (const c of capsules) infra.drawCapsule(ctx, c);
     if (ship.isMobile) this.hud.drawDeathLine(ship, fx);

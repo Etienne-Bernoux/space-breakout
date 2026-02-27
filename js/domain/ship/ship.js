@@ -24,9 +24,11 @@ export class Ship {
     this.movingLeft = false;
     this.movingRight = false;
     this.canvasWidth = canvasWidth;
+    this.vx = 0; // vélocité horizontale (pour le rendu des flammes)
   }
 
   update(touchX) {
+    const prevX = this.x;
     if (touchX !== null && touchX !== undefined) {
       // Tactile : le vaisseau suit le doigt
       const target = touchX - this.width / 2;
@@ -37,5 +39,6 @@ export class Ship {
       if (this.movingRight) this.x += this.speed;
     }
     this.x = Math.max(0, Math.min(this.canvasWidth - this.width, this.x));
+    this.vx = this.x - prevX;
   }
 }

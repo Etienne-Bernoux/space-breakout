@@ -40,6 +40,15 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 | Upgrades power-ups | 2-3 niveaux par power-up (ex: élargi ×1.5 → ×1.8 → ×2.0) | L |
 | Déverrouillage | Certains power-ups verrouillés par défaut, débloqués en progression | M |
 
+## Skins & Feedback visuel
+
+| Feature | Description | Effort |
+|---|---|---|
+| Choix skin vaisseau | Sélection entre paddle sci-fi (défaut) et vaisseau classique (déblocable) | M |
+| Skin drone — piercing | Le drone change d'aspect quand piercing est actif (traînée, couleur, forme) | S |
+| Skin drone — collant | Le drone change d'aspect quand collant est actif (aura, effet magnétique) | S |
+| Skin bords — warp | Les bords de l'écran changent d'aspect quand warp est actif (portail, distorsion) | S |
+
 ## Power-ups P2
 
 | Power-up | Description | Effort | Type |

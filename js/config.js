@@ -7,7 +7,7 @@ export const CONFIG = {
 
   ship: {
     width: 100,
-    height: 20,
+    height: 14,
     mobileWidthRatio: 0.28,        // mobile : 28% de la largeur canvas
     speed: 7,
     color: '#00d4ff',

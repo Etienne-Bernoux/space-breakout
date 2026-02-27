@@ -6,27 +6,12 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 
 | Feature | Description | Effort |
 |---|---|---|
-| ~~Layers dynamiques~~ | ~~Drums/bass/lead/pad sur des gains séparés, intensité pilotée par le gameplay (nb astéroïdes, combo, power-up)~~ | ~~L~~ | ✅ |
-| ~~Sections contextuelles~~ | ~~Bridge/breakdown quand il reste peu d'astéroïdes, chorus quand c'est chaud~~ | ~~M~~ | ✅ |
 | Variations mélodiques | 2-3 variantes du chorus/verse tirées aléatoirement pour casser la répétition | M |
-| ~~Fills de transition~~ | ~~Roulements snare, montée arp entre les sections~~ | ~~S~~ | ✅ |
-| ~~Accents combos~~ | ~~Accents musicaux par paliers (×2, ×3, ×5+)~~ | ~~S~~ | ✅ |
-| ~~Tempo progressif~~ | ~~BPM 110→128 piloté par l'intensité gameplay~~ | ~~S~~ | ✅ |
 
 ## Game feel / Polish
 
 | Feature | Description | Effort |
 |---|---|---|
-| ~~Slow-motion final~~ | ~~Ralenti 0.5s sur le dernier astéroïde du niveau~~ | ~~S~~ | ✅ |
-| ~~Combo counter~~ | ~~Affichage ×2, ×3… avec feedback visuel croissant (taille, couleur)~~ | ~~M~~ | ✅ |
-| ~~Effets visuels intensité~~ | ~~Vignette, micro-shake, étoiles rapides, glow score, death line colorée (EffectDirector)~~ | ~~M~~ | ✅ |
-| ~~GameIntensityDirector~~ | ~~Chef d'orchestre : centralise intensité, dispatch vers MusicDirector + EffectDirector~~ | ~~M~~ | ✅ |
-| ~~MusicDirector centralise les sons~~ | ~~Tous les sons (SFX + musique + stingers) passent par le director, plus d'import direct~~ | ~~S~~ | ✅ |
-| ~~Tests e2e Playwright~~ | ~~Smoke, flow, modes ?dev et ?mus~~ | ~~S~~ | ✅ |
-| ~~Décroissance d'intensité~~ | ~~L'intensité redescend automatiquement quand il ne se passe rien (combo decay)~~ | ~~S~~ | ✅ |
-| ~~Couleur combo max~~ | ~~Progression étalée de ×2 (jaune) à ×15 (rouge vif) + glow croissant~~ | ~~S~~ | ✅ |
-| ~~Stinger combo rond~~ | ~~Arpège spécial aux paliers ×5, ×10, ×15… (square wave filtré)~~ | ~~S~~ | ✅ |
-| ~~Multiplicateur score combo~~ | ~~×2 @combo 5, ×3 @combo 10, ×4 @combo 15… cumulable avec material/scoreDouble~~ | ~~S~~ | ✅ |
 | Animation victoire | Le vaisseau traverse l'écran vers le haut (décollage) à la victoire | S |
 | Animation défaite | Le vaisseau explose (particules + screenshake) au game over | S |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |
@@ -59,15 +44,9 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 
 | Power-up | Description | Effort | Type |
 |---|---|---|---|
-| ~~Multi-drone~~ | ~~+1 drone supplémentaire (éventail, game over si tous perdus)~~ | ~~L~~ | ~~Bonus~~ | ✅ |
-| ~~Cumul taille vaisseau~~ | ~~shipWide/shipNarrow se multiplient (×1.5 → ×2.25 → …), revert à l'original~~ | ~~S~~ | ~~Mécanique~~ | ✅ |
-| ~~Drone large~~ | ~~Drone radius ×1.8 pendant 15s~~ | ~~S~~ | ~~Bonus~~ | ✅ |
-| ~~Drone mini~~ | ~~Drone radius ×0.5 pendant 10s~~ | ~~S~~ | ~~Malus~~ | ✅ |
 | Filet de sécurité | 1 rebond gratuit en bas de l'écran (ligne visible, disparaît après usage) | M | Bonus |
 | Onde de choc | Détruit tous les astéroïdes dans un rayon autour du point d'impact | M | Bonus |
 | Missiles | Tap pour tirer 2 missiles verticaux (3 charges) | L | Bonus |
-| ~~Drone rapide~~ | ~~Vitesse ×1.8 pendant 10s~~ | ~~S~~ | ~~Malus~~ | ✅ |
-| ~~Warp~~ | ~~Le drone traverse les murs latéraux (wrap-around) pendant 10s~~ | ~~S~~ | ~~Bonus~~ | ✅ |
 
 ## Power-ups P3
 

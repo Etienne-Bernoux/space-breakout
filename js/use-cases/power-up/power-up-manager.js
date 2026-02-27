@@ -21,9 +21,14 @@ export class PowerUpManager {
       return;
     }
 
-    // Déjà actif → reset timer
+    // Déjà actif
     if (this.active.has(puId)) {
-      this.active.get(puId).startTime = now;
+      const entry = this.active.get(puId);
+      entry.startTime = now;
+      // Cumul pour les effets de taille vaisseau
+      if (def.effect.target === 'ship' && def.effect.prop === 'width') {
+        this._resizeShip(gameState, def.effect.factor);
+      }
       return;
     }
 

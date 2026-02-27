@@ -121,15 +121,43 @@ describe('PowerUpManager', () => {
   });
 
   describe('re-activation', () => {
-    it('reset le timer si déjà actif', () => {
+    it('reset le timer si déjà actif (non-ship)', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('dronePiercing', gs, 0);
+      pm.activate('dronePiercing', gs, 10000); // re-active à t=10s
+      pm.update(gs, 15001); // 15s après t=0, mais seulement 5s après re-active
+      expect(gs.drone.piercing).to.be.true; // encore actif
+      pm.update(gs, 25001); // 15s après re-active → expiré
+      expect(gs.drone.piercing).to.be.false;
+    });
+
+    it('cumul taille vaisseau : shipWide ×1.5 puis ×1.5 = ×2.25', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('shipWide', gs, 0);
-      pm.activate('shipWide', gs, 15000); // re-active à t=15s
-      pm.update(gs, 20001); // 20s après t=0, mais seulement 5s après re-active
-      expect(gs.ship.width).to.equal(150); // encore actif
-      pm.update(gs, 35001); // 20s après re-active → expiré
-      expect(gs.ship.width).to.equal(100);
+      expect(gs.ship.width).to.equal(150);
+      pm.activate('shipWide', gs, 5000);
+      expect(gs.ship.width).to.equal(225); // 150 × 1.5
+    });
+
+    it('cumul taille vaisseau : revert restaure la largeur originale', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('shipWide', gs, 0);
+      pm.activate('shipWide', gs, 5000);
+      expect(gs.ship.width).to.equal(225);
+      pm.update(gs, 25001); // expiré
+      expect(gs.ship.width).to.equal(100); // retour original
+    });
+
+    it('cumul taille vaisseau : shipNarrow ×0.6 puis ×0.6 = ×0.36', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('shipNarrow', gs, 0);
+      expect(gs.ship.width).to.equal(60);
+      pm.activate('shipNarrow', gs, 3000);
+      expect(gs.ship.width).to.equal(36); // 60 × 0.6
     });
   });
 

@@ -13,11 +13,13 @@ export class CollisionHandler {
    * @param {object} deps.ui        - { combo, comboDisplay, comboFadeTimer, slowMoTimer }
    * @param {object} deps.config    - { screenshake, capsule }
    * @param {object} deps.effects   - { spawnExplosion, triggerShake }
+   * @param {function} deps.getGameState - () => { ship, drones, session, field }
    */
-  constructor({ entities, session, systems, ui, config, effects }) {
+  constructor({ entities, session, systems, ui, config, effects, getGameState }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
+    this.getGameState = getGameState;
     this.ui = ui;
     this.config = config;
     this.effects = effects;
@@ -83,9 +85,8 @@ export class CollisionHandler {
   }
 
   #handleCapsulePickup() {
-    const { ship } = this.entities;
-    const gs = { ship, drones: this.entities.drones, session: this.session, field: this.entities.field };
-    const capEvts = this.session.checkCapsuleCollision(this.entities.capsules, ship);
+    const gs = this.getGameState();
+    const capEvts = this.session.checkCapsuleCollision(this.entities.capsules, this.entities.ship);
     for (const ce of capEvts) {
       this.systems.powerUp.activate(ce.powerUpId, gs);
       this.systems.intensity.onPowerUpActivated();
@@ -94,7 +95,7 @@ export class CollisionHandler {
   }
 
   #handlePowerUpExpiry() {
-    const gs = { ship: this.entities.ship, drones: this.entities.drones, session: this.session, field: this.entities.field };
+    const gs = this.getGameState();
     const puCountBefore = this.systems.powerUp.getActive().length;
     this.systems.powerUp.update(gs);
     if (puCountBefore > 0 && this.systems.powerUp.getActive().length === 0) {

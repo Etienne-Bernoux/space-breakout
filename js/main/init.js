@@ -78,6 +78,7 @@ G.collisionHandler = new CollisionHandler({
   ui: G.ui,
   config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
   effects: { spawnExplosion, triggerShake },
+  getGameState: () => G.gs,
 });
 
 G.hud = new HudRenderer({

@@ -64,7 +64,8 @@ function makeDeps(overrides = {}) {
     triggerShake: vi.fn(),
     ...overrides.effects,
   };
-  return { entities, session, systems, ui, config, effects };
+  const getGameState = () => ({ ship: entities.ship, drones: entities.drones, session, field: entities.field });
+  return { entities, session, systems, ui, config, effects, getGameState };
 }
 
 function asteroidHitEvent(sizeName = 'small') {

@@ -73,6 +73,7 @@ function createGame() {
     ui,
     config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
     effects,
+    getGameState: () => ({ ship: entities.ship, drones: entities.drones, session, field: entities.field }),
   });
 
   return { session, entities, systems, ui, collisionHandler, effects };

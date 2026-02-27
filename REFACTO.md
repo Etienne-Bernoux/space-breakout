@@ -283,4 +283,4 @@ export function gameScale(width = CONFIG.canvas.width) {
 | 8 | R5 — Asteroid render split | M | Passe sous 300L, maintenabilité | ✅ 6169b81 |
 | 9 | R4 — CollisionResolver extract | M | SRP, architecture propre | ✅ 2f096c8 |
 | 10 | R11 — DroneManager | M | Encapsule lifecycle drone | ✅ 8062fa4 |
-| 11 | R10 — Tests infra/domain | L | Filet de sécurité global | |
+| 11 | R10 — Tests infra/domain | L | Filet de sécurité global | ✅ f2c7d9c (domain: +53 tests, 280 total) |

@@ -280,7 +280,7 @@ export function gameScale(width = CONFIG.canvas.width) {
 | 5 | R9 — Scale formula | S | Quick fix, DRY | ✅ 28ce369 |
 | 6 | R7 — DI intensity director | S | Aligne le pattern DI existant | ✅ 9517fd3 |
 | 7 | R3 — Loop state dispatch | S | Lisibilité, testabilité | ✅ 9990282 |
-| 8 | R5 — Asteroid render split | M | Passe sous 300L, maintenabilité | |
-| 9 | R4 — CollisionResolver extract | M | SRP, architecture propre | |
-| 10 | R11 — DroneManager | M | Encapsule lifecycle drone | |
+| 8 | R5 — Asteroid render split | M | Passe sous 300L, maintenabilité | ✅ 6169b81 |
+| 9 | R4 — CollisionResolver extract | M | SRP, architecture propre | ✅ 2f096c8 |
+| 10 | R11 — DroneManager | M | Encapsule lifecycle drone | ✅ 8062fa4 |
 | 11 | R10 — Tests infra/domain | L | Filet de sécurité global | |

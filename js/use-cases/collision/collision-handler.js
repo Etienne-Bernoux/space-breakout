@@ -42,6 +42,7 @@ export class CollisionHandler {
       const ev1 = this.session.checkShipCollision(drone, ship);
       if (ev1) {
         this.ui.combo = 0;
+        this.session.combo = 0;
         intensity.onBounce();
       }
 
@@ -58,6 +59,7 @@ export class CollisionHandler {
 
   #onAsteroidDestroyed(ev, field, totalAsteroids, drop) {
     this.ui.combo++;
+    this.session.combo = this.ui.combo;
     if (this.ui.combo >= 2) {
       this.ui.comboDisplay = this.ui.combo;
       this.ui.comboFadeTimer = COMBO_FADE_DURATION;
@@ -112,6 +114,7 @@ export class CollisionHandler {
       } else {
         const livesLeft = this.session.loseLife();
         this.ui.combo = 0;
+        this.session.combo = 0;
         if (livesLeft <= 0) {
           this.session.state = 'gameOver';
           this.systems.intensity.onGameOver();

@@ -16,8 +16,13 @@ export class GameSession {
     this.lives = this.maxLives;
     this.score = 0;
     this.scoreMultiplier = 1;
+    this._combo = 0;
     this.state = 'playing';
   }
+
+  /** Met à jour le combo courant (piloté par CollisionHandler) */
+  set combo(val) { this._combo = val; }
+  get combo() { return this._combo; }
 
   pause() {
     if (this.state === 'playing') this.state = 'paused';
@@ -94,9 +99,10 @@ export class GameSession {
           continue;
         }
 
-        // Détruit — scoring
+        // Détruit — scoring (combo mult: ×2 @5, ×3 @10, ×4 @15…)
         const basePoints = this.basePoints[a.sizeName] || this.basePoints.small;
-        const mult = (a.material?.pointsMult || 1) * (this.scoreMultiplier || 1);
+        const comboMult = 1 + Math.floor((this._combo || 0) / 5);
+        const mult = (a.material?.pointsMult || 1) * (this.scoreMultiplier || 1) * comboMult;
         const points = Math.round(basePoints * mult);
         this.score += points;
 

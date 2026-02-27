@@ -235,6 +235,62 @@ describe('GameSession — matériaux', () => {
   });
 });
 
+// --- Combo score multiplier ---
+
+describe('GameSession — combo score multiplier', () => {
+  it('combo 0-4 → ×1 (pas de bonus)', () => {
+    const s = makeSession();
+    s.start();
+    s.combo = 4;
+    const ast = makeAsteroid({ x: 395, y: 495 });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    s.checkAsteroidCollision(d, field);
+    expect(s.score).to.equal(10); // small × 1
+  });
+
+  it('combo 5 → ×2', () => {
+    const s = makeSession();
+    s.start();
+    s.combo = 5;
+    const ast = makeAsteroid({ x: 395, y: 495 });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    s.checkAsteroidCollision(d, field);
+    expect(s.score).to.equal(20); // small × 2
+  });
+
+  it('combo 10 → ×3', () => {
+    const s = makeSession();
+    s.start();
+    s.combo = 10;
+    const ast = makeAsteroid({ sizeName: 'large', x: 395, y: 495 });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    s.checkAsteroidCollision(d, field);
+    expect(s.score).to.equal(120); // 40 × 3
+  });
+
+  it('combo se cumule avec material pointsMult', () => {
+    const s = makeSession();
+    s.start();
+    s.combo = 5;
+    const ast = makeAsteroid({ x: 395, y: 495, material: { pointsMult: 2 } });
+    const field = makeField([ast]);
+    const d = makeDrone({ x: 400, y: 500, dy: -3 });
+    s.checkAsteroidCollision(d, field);
+    expect(s.score).to.equal(40); // 10 × 2 (material) × 2 (combo)
+  });
+
+  it('combo reset à 0 après start()', () => {
+    const s = makeSession();
+    s.start();
+    s.combo = 10;
+    s.start();
+    expect(s.combo).to.equal(0);
+  });
+});
+
 // --- Drone lost ---
 
 describe('GameSession — isDroneLost + loseLife', () => {

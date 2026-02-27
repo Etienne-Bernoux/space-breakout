@@ -44,7 +44,7 @@ function updateStatsDisplay() {
   const secs = String(elapsed % 60).padStart(2, '0');
   timerEl.querySelector('.val').textContent = `${mins}:${secs}`;
 
-  const level = G.intensityDirector.intensity;
+  const level = G.systems.intensity.intensity;
   intensityValEl.textContent = level;
   intensityValEl.style.color = INTENSITY_COLORS[level] || '#fff';
 
@@ -54,7 +54,7 @@ function updateStatsDisplay() {
     barSegments[i].style.background = on ? INTENSITY_COLORS[i] : 'transparent';
   }
 
-  comboEl.querySelector('.val').textContent = G.intensityDirector.combo;
+  comboEl.querySelector('.val').textContent = G.systems.intensity.combo;
 }
 
 export function updateDevStats(playing) {

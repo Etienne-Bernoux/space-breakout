@@ -38,7 +38,7 @@ function drawScene(fx) {
   ctx.restore();
   drawVignette(ctx, fx);
   drawHUD(fx);
-  drawPowerUpHUD(ctx, G.puManager.getActive(), CONFIG.canvas.width);
+  drawPowerUpHUD(ctx, G.systems.powerUp.getActive(), CONFIG.canvas.width);
   drawPauseButton();
   if (G.ui.comboFadeTimer > 0) drawCombo();
 }
@@ -48,8 +48,8 @@ export function loop() {
   const { ship, drones, field } = G.entities;
 
   // Update intensity effects (lerp)
-  G.intensityDirector.update();
-  const fx = G.intensityDirector.getEffects();
+  G.systems.intensity.update();
+  const fx = G.systems.intensity.getEffects();
   setAmbientShake(fx.microShake);
 
   ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);

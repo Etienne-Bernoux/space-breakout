@@ -15,13 +15,13 @@ export function handleCollisions() {
     const ev1 = G.session.checkShipCollision(drone, ship);
     if (ev1) {
       G.ui.combo = 0;
-      G.intensityDirector.onBounce();
+      G.systems.intensity.onBounce();
     }
 
     const ev2 = G.session.checkAsteroidCollision(drone, field);
     if (ev2) {
       spawnExplosion(ev2.x, ev2.y, ev2.color);
-      G.intensityDirector.onAsteroidHit();
+      G.systems.intensity.onAsteroidHit();
       if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
         G.ui.combo++;
         if (G.ui.combo >= 2) {
@@ -30,9 +30,9 @@ export function handleCollisions() {
         }
         const shakeAmount = CONFIG.screenshake.intensity[ev2.sizeName] || CONFIG.screenshake.intensity.small;
         triggerShake(shakeAmount);
-        const puId = G.dropSystem.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
+        const puId = G.systems.drop.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
         if (puId) ent.capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
-        G.intensityDirector.onAsteroidDestroyed(field.remaining, totalAsteroids, G.ui.combo);
+        G.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, G.ui.combo);
         if (field.remaining === 0) triggerSlowMo();
       }
     }
@@ -42,16 +42,16 @@ export function handleCollisions() {
   const gs = G.gs;
   const capEvts = G.session.checkCapsuleCollision(ent.capsules, ship);
   for (const ce of capEvts) {
-    G.puManager.activate(ce.powerUpId, gs);
-    G.intensityDirector.onPowerUpActivated();
+    G.systems.powerUp.activate(ce.powerUpId, gs);
+    G.systems.intensity.onPowerUpActivated();
     spawnExplosion(ce.x, ce.y, getPowerUp(ce.powerUpId)?.color || '#fff');
   }
 
   // --- Expiration des power-ups ---
-  const puCountBefore = G.puManager.getActive().length;
-  G.puManager.update(gs);
-  if (puCountBefore > 0 && G.puManager.getActive().length === 0) {
-    G.intensityDirector.onPowerUpExpired();
+  const puCountBefore = G.systems.powerUp.getActive().length;
+  G.systems.powerUp.update(gs);
+  if (puCountBefore > 0 && G.systems.powerUp.getActive().length === 0) {
+    G.systems.intensity.onPowerUpExpired();
   }
 
   // --- Drones perdus (multi-drone) ---
@@ -65,10 +65,10 @@ export function handleCollisions() {
       G.ui.combo = 0;
       if (livesLeft <= 0) {
         G.session.state = 'gameOver';
-        G.intensityDirector.onGameOver();
+        G.systems.intensity.onGameOver();
       } else {
         ent.drones[0].reset(ship);
-        G.intensityDirector.onLifeChanged(livesLeft);
+        G.systems.intensity.onLifeChanged(livesLeft);
       }
     }
   }
@@ -76,6 +76,6 @@ export function handleCollisions() {
   // Retarder le win pendant le slow-mo pour qu'il soit visible
   if (G.ui.slowMoTimer <= 0) {
     const ev4 = G.session.checkWin(field);
-    if (ev4) { G.intensityDirector.onWin(); }
+    if (ev4) { G.systems.intensity.onWin(); }
   }
 }

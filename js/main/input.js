@@ -31,10 +31,10 @@ setTapHandler((x, y) => {
     if (x >= pb.x && x <= pb.x + pb.size &&
         y >= pb.y && y <= pb.y + pb.size) {
       G.session.pause();
-      G.intensityDirector.onPause();
+      G.systems.intensity.onPause();
       return;
     }
-    if (launchAllDrones()) G.intensityDirector.onLaunch();
+    if (launchAllDrones()) G.systems.intensity.onLaunch();
   }
   if (G.session.state === 'gameOver' || G.session.state === 'won') {
     resetMenu();
@@ -72,7 +72,7 @@ setMenuTapHandler((x, y) => {
     // Bouton REPRENDRE
     if (x >= cx - halfW && x <= cx + halfW && y >= cy && y <= cy + btnH) {
       G.session.resume();
-      G.intensityDirector.onResume();
+      G.systems.intensity.onResume();
     }
     // Bouton MENU
     if (x >= cx - halfW && x <= cx + halfW && y >= cy + btnH + gap && y <= cy + btnH * 2 + gap) {
@@ -111,12 +111,12 @@ document.addEventListener('keydown', (e) => {
   if (G.session.state === 'playing') {
     if (e.key === 'ArrowLeft') G.entities.ship.movingLeft = true;
     if (e.key === 'ArrowRight') G.entities.ship.movingRight = true;
-    if (e.key === ' ') { if (launchAllDrones()) G.intensityDirector.onLaunch(); }
-    if (e.key === 'Escape') { G.session.pause(); G.intensityDirector.onPause(); return; }
+    if (e.key === ' ') { if (launchAllDrones()) G.systems.intensity.onLaunch(); }
+    if (e.key === 'Escape') { G.session.pause(); G.systems.intensity.onPause(); return; }
   }
 
   if (G.session.state === 'paused') {
-    if (e.key === 'Escape') { G.session.resume(); G.intensityDirector.onResume(); }
+    if (e.key === 'Escape') { G.session.resume(); G.systems.intensity.onResume(); }
     if (e.key === 'r') { resetMenu(); G.session.backToMenu(); if (isDevMode()) showDevPanel(); }
     return;
   }

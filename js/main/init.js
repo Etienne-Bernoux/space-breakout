@@ -6,7 +6,6 @@ import { GameSession } from '../use-cases/game-logic.js';
 import { DropSystem } from '../use-cases/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up-manager.js';
 import { GameIntensityDirector } from '../use-cases/game-intensity-director.js';
-import { Capsule } from '../domain/capsule.js';
 import { setupResize } from '../infra/resize.js';
 import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
 
@@ -36,9 +35,11 @@ export const G = {
   },
 
   // --- Systems ---
-  dropSystem: new DropSystem(CONFIG.drop),
-  puManager: new PowerUpManager(),
-  intensityDirector: new GameIntensityDirector(),
+  systems: {
+    drop: new DropSystem(CONFIG.drop),
+    powerUp: new PowerUpManager(),
+    intensity: new GameIntensityDirector(),
+  },
 
   // --- UI state ---
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },
@@ -72,7 +73,6 @@ export function pauseBtnLayout() {
 }
 
 setupResize(() => {
-  // Repositionner le vaisseau en bas quand la hauteur change
   G.session.canvasHeight = CONFIG.canvas.height;
   const ship = G.entities.ship;
   if (ship) {
@@ -85,24 +85,30 @@ setupResize(() => {
   }
 });
 
-// --- Chargement des réglages audio ---
-// Courbe perceptuelle : x² pour que 50% du slider ≈ moitié du volume perçu
+// --- Courbe perceptuelle : x² pour que 50% du slider ≈ moitié du volume perçu ---
 export function perceptualVolume(v) {
   return v * v;
 }
 
-export function startGame() {
+// --- Démarrage d'une partie ---
+function spawnEntities(ent) {
   const isMobile = 'ontouchstart' in window;
-  const ent = G.entities;
   ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
   ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width)];
-  // En mode dev, utiliser la config enrichie (matériaux + densité)
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
   ent.field = new AsteroidField(astConfig);
   ent.capsules = [];
-  Object.assign(G.ui, { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 });
-  G.puManager.clear(G.gs);
   ent.totalAsteroids = ent.field.remaining;
-  G.intensityDirector.enable();
+}
+
+function resetSystems(sys) {
+  Object.assign(G.ui, { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 });
+  sys.powerUp.clear(G.gs);
+  sys.intensity.enable();
+}
+
+export function startGame() {
+  spawnEntities(G.entities);
+  resetSystems(G.systems);
   G.session.start();
 }

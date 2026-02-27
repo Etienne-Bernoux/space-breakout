@@ -34,7 +34,7 @@ function buildButtons() {
 
     btn.appendChild(document.createTextNode(def.short));
     btn.addEventListener('click', () => {
-      G.puManager.activate(puId, G.gs);
+      G.systems.powerUp.activate(puId, G.gs);
     });
     container.appendChild(btn);
   }

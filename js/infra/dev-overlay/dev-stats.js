@@ -3,9 +3,14 @@
 const statsContainer = document.getElementById('dev-stats');
 const INTENSITY_COLORS = ['#4488ff', '#44cc88', '#ffcc00', '#ff6600', '#ff2244'];
 let statsBuilt = false;
-let timerEl, intensityValEl, comboEl, barSegments;
+let timerEl, intensityValEl, comboEl, fpsEl, ftEl, barSegments;
 let gameStartTime = 0;
 let wasPlaying = false;
+let frameCount = 0;
+let lastFpsTime = 0;
+let currentFps = 0;
+let lastFrameTime = 0;
+let currentFt = 0;
 
 /** @type {{ intensity: number, combo: number }} */
 let intensityRef = null;
@@ -41,6 +46,14 @@ function buildStats() {
   comboEl = document.createElement('div');
   comboEl.innerHTML = 'Combo <span class="val">0</span>';
   statsContainer.appendChild(comboEl);
+
+  fpsEl = document.createElement('div');
+  fpsEl.innerHTML = 'FPS <span class="val">--</span>';
+  statsContainer.appendChild(fpsEl);
+
+  ftEl = document.createElement('div');
+  ftEl.innerHTML = 'Frame <span class="val">--</span><span style="opacity:0.5"> ms</span>';
+  statsContainer.appendChild(ftEl);
 }
 
 function updateStatsDisplay() {
@@ -60,6 +73,23 @@ function updateStatsDisplay() {
   }
 
   comboEl.querySelector('.val').textContent = intensityRef.combo;
+
+  frameCount++;
+  const now = performance.now();
+  if (now - lastFpsTime >= 500) {
+    currentFps = Math.round(frameCount / ((now - lastFpsTime) / 1000));
+    frameCount = 0;
+    lastFpsTime = now;
+  }
+  const fpsValEl = fpsEl.querySelector('.val');
+  fpsValEl.textContent = currentFps;
+  fpsValEl.style.color = currentFps >= 55 ? '#44cc88' : currentFps >= 30 ? '#ffcc00' : '#ff2244';
+
+  currentFt = now - lastFrameTime;
+  lastFrameTime = now;
+  const ftValEl = ftEl.querySelector('.val');
+  ftValEl.textContent = currentFt.toFixed(1);
+  ftValEl.style.color = currentFt <= 10 ? '#44cc88' : currentFt <= 14 ? '#ffcc00' : '#ff2244';
 }
 
 export function updateDevStats(playing) {

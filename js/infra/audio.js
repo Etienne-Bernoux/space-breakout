@@ -1,3 +1,5 @@
+import { synthSfxr } from './sfxr-synth.js';
+
 let audioCtx = null;
 let sfxGain = null;
 
@@ -85,32 +87,31 @@ export function playWin() {
   });
 }
 
+// Params sfxr explosion (générés sur sfxr.me)
+const EXPLOSION_SFXR = {
+  p_env_attack: 0, p_env_sustain: 0.3672485374573341,
+  p_env_punch: 0.620889340391127, p_env_decay: 0.1984798119077068,
+  p_base_freq: 0.15660990346413736, p_freq_limit: 0,
+  p_freq_ramp: -0.34092310379782853, p_freq_dramp: 0,
+  p_vib_strength: 0.42636208279456644, p_vib_speed: 0.5145269624160903,
+  p_arp_mod: 0.5030122924389628, p_arp_speed: 0.6630336150439109,
+  p_duty: 0, p_duty_ramp: 0, p_repeat_speed: 0,
+  p_pha_offset: -0.24450737744696963, p_pha_ramp: -0.0776111794548913,
+  p_lpf_freq: 1, p_lpf_ramp: 0, p_lpf_resonance: 0,
+  p_hpf_freq: 0, p_hpf_ramp: 0, sound_vol: 0.25,
+};
+
 export function playShipExplosion() {
   const ctx = getCtx();
   const now = ctx.currentTime;
 
-  // --- A. Couche bruit : le souffle de l'explosion (le "boom") ---
-  // Bruit blanc → filtre passe-bas grave → enveloppe rapide
-  const bufLen = ctx.sampleRate * 1.5;
-  const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < bufLen; i++) {
-    data[i] = Math.random() * 2 - 1;
-  }
+  // --- A. Couche sfxr : le souffle de l'explosion ---
+  const samples = synthSfxr(EXPLOSION_SFXR, ctx.sampleRate);
+  const buf = ctx.createBuffer(1, samples.length, ctx.sampleRate);
+  buf.getChannelData(0).set(samples);
   const noise = ctx.createBufferSource();
   noise.buffer = buf;
-  const nGain = ctx.createGain();
-  nGain.gain.setValueAtTime(0.7, now);
-  nGain.gain.linearRampToValueAtTime(0.5, now + 0.05);
-  nGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-  const nFilter = ctx.createBiquadFilter();
-  nFilter.type = 'lowpass';
-  nFilter.frequency.setValueAtTime(600, now);
-  nFilter.frequency.exponentialRampToValueAtTime(100, now + 0.8);
-  nFilter.Q.setValueAtTime(1.5, now);
-  noise.connect(nFilter);
-  nFilter.connect(nGain);
-  nGain.connect(sfxGain);
+  noise.connect(sfxGain);
   noise.start(now);
 
   // --- B. Kick d'impact — sinus grave avec pitch drop rapide ---

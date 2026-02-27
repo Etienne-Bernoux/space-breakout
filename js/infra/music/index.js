@@ -18,6 +18,6 @@ export {
   resetAudio, playSectionByName,
 } from './scheduler.js';
 
-export { playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent } from './stingers.js';
+export { playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent, playComboMilestone } from './stingers.js';
 
 export { playInstrumentDemo } from './demos.js';

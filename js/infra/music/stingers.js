@@ -241,4 +241,37 @@ function playComboAccent(combo) {
   }
 }
 
-export { playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent };
+/**
+ * Stinger spécial aux paliers de combo ronds (×5, ×10, ×15…).
+ * Arpège 5 notes montantes, plus brillant et fort que le combo accent.
+ */
+function playComboMilestone(combo) {
+  const c = getCtx();
+  const t = c.currentTime;
+  const tier = Math.min(3, Math.floor(combo / 5));  // 0→3
+  const baseNote = 72 + tier * 2;                    // monte avec le palier
+  const notes = [0, 4, 7, 11, 12].map(n => baseNote + n);  // arpège majeur 7
+  const vol = 0.08 + tier * 0.02;                    // 0.08 → 0.14
+
+  for (let i = 0; i < notes.length; i++) {
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'square';
+    osc.frequency.value = freq(notes[i]);
+    const start = t + i * 0.06;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(vol, start + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+    // Filtre passe-bas pour adoucir le square
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 2000 + tier * 500;
+    osc.connect(filter);
+    filter.connect(g);
+    g.connect(c.destination);
+    osc.start(start);
+    osc.stop(start + 0.3);
+  }
+}
+
+export { playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent, playComboMilestone };

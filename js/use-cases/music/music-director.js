@@ -6,7 +6,7 @@ import {
   getCurrentSection, setBPM,
   startMusic, isPlaying, fadeOutMusic,
   muffle, unmuffle,
-  playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent,
+  playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent, playComboMilestone,
 } from '../../infra/music/index.js';
 
 import {
@@ -78,7 +78,10 @@ export class MusicDirector {
 
   onAsteroidHit() { playAsteroidHit(); }
 
-  onCombo(combo) { playComboAccent(combo); }
+  onCombo(combo) {
+    if (combo > 0 && combo % 5 === 0) playComboMilestone(combo);
+    else playComboAccent(combo);
+  }
 
   onPowerUp() { playPowerUpAccent(); }
 

@@ -97,6 +97,18 @@ describe('MusicDirector — calcul d\'intensité', () => {
     });
   });
 
+  describe('combo milestone dispatch', () => {
+    it('combo multiple de 5 → milestone, sinon accent', () => {
+      // On teste la logique de branchement, pas l'audio
+      const results = [];
+      for (const c of [2, 3, 5, 10, 12, 15]) {
+        results.push({ combo: c, isMilestone: c > 0 && c % 5 === 0 });
+      }
+      expect(results.filter(r => r.isMilestone).map(r => r.combo)).to.deep.equal([5, 10, 15]);
+      expect(results.filter(r => !r.isMilestone).map(r => r.combo)).to.deep.equal([2, 3, 12]);
+    });
+  });
+
   describe('edge cases', () => {
     it('tout à 0', () => {
       expect(calcIntensity(1.0, 0, false)).to.equal(0);

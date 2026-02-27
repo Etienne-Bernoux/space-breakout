@@ -14,8 +14,9 @@ export class CollisionHandler {
    * @param {object} deps.config    - { screenshake, capsule }
    * @param {object} deps.effects   - { spawnExplosion, triggerShake }
    * @param {function} deps.getGameState - () => { ship, drones, session, field }
+   * @param {object} deps.droneManager - DroneManager
    */
-  constructor({ entities, session, systems, ui, config, effects, getGameState }) {
+  constructor({ entities, session, systems, ui, config, effects, getGameState, droneManager }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -23,6 +24,7 @@ export class CollisionHandler {
     this.ui = ui;
     this.config = config;
     this.effects = effects;
+    this.droneManager = droneManager || null;
   }
 
   /** Appelé à chaque frame de jeu */
@@ -110,8 +112,8 @@ export class CollisionHandler {
     for (let i = drones.length - 1; i >= 0; i--) {
       if (!this.session.isDroneLost(drones[i])) continue;
 
-      if (drones.length > 1) {
-        drones.splice(i, 1);
+      if (this.droneManager?.removeExtra(drones, i)) {
+        // drone supplémentaire retiré
       } else {
         const livesLeft = this.session.loseLife();
         this.ui.combo = 0;
@@ -120,8 +122,9 @@ export class CollisionHandler {
           this.session.state = 'gameOver';
           this.systems.intensity.onGameOver();
         } else {
-          drones[0].reset(ship);
-          this.systems.powerUp.clearDroneEffects();
+          this.droneManager
+            ? this.droneManager.resetLast(drones, ship)
+            : drones[0].reset(ship);
           this.systems.intensity.onLifeChanged(livesLeft);
         }
       }

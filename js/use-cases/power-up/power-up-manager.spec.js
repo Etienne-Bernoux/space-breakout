@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { PowerUpManager } from './power-up-manager.js';
+import { DroneManager } from '../drone/drone-manager.js';
 
 function makeDrone(overrides = {}) {
   return { sticky: false, piercing: false, warp: false, radius: 6, speed: 3, launched: true, launch() { this.launched = true; }, ...overrides };
@@ -8,7 +9,7 @@ function makeDrone(overrides = {}) {
 function makeGameState(overrides = {}) {
   const drone = makeDrone(overrides.drone);
   return {
-    ship: { width: 100, x: 0, ...overrides.ship },
+    ship: { width: 100, x: 0, y: 400, height: 10, ...overrides.ship },
     drones: [drone],
     get drone() { return this.drones[0]; },
     session: { lives: 3, scoreMultiplier: 1, ...overrides.session },
@@ -304,7 +305,7 @@ describe('PowerUpManager', () => {
 
   describe('droneMulti (spawn)', () => {
     it('ajoute un drone dans gs.drones', () => {
-      const pm = new PowerUpManager();
+      const pm = new PowerUpManager({ droneManager: new DroneManager() });
       const gs = makeGameState();
       expect(gs.drones).to.have.length(1);
       pm.activate('droneMulti', gs, 0);
@@ -313,14 +314,14 @@ describe('PowerUpManager', () => {
     });
 
     it('le nouveau drone copie les flags du premier', () => {
-      const pm = new PowerUpManager();
+      const pm = new PowerUpManager({ droneManager: new DroneManager() });
       const gs = makeGameState({ drone: { piercing: true } });
       pm.activate('droneMulti', gs, 0);
       expect(gs.drones[1].piercing).to.be.true;
     });
 
     it('le nouveau drone est lancé immédiatement', () => {
-      const pm = new PowerUpManager();
+      const pm = new PowerUpManager({ droneManager: new DroneManager() });
       const gs = makeGameState();
       pm.activate('droneMulti', gs, 0);
       expect(gs.drones[1].launched).to.be.true;
@@ -329,7 +330,7 @@ describe('PowerUpManager', () => {
 
   describe('multi-drone : apply/revert boucle sur drones', () => {
     it('piercing s\'applique à tous les drones', () => {
-      const pm = new PowerUpManager();
+      const pm = new PowerUpManager({ droneManager: new DroneManager() });
       const gs = makeGameState();
       pm.activate('droneMulti', gs, 0); // 2 drones
       pm.activate('dronePiercing', gs, 0);
@@ -338,7 +339,7 @@ describe('PowerUpManager', () => {
     });
 
     it('revert piercing sur tous les drones', () => {
-      const pm = new PowerUpManager();
+      const pm = new PowerUpManager({ droneManager: new DroneManager() });
       const gs = makeGameState();
       pm.activate('droneMulti', gs, 0);
       pm.activate('dronePiercing', gs, 0);

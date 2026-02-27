@@ -25,6 +25,7 @@ import { DropSystem } from './use-cases/drop/drop-system.js';
 import { PowerUpManager } from './use-cases/power-up/power-up-manager.js';
 import { GameIntensityDirector } from './use-cases/intensity/game-intensity-director.js';
 import { CollisionHandler } from './use-cases/collision/collision-handler.js';
+import { DroneManager } from './use-cases/drone/drone-manager.js';
 
 /**
  * Crée un jeu complet avec wiring réel (pas de mocks sauf effects).
@@ -53,10 +54,16 @@ function createGame() {
     totalAsteroids: field.remaining,
   };
 
+  const powerUp = new PowerUpManager();
+  const droneManager = new DroneManager({
+    clearDroneEffects: () => powerUp.clearDroneEffects(),
+  });
+  powerUp.droneManager = droneManager;
   const systems = {
     drop: new DropSystem(CONFIG.drop),
-    powerUp: new PowerUpManager(),
+    powerUp,
     intensity: new GameIntensityDirector(),
+    droneManager,
   };
 
   const ui = { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 };
@@ -74,6 +81,7 @@ function createGame() {
     config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
     effects,
     getGameState: () => ({ ship: entities.ship, drones: entities.drones, session, field: entities.field }),
+    droneManager,
   });
 
   return { session, entities, systems, ui, collisionHandler, effects };

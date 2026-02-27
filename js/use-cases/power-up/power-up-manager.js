@@ -3,7 +3,6 @@
 // gameState = { ship, drones, session, field }
 
 import { getPowerUp } from '../../domain/power-ups.js';
-import { Drone } from '../../domain/drone/drone.js';
 
 // --- Strategies par type d'effet ---
 // Chaque strategy : { apply(gs, effect, saved), revert(gs, effect, saved), cumul?(gs, effect) }
@@ -88,8 +87,9 @@ function resolveStrategy(effect) {
 }
 
 export class PowerUpManager {
-  constructor() {
+  constructor({ droneManager } = {}) {
     this.active = new Map(); // id → { startTime, def, saved }
+    this.droneManager = droneManager || null;
   }
 
   /** Activer un power-up. Si déjà actif → reset timer + cumul. */
@@ -169,17 +169,7 @@ export class PowerUpManager {
     if (effect.target === 'session' && effect.delta) {
       gs.session[effect.prop] += effect.delta;
     } else if (effect.action === 'spawn') {
-      const ref = gs.drones[0];
-      if (ref) {
-        const d = new Drone(
-          { radius: ref._baseRadius || ref.radius, speed: ref._baseSpeed || ref.speed, color: ref.color },
-          gs.ship,
-        );
-        d.piercing = ref.piercing;
-        d.sticky = ref.sticky;
-        d.launchAtAngle(gs.ship, (Math.random() - 0.5) * 0.6);
-        gs.drones.push(d);
-      }
+      if (this.droneManager) this.droneManager.spawn(gs.drones, gs.ship);
     } else if (effect.action === 'weakenAll') {
       for (const a of gs.field.grid) {
         if (!a.alive || !a.destructible) continue;

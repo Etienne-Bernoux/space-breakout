@@ -20,6 +20,7 @@ import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
+import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from './hud.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from './input.js';
@@ -45,11 +46,21 @@ export const G = {
   },
   systems: {
     drop: new DropSystem(CONFIG.drop),
-    powerUp: new PowerUpManager(),
+    powerUp: null, // wired below (circular dep with droneManager)
     intensity: new GameIntensityDirector(),
+    droneManager: null, // wired below
   },
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },
 };
+
+// --- Wiring PowerUpManager ↔ DroneManager ---
+G.systems.powerUp = new PowerUpManager({
+  droneManager: null, // set after droneManager created
+});
+G.systems.droneManager = new DroneManager({
+  clearDroneEffects: () => G.systems.powerUp.clearDroneEffects(),
+});
+G.systems.powerUp.droneManager = G.systems.droneManager;
 
 // --- Utilitaires responsive ---
 export { gameScale } from '../shared/responsive.js';
@@ -91,6 +102,7 @@ G.collisionHandler = new CollisionHandler({
   config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
   effects: { spawnExplosion, triggerShake },
   getGameState: () => G.gs,
+  droneManager: G.systems.droneManager,
 });
 
 G.hud = new HudRenderer({

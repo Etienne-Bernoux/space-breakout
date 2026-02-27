@@ -65,7 +65,15 @@ function makeDeps(overrides = {}) {
     ...overrides.effects,
   };
   const getGameState = () => ({ ship: entities.ship, drones: entities.drones, session, field: entities.field });
-  return { entities, session, systems, ui, config, effects, getGameState };
+  const droneManager = {
+    removeExtra(drones, i) {
+      if (drones.length > 1) { drones.splice(i, 1); return true; }
+      return false;
+    },
+    resetLast: vi.fn((drones, ship) => { drones[0].reset(ship); }),
+    ...overrides.droneManager,
+  };
+  return { entities, session, systems, ui, config, effects, getGameState, droneManager };
 }
 
 function asteroidHitEvent(sizeName = 'small') {
@@ -184,7 +192,7 @@ describe('CollisionHandler', () => {
   });
 
   // 10. Dernier drone perdu → perte de vie
-  it('perd une vie et reset le drone quand le dernier est perdu', () => {
+  it('perd une vie et reset le drone via droneManager', () => {
     deps.session.isDroneLost.mockReturnValue(true);
     deps.session.loseLife.mockReturnValue(2);
     deps.ui.combo = 3;
@@ -193,7 +201,7 @@ describe('CollisionHandler', () => {
 
     expect(deps.session.loseLife).toHaveBeenCalled();
     expect(deps.ui.combo).toBe(0);
-    expect(deps.entities.drones[0].reset).toHaveBeenCalledWith(deps.entities.ship);
+    expect(deps.droneManager.resetLast).toHaveBeenCalledWith(deps.entities.drones, deps.entities.ship);
     expect(deps.systems.intensity.onLifeChanged).toHaveBeenCalledWith(2);
   });
 

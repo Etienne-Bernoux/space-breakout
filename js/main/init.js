@@ -18,8 +18,6 @@ const ctx = canvas.getContext('2d');
 export const G = {
   // --- Rendering ---
   render: { canvas, ctx },
-  get canvas() { return this.render.canvas; },
-  get ctx() { return this.render.ctx; },
 
   // --- Game entities ---
   session: new GameSession(CONFIG),
@@ -38,14 +36,6 @@ export const G = {
 
   // --- UI state ---
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },
-  get combo() { return this.ui.combo; },
-  set combo(v) { this.ui.combo = v; },
-  get comboDisplay() { return this.ui.comboDisplay; },
-  set comboDisplay(v) { this.ui.comboDisplay = v; },
-  get comboFadeTimer() { return this.ui.comboFadeTimer; },
-  set comboFadeTimer(v) { this.ui.comboFadeTimer = v; },
-  get slowMoTimer() { return this.ui.slowMoTimer; },
-  set slowMoTimer(v) { this.ui.slowMoTimer = v; },
 };
 
 // --- Scale responsive pour le jeu (HUD, boutons, overlays) ---

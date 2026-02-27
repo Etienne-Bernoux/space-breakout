@@ -24,30 +24,33 @@ function drawVignette(ctx, fx) {
 }
 
 function drawScene(fx) {
+  const ctx = G.render.ctx;
   const shake = updateShake();
-  G.render.ctx.save();
-  G.render.ctx.translate(shake.x, shake.y);
-  G.field.draw(G.render.ctx);
-  updateParticles(G.render.ctx);
-  for (const c of G.capsules) drawCapsule(G.render.ctx, c);
+  ctx.save();
+  ctx.translate(shake.x, shake.y);
+  G.field.draw(ctx);
+  updateParticles(ctx);
+  for (const c of G.capsules) drawCapsule(ctx, c);
   if (G.ship.isMobile) drawDeathLine(G.ship, fx);
-  G.ship.draw(G.render.ctx);
-  for (const d of G.drones) d.draw(G.render.ctx);
-  G.render.ctx.restore();
-  drawVignette(G.render.ctx, fx);
+  G.ship.draw(ctx);
+  for (const d of G.drones) d.draw(ctx);
+  ctx.restore();
+  drawVignette(ctx, fx);
   drawHUD(fx);
-  drawPowerUpHUD(G.render.ctx, G.puManager.getActive(), CONFIG.canvas.width);
+  drawPowerUpHUD(ctx, G.puManager.getActive(), CONFIG.canvas.width);
   drawPauseButton();
   if (G.ui.comboFadeTimer > 0) drawCombo();
 }
 
 export function loop() {
+  const ctx = G.render.ctx;
+
   // Update intensity effects (lerp)
   G.intensityDirector.update();
   const fx = G.intensityDirector.getEffects();
   setAmbientShake(fx.microShake);
 
-  G.render.ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+  ctx.clearRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
   updateStars(fx.starSpeed);
 
   // Curseur adapté à l'état
@@ -56,7 +59,7 @@ export function loop() {
   if (isMusicLabActive()) {
     const mouse = getMousePos();
     handleMusicLabHover(mouse.x, mouse.y);
-    drawMusicLab(G.render.ctx);
+    drawMusicLab(ctx);
     requestAnimationFrame(loop);
     return;
   }
@@ -64,7 +67,7 @@ export function loop() {
   if (isDevPanelActive()) {
     const mouse = getMousePos();
     handleDevHover(mouse.x, mouse.y);
-    drawDevPanel(G.render.ctx);
+    drawDevPanel(ctx);
     requestAnimationFrame(loop);
     return;
   }
@@ -72,15 +75,15 @@ export function loop() {
   if (G.session.state === 'menu') {
     const mouse = getMousePos();
     updateMenuHover(mouse.x, mouse.y);
-    updateMenu(G.render.ctx);
+    updateMenu(ctx);
     requestAnimationFrame(loop);
     return;
   }
 
   if (G.session.state === 'paused') {
-    G.field.draw(G.render.ctx);
-    G.ship.draw(G.render.ctx);
-    for (const d of G.drones) d.draw(G.render.ctx);
+    G.field.draw(ctx);
+    G.ship.draw(ctx);
+    for (const d of G.drones) d.draw(ctx);
     drawHUD(fx);
     drawPauseScreen();
     requestAnimationFrame(loop);

@@ -1,4 +1,4 @@
-import { Capsule } from '../../domain/capsule.js';
+import { Capsule } from '../../domain/capsule/capsule.js';
 import { getPowerUp } from '../../domain/power-ups.js';
 
 const COMBO_FADE_DURATION = 90;

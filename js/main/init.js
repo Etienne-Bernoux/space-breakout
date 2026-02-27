@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
-import { Ship } from '../domain/ship.js';
-import { Drone } from '../domain/drone.js';
+import { Ship } from '../domain/ship/ship.js';
+import { Drone } from '../domain/drone/drone.js';
 import { AsteroidField } from '../domain/asteroid/index.js';
 import { GameSession } from '../use-cases/game-logic/game-session.js';
 import { DropSystem } from '../use-cases/drop/drop-system.js';

@@ -3,7 +3,7 @@
 // gameState = { ship, drones, session, field }
 
 import { getPowerUp } from '../../domain/power-ups.js';
-import { Drone } from '../../domain/drone.js';
+import { Drone } from '../../domain/drone/drone.js';
 
 export class PowerUpManager {
   constructor() {

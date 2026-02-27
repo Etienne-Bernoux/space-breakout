@@ -29,6 +29,10 @@ export class PowerUpManager {
       if (def.effect.target === 'ship' && def.effect.prop === 'width') {
         this._resizeShip(gameState, def.effect.factor);
       }
+      // Cumul pour les effets drone numériques (radius, speed)
+      if (def.effect.target === 'drone' && def.effect.factor) {
+        for (const d of gameState.drones) d[def.effect.prop] *= def.effect.factor;
+      }
       return;
     }
 

@@ -159,6 +159,34 @@ describe('PowerUpManager', () => {
       pm.activate('shipNarrow', gs, 3000);
       expect(gs.ship.width).to.equal(36); // 60 × 0.6
     });
+
+    it('cumul drone : droneLarge ×1.8 puis ×1.8 = ×3.24', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneLarge', gs, 0);
+      expect(gs.drone.radius).to.be.closeTo(10.8, 0.01); // 6 × 1.8
+      pm.activate('droneLarge', gs, 5000);
+      expect(gs.drone.radius).to.be.closeTo(19.44, 0.01); // 10.8 × 1.8
+    });
+
+    it('cumul drone : revert restaure le radius original', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneLarge', gs, 0);
+      pm.activate('droneLarge', gs, 5000);
+      expect(gs.drone.radius).to.be.closeTo(19.44, 0.01);
+      pm.update(gs, 25001); // expiré
+      expect(gs.drone.radius).to.equal(6); // retour original
+    });
+
+    it('cumul drone : droneFast ×1.8 puis ×1.8', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneFast', gs, 0);
+      expect(gs.drone.speed).to.be.closeTo(5.4, 0.01);
+      pm.activate('droneFast', gs, 3000);
+      expect(gs.drone.speed).to.be.closeTo(9.72, 0.01); // 5.4 × 1.8
+    });
   });
 
   describe('clearDroneEffects', () => {

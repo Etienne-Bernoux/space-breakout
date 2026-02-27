@@ -76,7 +76,12 @@ export class PowerUpManager {
     if (effect.target === 'ship' && effect.prop === 'width') {
       saved.width = gs.ship.width;
       this._resizeShip(gs, effect.factor);
+    } else if (effect.target === 'drone' && effect.factor) {
+      // Numeric drone property (radius, speed)
+      saved.values = gs.drones.map(d => d[effect.prop]);
+      for (const d of gs.drones) d[effect.prop] *= effect.factor;
     } else if (effect.target === 'drone') {
+      // Boolean drone property (sticky, piercing, warp)
       for (const d of gs.drones) d[effect.prop] = true;
     } else if (effect.target === 'session' && effect.factor) {
       gs.session[effect.prop] = (gs.session[effect.prop] || 1) * effect.factor;
@@ -105,7 +110,13 @@ export class PowerUpManager {
       for (const d of gs.drones) {
         if (!d.launched) d.x = gs.ship.x + gs.ship.width / 2;
       }
+    } else if (effect.target === 'drone' && effect.factor) {
+      // Numeric drone property — restore saved values
+      for (let i = 0; i < gs.drones.length; i++) {
+        gs.drones[i][effect.prop] = saved.values?.[i] ?? gs.drones[i][effect.prop];
+      }
     } else if (effect.target === 'drone') {
+      // Boolean drone property
       for (const d of gs.drones) {
         d[effect.prop] = false;
         if (effect.prop === 'sticky') {

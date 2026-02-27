@@ -11,6 +11,7 @@ export class Drone {
     this.color = config.color;
     this.piercing = false;
     this.sticky = false;
+    this.warp = false;
     this.reset(ship);
   }
 
@@ -51,13 +52,18 @@ export class Drone {
     this.x += this.dx;
     this.y += this.dy;
 
-    // Rebond murs latéraux + clamp pour éviter de rester collé
-    if (this.x - this.radius <= 0) {
-      this.x = this.radius;
-      this.dx = Math.abs(this.dx);
-    } else if (this.x + this.radius >= canvasWidth) {
-      this.x = canvasWidth - this.radius;
-      this.dx = -Math.abs(this.dx);
+    // Murs latéraux : warp (traverse) ou rebond
+    if (this.warp) {
+      if (this.x + this.radius < 0) this.x = canvasWidth + this.radius;
+      else if (this.x - this.radius > canvasWidth) this.x = -this.radius;
+    } else {
+      if (this.x - this.radius <= 0) {
+        this.x = this.radius;
+        this.dx = Math.abs(this.dx);
+      } else if (this.x + this.radius >= canvasWidth) {
+        this.x = canvasWidth - this.radius;
+        this.dx = -Math.abs(this.dx);
+      }
     }
     // Rebond plafond
     if (this.y - this.radius <= 0) {

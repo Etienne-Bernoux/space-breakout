@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { PowerUpManager } from './power-up-manager.js';
 
 function makeDrone(overrides = {}) {
-  return { sticky: false, piercing: false, launched: true, launch() { this.launched = true; }, ...overrides };
+  return { sticky: false, piercing: false, warp: false, radius: 6, speed: 3, launched: true, launch() { this.launched = true; }, ...overrides };
 }
 
 function makeGameState(overrides = {}) {
@@ -183,6 +183,66 @@ describe('PowerUpManager', () => {
       expect(list).to.have.length(1);
       expect(list[0].id).to.equal('shipWide');
       expect(list[0].remaining).to.equal(15000);
+    });
+  });
+
+  describe('droneLarge', () => {
+    it('multiplie le radius ×1.8', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneLarge', gs, 0);
+      expect(gs.drone.radius).to.be.closeTo(10.8, 0.01);
+    });
+
+    it('revert restaure le radius original', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneLarge', gs, 0);
+      pm.update(gs, 15001);
+      expect(gs.drone.radius).to.equal(6);
+    });
+  });
+
+  describe('droneMini', () => {
+    it('réduit le radius ×0.5', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneMini', gs, 0);
+      expect(gs.drone.radius).to.equal(3);
+    });
+  });
+
+  describe('droneFast', () => {
+    it('multiplie speed ×1.8', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneFast', gs, 0);
+      expect(gs.drone.speed).to.be.closeTo(5.4, 0.01);
+    });
+
+    it('revert restaure speed original', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneFast', gs, 0);
+      pm.update(gs, 10001);
+      expect(gs.drone.speed).to.equal(3);
+    });
+  });
+
+  describe('droneWarp', () => {
+    it('active warp sur le drone', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneWarp', gs, 0);
+      expect(gs.drone.warp).to.be.true;
+    });
+
+    it('désactive après expiration', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('droneWarp', gs, 0);
+      pm.update(gs, 10001);
+      expect(gs.drone.warp).to.be.false;
     });
   });
 

@@ -138,6 +138,42 @@ describe('Drone', () => {
     });
   });
 
+  describe('warp — traverse les murs latéraux', () => {
+    it('sort à droite → réapparaît à gauche', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = makeDrone(ship);
+      drone.launched = true;
+      drone.warp = true;
+      drone.x = 810; // dépassé à droite (> canvasWidth + radius)
+      drone.dx = 3;
+      drone.update(ship, 800);
+      expect(drone.x).to.equal(-drone.radius);
+    });
+
+    it('sort à gauche → réapparaît à droite', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = makeDrone(ship);
+      drone.launched = true;
+      drone.warp = true;
+      drone.x = -10; // dépassé à gauche (< -radius)
+      drone.dx = -3;
+      drone.update(ship, 800);
+      expect(drone.x).to.equal(800 + drone.radius);
+    });
+
+    it('ne rebondit pas quand warp est actif', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = makeDrone(ship);
+      drone.launched = true;
+      drone.warp = true;
+      drone.x = 2;
+      drone.dx = -3;
+      drone.update(ship, 800);
+      // dx reste négatif (pas de rebond)
+      expect(drone.dx).to.be.below(0);
+    });
+  });
+
   describe('pas de sortie par le bas (non géré par drone)', () => {
     it('ne clamp pas en bas — c\'est main.js qui gère la perte de vie', () => {
       const ship = makeShip(100, 500, 100);

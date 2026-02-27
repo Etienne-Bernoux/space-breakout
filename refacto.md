@@ -3,122 +3,55 @@
 ## État actuel (27/02/2026)
 
 Architecture DDD en place :
-- `domain/` — entités pures (Ship, Drone, Capsule, AsteroidField, patterns, materials)
+- `domain/` — entités pures (Ship, Drone, Capsule, AsteroidField, patterns, materials) — **zéro code canvas** dans Ship/Drone
 - `use-cases/` — un dossier par use-case, classes avec injection de deps
-- `main/` — wiring (init.js), boucle de rendu (loop.js), HUD (hud.js), input (input.js)
-- `infra/` — couche technique (audio, particles, menu, dev-panel, dev-overlay, resize, touch, stars)
+- `main/` — wiring (init.js), boucle de rendu (loop.js), HUD (hud.js), input (input.js) — **classes avec injection**
+- `infra/` — couche technique (audio, particles, menu, dev-panel, dev-overlay, resize, touch, stars, renderers/)
 
-157 tests unitaires + 15 tests e2e Playwright.
-
----
-
-## 1. Couper les derniers imports de G dans infra/
-
-**Fichiers concernés :**
-- `infra/dev-overlay/index.js` → importe `G` directement
-- `infra/dev-overlay/dev-stats.js` → importe `G` directement
-
-**Action :** Injecter les dépendances nécessaires via `init.js` au lieu d'importer G.
-Le dev-overlay a besoin de `entities.field`, `systems.powerUp`, `session`, `gs`.
-Le dev-stats a besoin de `systems.intensity`.
-
-**Impact :** Faible (2 fichiers). Supprime les dernières dépendances infra → main.
+191 tests unitaires + 15 tests e2e Playwright.
 
 ---
 
-## 2. Extraire les utilitaires d'init.js
+## Tâches complétées
 
-**Fonctions à déplacer :**
-- `gameScale()` → util ou fichier dédié (utilisé par HudRenderer, InputHandler)
-- `pauseBtnLayout()` → idem
-- `perceptualVolume()` → infra/audio.js (c'est de l'audio)
-- `getSlowMoFactor()` → use-cases ou supprimé (plus utilisé ?)
-
-**Action :** Créer `js/main/utils.js` ou injecter ces fonctions. init.js ne devrait contenir que du wiring.
-
-**Impact :** Moyen (init.js + consommateurs à mettre à jour).
-
----
-
-## 3. Transformer GameLoop et InputHandler en vrais injectés
-
-**Problème actuel :** GameLoop et InputHandler sont des classes avec injection, mais elles importent encore des modules infra directement (stars, particles, menu, dev-panel, music-lab, touch, screenshake, power-up-render, dev-overlay).
-
-**Action :** Injecter ces dépendances infra via le constructeur. Gros chantier — à découper :
-- GameLoop : injecter `{ stars, particles, screenshake, menu, devPanel, musicLab, devOverlay, powerUpRender }`
-- InputHandler : injecter `{ touch, menu, devPanel, musicLab }`
-
-**Impact :** Élevé mais rend GameLoop et InputHandler testables unitairement.
+| # | Tâche | Commit |
+|---|-------|--------|
+| 1 | Couper imports G dans dev-overlay | `f435e7e` |
+| 2 | Extraire utils d'init.js (perceptualVolume → audio, suppr getSlowMoFactor) | `19d449e` |
+| 3a | Tests HudRenderer (10 tests) | `d1914cc` |
+| 4 | domain/ un dossier par entité (ship/, drone/, capsule/) | `66df8e9` |
+| 5 | Séparer rendu du domain (Ship.draw, Drone.draw → infra/renderers/) | `c410400` |
+| 6 | GameLoop/InputHandler full injection (infra injecté via constructeur) | `7244a3b` |
+| 3b | Tests GameLoop (14) + InputHandler (10) | `c32a09a` |
 
 ---
 
-## 4. domain/ — un dossier par entité
+## Reste à faire (optionnel)
 
-**État actuel :** `domain/` a un mélange de fichiers plats et du dossier `asteroid/`.
+### A. AsteroidField.draw() → infra/renderers/
 
-**Structure cible :**
-```
-domain/
-  ship/ship.js + ship.spec.js (à créer)
-  drone/drone.js + drone.spec.js
-  capsule/capsule.js + capsule.spec.js
-  asteroid/  (déjà structuré)
-  power-ups/power-ups.js
-  patterns/patterns.js
-  materials/materials.js
-```
+**Problème :** `AsteroidField.draw()` et `_tracePath()` sont du code canvas dans une entité domain.
+L'AsteroidField importe encore `renderAsteroid` depuis `infra/renderers/asteroid-render.js` (couplage domain → infra).
 
-**Impact :** Faible (renommage + imports). Cohérent avec use-cases/.
+**Action :** Extraire `draw()` et `_tracePath()` dans `infra/renderers/field-render.js`.
+AsteroidField devient un objet pur : état de la grille + logique de fragmentation.
+
+**Impact :** Moyen. Dernier couplage rendering dans domain/.
 
 ---
 
-## 5. Séparer le rendu du domain
+### B. CONFIG global → injection
 
-**Problème :** `asteroid-render.js` est dans `domain/` mais c'est de l'infra (canvas rendering).
-`Ship.draw()` et `Drone.draw()` contiennent du code canvas directement dans les entités domain.
+**Problème :** `CONFIG` est importé dans ~15 fichiers. C'est un singleton global.
 
-**Action :**
-- Déplacer `asteroid-render.js` → `infra/renderers/asteroid-render.js`
-- Extraire `Ship.draw()` → `infra/renderers/ship-render.js`
-- Extraire `Drone.draw()` → `infra/renderers/drone-render.js`
-- Les entités domain deviennent des objets purs (état + logique, zéro canvas)
+**Action :** Injecter `config` dans chaque classe/module via le constructeur.
 
-**Impact :** Élevé. C'est le changement le plus "DDD pur" — les entités ne connaissent plus le rendering.
+**Impact :** Élevé (beaucoup de fichiers). Très mécanique, faible ROI.
 
 ---
 
-## 6. Tests manquants
+### C. Tests d'intégration
 
-**Classes sans tests unitaires :**
-- `HudRenderer` — mockable maintenant, tester les appels ctx
-- `GameLoop` — tester les transitions d'état (menu/playing/paused/gameOver/won)
-- `InputHandler` — tester les dispatches clavier/touch
+**Action :** Tester le wiring complet init.js → startGame → collision → win.
 
-**Tests d'intégration :**
-- Tester le wiring complet init.js → startGame → collision → win
-
-**Impact :** Moyen. Augmenterait significativement la couverture.
-
----
-
-## 7. CONFIG global → injection
-
-**Problème :** `CONFIG` est importé dans ~15 fichiers. C'est un singleton global comme l'était G.
-
-**Action :** Injecter `config` dans chaque classe/module qui en a besoin, via le constructeur.
-
-**Impact :** Élevé (beaucoup de fichiers). À faire en dernier — c'est le plus mécanique.
-
----
-
-## Ordre recommandé
-
-| Priorité | Tâche | Effort | ROI |
-|----------|-------|--------|-----|
-| 1 | Couper imports G dans dev-overlay | Faible | Élevé — plus aucun import circulaire |
-| 2 | Extraire utils d'init.js | Faible | Moyen — init.js pur wiring |
-| 3 | Tests manquants (HudRenderer, GameLoop) | Moyen | Élevé — couverture |
-| 4 | domain/ un dossier par entité | Faible | Moyen — cohérence |
-| 5 | Séparer rendu du domain | Élevé | Élevé — DDD pur |
-| 6 | GameLoop/InputHandler full injection | Élevé | Moyen — testabilité |
-| 7 | CONFIG → injection | Élevé | Faible — mécanique |
+**Impact :** Moyen. Validerait le wiring end-to-end sans browser.

@@ -66,11 +66,13 @@ function createGame() {
     droneManager,
   };
 
-  const ui = { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 };
+  const ui = { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null };
 
   const effects = {
     spawnExplosion: vi.fn(),
+    spawnShipExplosion: vi.fn(),
     triggerShake: vi.fn(),
+    spawnDebris: vi.fn(() => []),
   };
 
   const collisionHandler = new CollisionHandler({

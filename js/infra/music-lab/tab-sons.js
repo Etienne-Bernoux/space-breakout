@@ -1,6 +1,7 @@
 // Sons tab content and data
 
 import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../music/index.js';
+import { playShipExplosion } from '../audio.js';
 import { drawBtn, drawLabel } from './draw-helpers.js';
 import { getHovered } from './state.js';
 
@@ -46,9 +47,10 @@ export function getInstruments() {
 }
 
 const STINGERS = [
-  { id: 'win',      label: 'WIN',      color: '#44ff88', fn: playWinStinger },
-  { id: 'gameover', label: 'GAMEOVER', color: '#ff4444', fn: playGameOverStinger },
-  { id: 'powerup',  label: 'POWER-UP', color: '#ffcc00', fn: playPowerUpAccent },
+  { id: 'win',       label: 'WIN',       color: '#44ff88', fn: playWinStinger },
+  { id: 'gameover',  label: 'GAMEOVER',  color: '#ff4444', fn: playGameOverStinger },
+  { id: 'powerup',   label: 'POWER-UP',  color: '#ffcc00', fn: playPowerUpAccent },
+  { id: 'explosion', label: 'EXPLOSION', color: '#ff8800', fn: playShipExplosion },
 ];
 
 export function getStingers() {

@@ -120,7 +120,16 @@ export class CollisionHandler {
         this.session.combo = 0;
         if (livesLeft <= 0) {
           this.session.state = 'gameOver';
+          this.ui.deathAnimTimer = 240;
+          this.ui.deathZoomCenter = { x: ship.x + ship.width / 2, y: ship.y + ship.height / 2 };
+          this.ui.deathDebris = this.effects.spawnDebris(ship.x, ship.y, ship.width, ship.height, ship.color);
           this.systems.intensity.onGameOver();
+          // grosse explosion au centre du ship
+          const sx = ship.x + ship.width / 2;
+          const sy = ship.y + ship.height / 2;
+          this.effects.spawnShipExplosion(sx, sy);
+          this.effects.triggerShake(14);
+          ship.visible = false;
         } else {
           this.droneManager
             ? this.droneManager.resetLast(drones, ship)
@@ -134,7 +143,10 @@ export class CollisionHandler {
   #handleWinCondition() {
     if (this.ui.slowMoTimer <= 0) {
       const ev = this.session.checkWin(this.entities.field);
-      if (ev) this.systems.intensity.onWin();
+      if (ev) {
+        this.ui.winAnimTimer = 120;
+        this.systems.intensity.onWin();
+      }
     }
   }
 }

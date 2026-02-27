@@ -25,6 +25,7 @@ export class Ship {
     this.movingRight = false;
     this.canvasWidth = canvasWidth;
     this.vx = 0; // vélocité horizontale (pour le rendu des flammes)
+    this.visible = true;
   }
 
   update(touchX) {

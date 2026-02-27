@@ -3,6 +3,7 @@
 // Petits moteurs rectangulaires incrustés sous le paddle
 
 export function drawShip(ctx, ship) {
+  if (!ship.visible) return;
   const { x, y, width, height, color } = ship;
   const cx = x + width / 2;
   const bev = 4;       // biseau : assez pour voir l'angle, pas trop pour garder le segment vertical

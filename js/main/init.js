@@ -9,7 +9,7 @@ import { GameIntensityDirector } from '../use-cases/intensity/game-intensity-dir
 import { MusicDirector } from '../infra/orchestrators/music-director.js';
 import { EffectDirector } from '../infra/orchestrators/effect-director.js';
 import { setupResize } from '../infra/resize.js';
-import { spawnExplosion, spawnTrail, updateParticles } from '../infra/particles.js';
+import { spawnExplosion, spawnShipExplosion, spawnTrail, updateParticles } from '../infra/particles.js';
 import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
 import { isDevMode, getDevAsteroidConfig, isDevPanelActive, drawDevPanel, handleDevHover, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
@@ -21,6 +21,7 @@ import { isMusicLabActive, drawMusicLab, handleMusicLabHover, handleMusicLabTap,
 import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
+import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
@@ -55,7 +56,7 @@ export const G = {
     }),
     droneManager: null, // wired below
   },
-  ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },
+  ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null },
 };
 
 // --- Wiring PowerUpManager ↔ DroneManager ---
@@ -106,7 +107,7 @@ G.collisionHandler = new CollisionHandler({
   systems: G.systems,
   ui: G.ui,
   config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
-  effects: { spawnExplosion, triggerShake },
+  effects: { spawnExplosion, spawnShipExplosion, triggerShake, spawnDebris },
   getGameState: () => G.gs,
   droneManager: G.systems.droneManager,
 });
@@ -133,7 +134,7 @@ function spawnEntities(ent) {
 }
 
 function resetSystems(sys) {
-  Object.assign(G.ui, { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 });
+  Object.assign(G.ui, { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null });
   sys.powerUp.clear(G.gs);
   sys.intensity.enable();
 }
@@ -155,6 +156,7 @@ const loopInfra = {
   isMusicLabActive, drawMusicLab, handleMusicLabHover,
   updateDevOverlay,
   drawShip, drawDrone, drawField,
+  updateDebris,
 };
 
 const inputInfra = {

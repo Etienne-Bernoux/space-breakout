@@ -61,7 +61,9 @@ function makeDeps(overrides = {}) {
   };
   const effects = {
     spawnExplosion: vi.fn(),
+    spawnShipExplosion: vi.fn(),
     triggerShake: vi.fn(),
+    spawnDebris: vi.fn(() => []),
     ...overrides.effects,
   };
   const getGameState = () => ({ ship: entities.ship, drones: entities.drones, session, field: entities.field });

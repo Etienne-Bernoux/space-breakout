@@ -11,7 +11,7 @@ import {
 
 import {
   playBounce, playAsteroidHit, playLoseLife,
-  playWin, playGameOver, playLaunch, unlockAudio,
+  playWin, playGameOver, playShipExplosion, playLaunch, unlockAudio,
 } from '../audio.js';
 
 // BPM par niveau d'intensité : calm→climax
@@ -101,6 +101,7 @@ export class MusicDirector {
 
   onGameOver() {
     this.disable();
+    playShipExplosion();
     playGameOver();
     fadeOutMusic(0.8, () => playGameOverStinger());
   }

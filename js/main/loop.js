@@ -54,11 +54,60 @@ export class GameLoop {
   }
 
   #loopGameOver(ctx, fx) {
-    this.hud.drawEndScreen('GAME OVER');
+    const { width: W, height: H } = this.canvas;
+    const t = this.ui.deathAnimTimer;
+    const zc = this.ui.deathZoomCenter;
+
+    if (t > 0) {
+      this.ui.deathAnimTimer--;
+
+      // Zoom ×1→×2 sur toute la durée (ease-out)
+      const p = (240 - t) / 240;                // 0 → 1
+      const scale = 1 + (1 - (1 - p) * (1 - p)); // ease-out quadratic → 1 → 2
+
+      // Le ship doit apparaître à l'écran en (W/2, H*3/5).
+      // On translate pour mapper zc (position réelle) → cible écran.
+      const targetX = W / 2;
+      const targetY = H * 3 / 5;
+      const offsetX = (targetX - zc.x * scale);
+      const offsetY = (targetY - zc.y * scale);
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+      this.#drawScene(fx);
+      if (this.ui.deathDebris) this.infra.updateDebris(ctx, this.ui.deathDebris);
+      ctx.restore();
+
+      // Overlay progressif
+      const alpha = 0.7 * (1 - t / 240);
+      ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      // Écran game over : fond + débris + texte
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+      this.infra.updateStars(0.2);
+      if (this.ui.deathDebris) this.infra.updateDebris(ctx, this.ui.deathDebris);
+      this.hud.drawEndScreen('GAME OVER');
+    }
   }
 
   #loopWon(ctx, fx) {
-    this.hud.drawEndScreen('ZONE NETTOYÉE !');
+    const ship = this.entities.ship;
+    const H = this.canvas.height;
+    const targetY = H / 4 - ship.height / 2;
+
+    if (this.ui.winAnimTimer > 0) {
+      this.ui.winAnimTimer--;
+      // Ease-out vers le 1/3 supérieur
+      ship.y += (targetY - ship.y) * 0.04;
+      this.#drawScene(fx);
+    } else {
+      ship.y = targetY;
+      this.hud.drawEndScreen('ZONE NETTOYÉE !');
+      // Le vaisseau reste visible, dessiné au-dessus du texte
+      this.infra.drawShip(ctx, ship);
+    }
   }
 
   #loopPlaying(ctx, fx) {

@@ -103,7 +103,7 @@ export function handleMusicLabTap(x, y) {
       resetAudio();
       setMuffled(false);
       s.fn();
-      const durs = { win: 2.0, gameover: 3.0, powerup: 0.4 };
+      const durs = { win: 2.0, gameover: 3.0, powerup: 0.4, explosion: 1.2 };
       setActivity(`Stinger: ${s.label}`, durs[s.id] || 1);
     }
     return;

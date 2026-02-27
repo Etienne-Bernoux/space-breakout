@@ -9,7 +9,6 @@ import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-pan
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { G } from './init.js';
-import { handleCollisions } from './collisions.js';
 import { drawHUD, drawCombo, drawDeathLine, drawPauseButton, drawPauseScreen, drawEndScreen } from './hud.js';
 
 function drawVignette(ctx, fx) {
@@ -123,7 +122,7 @@ export function loop() {
   }
   for (const c of G.entities.capsules) c.update(CONFIG.canvas.height);
   G.entities.capsules = G.entities.capsules.filter(c => c.alive);
-  handleCollisions();
+  G.collisionHandler.update();
 
   drawScene(fx);
   updateDevOverlay();

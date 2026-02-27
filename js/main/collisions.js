@@ -1,81 +1,132 @@
-import { CONFIG } from '../config.js';
 import { Capsule } from '../domain/capsule.js';
 import { getPowerUp } from '../domain/power-ups.js';
-import { spawnExplosion } from '../infra/particles.js';
-import { triggerShake } from '../infra/screenshake.js';
-import { G, triggerSlowMo, COMBO_FADE_DURATION } from './init.js';
 
-export function handleCollisions() {
-  const { ship, field, totalAsteroids } = G.entities;
-  const ent = G.entities; // pour drones/capsules (mutés par splice/push)
+const COMBO_FADE_DURATION = 90;
+const SLOW_MO_DURATION = 30;
 
-  // --- Collisions drone/vaisseau + drone/astéroïdes (tous les drones) ---
-  for (const drone of ent.drones) {
-    if (!drone.launched) continue;
-    const ev1 = G.session.checkShipCollision(drone, ship);
-    if (ev1) {
-      G.ui.combo = 0;
-      G.systems.intensity.onBounce();
-    }
+export class CollisionHandler {
+  /**
+   * @param {object} deps
+   * @param {object} deps.entities  - { ship, drones, field, capsules, totalAsteroids }
+   * @param {object} deps.session   - GameSession
+   * @param {object} deps.systems   - { drop, powerUp, intensity }
+   * @param {object} deps.ui        - { combo, comboDisplay, comboFadeTimer, slowMoTimer }
+   * @param {object} deps.config    - { screenshake, capsule }
+   * @param {object} deps.effects   - { spawnExplosion, triggerShake }
+   */
+  constructor({ entities, session, systems, ui, config, effects }) {
+    this.entities = entities;
+    this.session = session;
+    this.systems = systems;
+    this.ui = ui;
+    this.config = config;
+    this.effects = effects;
+  }
 
-    const ev2 = G.session.checkAsteroidCollision(drone, field);
-    if (ev2) {
-      spawnExplosion(ev2.x, ev2.y, ev2.color);
-      G.systems.intensity.onAsteroidHit();
-      if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
-        G.ui.combo++;
-        if (G.ui.combo >= 2) {
-          G.ui.comboDisplay = G.ui.combo;
-          G.ui.comboFadeTimer = COMBO_FADE_DURATION;
+  /** Appelé à chaque frame de jeu */
+  update() {
+    this.#handleDroneCollisions();
+    this.#handleCapsulePickup();
+    this.#handlePowerUpExpiry();
+    this.#handleLostDrones();
+    this.#handleWinCondition();
+  }
+
+  #handleDroneCollisions() {
+    const { ship, field, totalAsteroids } = this.entities;
+    const { intensity, drop } = this.systems;
+
+    for (const drone of this.entities.drones) {
+      if (!drone.launched) continue;
+
+      const ev1 = this.session.checkShipCollision(drone, ship);
+      if (ev1) {
+        this.ui.combo = 0;
+        intensity.onBounce();
+      }
+
+      const ev2 = this.session.checkAsteroidCollision(drone, field);
+      if (ev2) {
+        this.effects.spawnExplosion(ev2.x, ev2.y, ev2.color);
+        intensity.onAsteroidHit();
+        if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
+          this.#onAsteroidDestroyed(ev2, field, totalAsteroids, drop);
         }
-        const shakeAmount = CONFIG.screenshake.intensity[ev2.sizeName] || CONFIG.screenshake.intensity.small;
-        triggerShake(shakeAmount);
-        const puId = G.systems.drop.decideDrop({ materialKey: ev2.materialKey || 'rock', sizeName: ev2.sizeName || 'small' });
-        if (puId) ent.capsules.push(new Capsule(puId, ev2.x, ev2.y, CONFIG.capsule));
-        G.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, G.ui.combo);
-        if (field.remaining === 0) triggerSlowMo();
       }
     }
   }
 
-  // --- Capsules ramassées ---
-  const gs = G.gs;
-  const capEvts = G.session.checkCapsuleCollision(ent.capsules, ship);
-  for (const ce of capEvts) {
-    G.systems.powerUp.activate(ce.powerUpId, gs);
-    G.systems.intensity.onPowerUpActivated();
-    spawnExplosion(ce.x, ce.y, getPowerUp(ce.powerUpId)?.color || '#fff');
+  #onAsteroidDestroyed(ev, field, totalAsteroids, drop) {
+    this.ui.combo++;
+    if (this.ui.combo >= 2) {
+      this.ui.comboDisplay = this.ui.combo;
+      this.ui.comboFadeTimer = COMBO_FADE_DURATION;
+    }
+    const shakeAmount = this.config.screenshake.intensity[ev.sizeName]
+      || this.config.screenshake.intensity.small;
+    this.effects.triggerShake(shakeAmount);
+
+    const puId = drop.decideDrop({
+      materialKey: ev.materialKey || 'rock',
+      sizeName: ev.sizeName || 'small',
+    });
+    if (puId) {
+      this.entities.capsules.push(new Capsule(puId, ev.x, ev.y, this.config.capsule));
+    }
+
+    this.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, this.ui.combo);
+    if (field.remaining === 0) {
+      this.ui.slowMoTimer = SLOW_MO_DURATION;
+    }
   }
 
-  // --- Expiration des power-ups ---
-  const puCountBefore = G.systems.powerUp.getActive().length;
-  G.systems.powerUp.update(gs);
-  if (puCountBefore > 0 && G.systems.powerUp.getActive().length === 0) {
-    G.systems.intensity.onPowerUpExpired();
+  #handleCapsulePickup() {
+    const { ship } = this.entities;
+    const gs = { ship, drones: this.entities.drones, session: this.session, field: this.entities.field };
+    const capEvts = this.session.checkCapsuleCollision(this.entities.capsules, ship);
+    for (const ce of capEvts) {
+      this.systems.powerUp.activate(ce.powerUpId, gs);
+      this.systems.intensity.onPowerUpActivated();
+      this.effects.spawnExplosion(ce.x, ce.y, getPowerUp(ce.powerUpId)?.color || '#fff');
+    }
   }
 
-  // --- Drones perdus (multi-drone) ---
-  for (let i = ent.drones.length - 1; i >= 0; i--) {
-    if (!G.session.isDroneLost(ent.drones[i])) continue;
+  #handlePowerUpExpiry() {
+    const gs = { ship: this.entities.ship, drones: this.entities.drones, session: this.session, field: this.entities.field };
+    const puCountBefore = this.systems.powerUp.getActive().length;
+    this.systems.powerUp.update(gs);
+    if (puCountBefore > 0 && this.systems.powerUp.getActive().length === 0) {
+      this.systems.intensity.onPowerUpExpired();
+    }
+  }
 
-    if (ent.drones.length > 1) {
-      ent.drones.splice(i, 1);
-    } else {
-      const livesLeft = G.session.loseLife();
-      G.ui.combo = 0;
-      if (livesLeft <= 0) {
-        G.session.state = 'gameOver';
-        G.systems.intensity.onGameOver();
+  #handleLostDrones() {
+    const { ship } = this.entities;
+    const drones = this.entities.drones;
+
+    for (let i = drones.length - 1; i >= 0; i--) {
+      if (!this.session.isDroneLost(drones[i])) continue;
+
+      if (drones.length > 1) {
+        drones.splice(i, 1);
       } else {
-        ent.drones[0].reset(ship);
-        G.systems.intensity.onLifeChanged(livesLeft);
+        const livesLeft = this.session.loseLife();
+        this.ui.combo = 0;
+        if (livesLeft <= 0) {
+          this.session.state = 'gameOver';
+          this.systems.intensity.onGameOver();
+        } else {
+          drones[0].reset(ship);
+          this.systems.intensity.onLifeChanged(livesLeft);
+        }
       }
     }
   }
 
-  // Retarder le win pendant le slow-mo pour qu'il soit visible
-  if (G.ui.slowMoTimer <= 0) {
-    const ev4 = G.session.checkWin(field);
-    if (ev4) { G.systems.intensity.onWin(); }
+  #handleWinCondition() {
+    if (this.ui.slowMoTimer <= 0) {
+      const ev = this.session.checkWin(this.entities.field);
+      if (ev) this.systems.intensity.onWin();
+    }
   }
 }

@@ -7,7 +7,10 @@ import { DropSystem } from '../use-cases/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up-manager.js';
 import { GameIntensityDirector } from '../use-cases/game-intensity-director.js';
 import { setupResize } from '../infra/resize.js';
+import { spawnExplosion } from '../infra/particles.js';
+import { triggerShake } from '../infra/screenshake.js';
 import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
+import { CollisionHandler } from './collisions.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -43,7 +46,20 @@ export const G = {
 
   // --- UI state ---
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },
+
+  // --- Collision handler (injecté après init) ---
+  collisionHandler: null,
 };
+
+// --- Wiring du CollisionHandler ---
+G.collisionHandler = new CollisionHandler({
+  entities: G.entities,
+  session: G.session,
+  systems: G.systems,
+  ui: G.ui,
+  config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
+  effects: { spawnExplosion, triggerShake },
+});
 
 // --- Scale responsive pour le jeu (HUD, boutons, overlays) ---
 export function gameScale() {
@@ -51,12 +67,7 @@ export function gameScale() {
 }
 
 // --- Slow-motion ---
-export const SLOW_MO_DURATION = 30; // frames (~0.5s à 60fps)
-export const SLOW_MO_FACTOR = 0.3;
-
-export function triggerSlowMo() {
-  G.ui.slowMoTimer = SLOW_MO_DURATION;
-}
+const SLOW_MO_FACTOR = 0.3;
 
 export function getSlowMoFactor() {
   return G.ui.slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;

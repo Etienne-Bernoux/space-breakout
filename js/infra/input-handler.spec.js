@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { InputHandler } from './input.js';
+import { InputHandler } from './input-handler.js';
 
 // Stubs globaux
 globalThis.document = {

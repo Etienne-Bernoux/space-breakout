@@ -28,12 +28,10 @@ js/
   main.js               → bootstrap (import ./main/index.js)
   shared/               → utilitaires transverses
     responsive.js       → gameScale() centralisé (clamp 0.6–1.0)
-  main/                 → composition root (game loop, HUD, input)
+  main/                 → composition root (wiring, boucle)
     init.js             → canvas, instances, startGame, état partagé (G), wiring DI
-    input.js            → handlers tactiles/clavier, pause
-    hud.js              → HUD, combo, pause screen, end screen
     loop.js             → boucle principale, state dispatch map, slow-motion
-    index.js            → point d'entrée, wiring
+    index.js            → point d'entrée, bootstrap
   domain/               → entités pures (config injectée, 0 dépendance)
     ship/ship.js        → vaisseau (raquette)
     drone/drone.js      → drone de minage (balle)
@@ -64,6 +62,7 @@ js/
     drop/
       drop-system.js    → probabilité de drop
   infra/                → DOM, Canvas, Audio, Input
+    input-handler.js    → handlers tactiles/clavier, pause
     stars.js            → fond étoilé parallaxe
     resize.js           → canvas responsive
     touch.js            → contrôles tactiles + souris
@@ -73,6 +72,7 @@ js/
     power-up-render.js  → rendu capsules + HUD power-ups actifs
     power-up-icons.js   → icônes canvas power-ups (12 icônes)
     renderers/
+      hud-render.js     → HUD, combo, pause screen, end screen
       ship-render.js    → rendu vaisseau
       drone-render.js   → rendu drone
       field-render.js   → rendu champ d'astéroïdes

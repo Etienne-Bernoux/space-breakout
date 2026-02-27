@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { HudRenderer } from './hud.js';
+import { HudRenderer } from './hud-render.js';
 
 function mockCtx() {
   return {

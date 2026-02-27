@@ -21,9 +21,9 @@ import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
-import { HudRenderer } from './hud.js';
+import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
-import { InputHandler } from './input.js';
+import { InputHandler } from '../infra/input-handler.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');

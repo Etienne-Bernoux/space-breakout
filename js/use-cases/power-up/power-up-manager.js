@@ -5,12 +5,94 @@
 import { getPowerUp } from '../../domain/power-ups.js';
 import { Drone } from '../../domain/drone/drone.js';
 
+// --- Strategies par type d'effet ---
+// Chaque strategy : { apply(gs, effect, saved), revert(gs, effect, saved), cumul?(gs, effect) }
+
+function centerShipDrones(gs) {
+  for (const d of gs.drones) {
+    if (!d.launched) d.x = gs.ship.x + gs.ship.width / 2;
+  }
+}
+
+function resizeShip(gs, factor) {
+  const cx = gs.ship.x + gs.ship.width / 2;
+  gs.ship.width = Math.round(gs.ship.width * factor);
+  gs.ship.x = cx - gs.ship.width / 2;
+  centerShipDrones(gs);
+}
+
+const STRATEGIES = {
+  shipWidth: {
+    apply(gs, effect, saved) {
+      saved.width = gs.ship.width;
+      resizeShip(gs, effect.factor);
+    },
+    revert(gs, effect, saved) {
+      const cx = gs.ship.x + gs.ship.width / 2;
+      gs.ship.width = saved.width;
+      gs.ship.x = cx - gs.ship.width / 2;
+      centerShipDrones(gs);
+    },
+    cumul(gs, effect) {
+      resizeShip(gs, effect.factor);
+    },
+  },
+
+  droneNumeric: {
+    apply(gs, effect, saved) {
+      saved.values = gs.drones.map(d => d[effect.prop]);
+      for (const d of gs.drones) d[effect.prop] *= effect.factor;
+    },
+    revert(gs, effect, saved) {
+      for (let i = 0; i < gs.drones.length; i++) {
+        gs.drones[i][effect.prop] = saved.values?.[i] ?? gs.drones[i][effect.prop];
+      }
+    },
+    cumul(gs, effect) {
+      for (const d of gs.drones) d[effect.prop] *= effect.factor;
+    },
+  },
+
+  droneBoolean: {
+    apply(gs, effect) {
+      for (const d of gs.drones) d[effect.prop] = true;
+    },
+    revert(gs, effect) {
+      for (const d of gs.drones) {
+        d[effect.prop] = false;
+        if (effect.prop === 'sticky') {
+          d._stickyOffset = undefined;
+          if (!d.launched) d.launch(gs.ship);
+        }
+      }
+    },
+  },
+
+  sessionFactor: {
+    apply(gs, effect) {
+      gs.session[effect.prop] = (gs.session[effect.prop] || 1) * effect.factor;
+    },
+    revert(gs, effect) {
+      gs.session[effect.prop] = Math.max(1, (gs.session[effect.prop] || effect.factor) / effect.factor);
+    },
+  },
+};
+
+/** Résout la strategy à utiliser pour un effect donné. */
+function resolveStrategy(effect) {
+  if (effect.target === 'ship' && effect.prop === 'width') return STRATEGIES.shipWidth;
+  if (effect.target === 'drone' && effect.factor) return STRATEGIES.droneNumeric;
+  if (effect.target === 'drone') return STRATEGIES.droneBoolean;
+  if (effect.target === 'session' && effect.factor) return STRATEGIES.sessionFactor;
+  return null;
+}
+
 export class PowerUpManager {
   constructor() {
     this.active = new Map(); // id → { startTime, def, saved }
   }
 
-  /** Activer un power-up. Si déjà actif → reset timer. */
+  /** Activer un power-up. Si déjà actif → reset timer + cumul. */
   activate(puId, gameState, now = Date.now()) {
     const def = getPowerUp(puId);
     if (!def) return;
@@ -21,22 +103,18 @@ export class PowerUpManager {
       return;
     }
 
-    // Déjà actif
+    // Déjà actif → reset timer + cumul éventuel
     if (this.active.has(puId)) {
       const entry = this.active.get(puId);
       entry.startTime = now;
-      // Cumul pour les effets de taille vaisseau
-      if (def.effect.target === 'ship' && def.effect.prop === 'width') {
-        this._resizeShip(gameState, def.effect.factor);
-      }
-      // Cumul pour les effets drone numériques (radius, speed)
-      if (def.effect.target === 'drone' && def.effect.factor) {
-        for (const d of gameState.drones) d[def.effect.prop] *= def.effect.factor;
-      }
+      const strategy = resolveStrategy(def.effect);
+      if (strategy?.cumul) strategy.cumul(gameState, def.effect);
       return;
     }
 
-    const saved = this._apply(puId, gameState);
+    const saved = {};
+    const strategy = resolveStrategy(def.effect);
+    if (strategy) strategy.apply(gameState, def.effect, saved);
     this.active.set(puId, { startTime: now, def, saved });
   }
 
@@ -45,7 +123,8 @@ export class PowerUpManager {
     for (const [puId, entry] of this.active) {
       if (entry.def.duration === Infinity) continue;
       if (now - entry.startTime >= entry.def.duration) {
-        this._revert(puId, entry.saved, gameState);
+        const strategy = resolveStrategy(entry.def.effect);
+        if (strategy) strategy.revert(gameState, entry.def.effect, entry.saved);
         this.active.delete(puId);
       }
     }
@@ -54,7 +133,8 @@ export class PowerUpManager {
   /** Révoquer tous les effets (fin de partie). */
   clear(gameState) {
     for (const [puId, entry] of this.active) {
-      this._revert(puId, entry.saved, gameState);
+      const strategy = resolveStrategy(entry.def.effect);
+      if (strategy) strategy.revert(gameState, entry.def.effect, entry.saved);
     }
     this.active.clear();
   }
@@ -80,68 +160,7 @@ export class PowerUpManager {
     }));
   }
 
-  // --- Apply / Revert (piloté par def.effect) ---
-
-  _apply(puId, gs) {
-    const def = getPowerUp(puId);
-    const { effect } = def;
-    const saved = {};
-
-    if (effect.target === 'ship' && effect.prop === 'width') {
-      saved.width = gs.ship.width;
-      this._resizeShip(gs, effect.factor);
-    } else if (effect.target === 'drone' && effect.factor) {
-      // Numeric drone property (radius, speed)
-      saved.values = gs.drones.map(d => d[effect.prop]);
-      for (const d of gs.drones) d[effect.prop] *= effect.factor;
-    } else if (effect.target === 'drone') {
-      // Boolean drone property (sticky, piercing, warp)
-      for (const d of gs.drones) d[effect.prop] = true;
-    } else if (effect.target === 'session' && effect.factor) {
-      gs.session[effect.prop] = (gs.session[effect.prop] || 1) * effect.factor;
-    }
-    return saved;
-  }
-
-  /** Resize le vaisseau en gardant le centre + repositionne le drone. */
-  _resizeShip(gs, factor) {
-    const cx = gs.ship.x + gs.ship.width / 2;
-    gs.ship.width = Math.round(gs.ship.width * factor);
-    gs.ship.x = cx - gs.ship.width / 2;
-    for (const d of gs.drones) {
-      if (!d.launched) d.x = gs.ship.x + gs.ship.width / 2;
-    }
-  }
-
-  _revert(puId, saved, gs) {
-    const def = getPowerUp(puId);
-    const { effect } = def;
-
-    if (effect.target === 'ship' && effect.prop === 'width') {
-      const cx = gs.ship.x + gs.ship.width / 2;
-      gs.ship.width = saved.width;
-      gs.ship.x = cx - gs.ship.width / 2;
-      for (const d of gs.drones) {
-        if (!d.launched) d.x = gs.ship.x + gs.ship.width / 2;
-      }
-    } else if (effect.target === 'drone' && effect.factor) {
-      // Numeric drone property — restore saved values
-      for (let i = 0; i < gs.drones.length; i++) {
-        gs.drones[i][effect.prop] = saved.values?.[i] ?? gs.drones[i][effect.prop];
-      }
-    } else if (effect.target === 'drone') {
-      // Boolean drone property
-      for (const d of gs.drones) {
-        d[effect.prop] = false;
-        if (effect.prop === 'sticky') {
-          d._stickyOffset = undefined;
-          if (!d.launched) d.launch(gs.ship);
-        }
-      }
-    } else if (effect.target === 'session' && effect.factor) {
-      gs.session[effect.prop] = Math.max(1, (gs.session[effect.prop] || effect.factor) / effect.factor);
-    }
-  }
+  // --- Instant effects ---
 
   _applyInstant(puId, gs) {
     const def = getPowerUp(puId);
@@ -150,7 +169,6 @@ export class PowerUpManager {
     if (effect.target === 'session' && effect.delta) {
       gs.session[effect.prop] += effect.delta;
     } else if (effect.action === 'spawn') {
-      // Ajouter un drone supplémentaire (copie config du premier)
       const ref = gs.drones[0];
       if (ref) {
         const d = new Drone(
@@ -159,7 +177,6 @@ export class PowerUpManager {
         );
         d.piercing = ref.piercing;
         d.sticky = ref.sticky;
-        // Lancer immédiatement avec un angle aléatoire léger
         d.launchAtAngle(gs.ship, (Math.random() - 0.5) * 0.6);
         gs.drones.push(d);
       }

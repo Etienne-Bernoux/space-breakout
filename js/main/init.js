@@ -11,6 +11,9 @@ import { spawnExplosion } from '../infra/particles.js';
 import { triggerShake } from '../infra/screenshake.js';
 import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
 import { CollisionHandler } from './collisions.js';
+import { HudRenderer } from './hud.js';
+import { GameLoop } from './loop.js';
+import { InputHandler } from './input.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -18,13 +21,8 @@ const ctx = canvas.getContext('2d');
 
 // --- Shared game state ---
 export const G = {
-  // --- Rendering ---
   render: { canvas, ctx },
-
-  // --- Game session ---
   session: new GameSession(CONFIG),
-
-  // --- Game entities ---
   entities: {
     ship: null,
     drones: [],
@@ -36,22 +34,37 @@ export const G = {
     const e = this.entities;
     return { ship: e.ship, drones: e.drones, session: this.session, field: e.field };
   },
-
-  // --- Systems ---
   systems: {
     drop: new DropSystem(CONFIG.drop),
     powerUp: new PowerUpManager(),
     intensity: new GameIntensityDirector(),
   },
-
-  // --- UI state ---
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },
-
-  // --- Collision handler (injecté après init) ---
-  collisionHandler: null,
 };
 
-// --- Wiring du CollisionHandler ---
+// --- Utilitaires responsive ---
+export function gameScale() {
+  return Math.min(1.0, Math.max(0.6, CONFIG.canvas.width / 500));
+}
+
+export function pauseBtnLayout() {
+  const s = gameScale();
+  const size = Math.round(40 * s);
+  return { x: CONFIG.canvas.width - size - 10, y: 8, size };
+}
+
+// --- Slow-motion ---
+const SLOW_MO_FACTOR = 0.3;
+export function getSlowMoFactor() {
+  return G.ui.slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;
+}
+
+// --- Audio ---
+export function perceptualVolume(v) {
+  return v * v;
+}
+
+// --- Wiring des classes ---
 G.collisionHandler = new CollisionHandler({
   entities: G.entities,
   session: G.session,
@@ -61,47 +74,16 @@ G.collisionHandler = new CollisionHandler({
   effects: { spawnExplosion, triggerShake },
 });
 
-// --- Scale responsive pour le jeu (HUD, boutons, overlays) ---
-export function gameScale() {
-  return Math.min(1.0, Math.max(0.6, CONFIG.canvas.width / 500));
-}
-
-// --- Slow-motion ---
-const SLOW_MO_FACTOR = 0.3;
-
-export function getSlowMoFactor() {
-  return G.ui.slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;
-}
-
-// --- Combo counter ---
-export const COMBO_FADE_DURATION = 90; // frames (~1.5s)
-
-// --- Bouton pause (responsive) ---
-export function pauseBtnLayout() {
-  const s = gameScale();
-  const size = Math.round(40 * s);
-  return { x: CONFIG.canvas.width - size - 10, y: 8, size };
-}
-
-setupResize(() => {
-  G.session.canvasHeight = CONFIG.canvas.height;
-  const ship = G.entities.ship;
-  if (ship) {
-    if (ship.isMobile) {
-      ship.bottomMargin = Math.max(60, Math.round(CONFIG.canvas.height * ship._mobileRatio));
-    }
-    ship.y = CONFIG.canvas.height - ship.height - ship.bottomMargin;
-    ship.canvasWidth = CONFIG.canvas.width;
-    for (const d of G.entities.drones) { if (!d.launched) d.reset(ship); }
-  }
+G.hud = new HudRenderer({
+  render: G.render,
+  session: G.session,
+  ui: G.ui,
+  canvas: CONFIG.canvas,
+  gameScale,
+  pauseBtnLayout,
 });
 
-// --- Courbe perceptuelle : x² pour que 50% du slider ≈ moitié du volume perçu ---
-export function perceptualVolume(v) {
-  return v * v;
-}
-
-// --- Démarrage d'une partie ---
+// startGame déclaré avant GameLoop/InputHandler car injecté en dépendance
 function spawnEntities(ent) {
   const isMobile = 'ontouchstart' in window;
   ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
@@ -123,3 +105,38 @@ export function startGame() {
   resetSystems(G.systems);
   G.session.start();
 }
+
+G.gameLoop = new GameLoop({
+  render: G.render,
+  entities: G.entities,
+  session: G.session,
+  systems: G.systems,
+  ui: G.ui,
+  canvas: CONFIG.canvas,
+  hud: G.hud,
+  collisionHandler: G.collisionHandler,
+});
+
+G.inputHandler = new InputHandler({
+  entities: G.entities,
+  session: G.session,
+  systems: G.systems,
+  canvas: CONFIG.canvas,
+  gameScale,
+  pauseBtnLayout,
+  startGame,
+});
+
+// --- Resize handler ---
+setupResize(() => {
+  G.session.canvasHeight = CONFIG.canvas.height;
+  const ship = G.entities.ship;
+  if (ship) {
+    if (ship.isMobile) {
+      ship.bottomMargin = Math.max(60, Math.round(CONFIG.canvas.height * ship._mobileRatio));
+    }
+    ship.y = CONFIG.canvas.height - ship.height - ship.bottomMargin;
+    ship.canvasWidth = CONFIG.canvas.width;
+    for (const d of G.entities.drones) { if (!d.launched) d.reset(ship); }
+  }
+});

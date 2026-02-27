@@ -84,6 +84,61 @@ const ICONS = {
     ctx.fill();
   },
 
+  // Drone large : grand cercle
+  droneLarge(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.8, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
+  // Drone mini : petit cercle avec flèches vers l'intérieur
+  droneMini(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-s, 0); ctx.lineTo(-s * 0.45, 0);
+    ctx.moveTo(s, 0); ctx.lineTo(s * 0.45, 0);
+    ctx.moveTo(-s * 0.6, -2); ctx.lineTo(-s * 0.45, 0); ctx.lineTo(-s * 0.6, 2);
+    ctx.moveTo(s * 0.6, -2); ctx.lineTo(s * 0.45, 0); ctx.lineTo(s * 0.6, 2);
+    ctx.stroke();
+  },
+
+  // Drone rapide : cercle + traits de vitesse
+  droneFast(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(s * 0.2, 0, s * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-s, -s * 0.4); ctx.lineTo(-s * 0.3, -s * 0.4);
+    ctx.moveTo(-s * 0.8, 0); ctx.lineTo(-s * 0.1, 0);
+    ctx.moveTo(-s, s * 0.4); ctx.lineTo(-s * 0.3, s * 0.4);
+    ctx.stroke();
+  },
+
+  // Warp : cercle avec portails (arcs aux bords)
+  droneWarp(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Portail gauche
+    ctx.beginPath();
+    ctx.arc(-s, 0, s * 0.5, -Math.PI * 0.4, Math.PI * 0.4);
+    ctx.stroke();
+    // Portail droit
+    ctx.beginPath();
+    ctx.arc(s, 0, s * 0.5, Math.PI * 0.6, Math.PI * 1.4);
+    ctx.stroke();
+    // Flèche direction
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.5, 0); ctx.lineTo(s * 0.5, 0);
+    ctx.moveTo(s * 0.25, -2); ctx.lineTo(s * 0.5, 0); ctx.lineTo(s * 0.25, 2);
+    ctx.stroke();
+  },
+
   // Fragilisation : éclairs / fissures
   weaken(ctx, s) {
     ctx.beginPath();

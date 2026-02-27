@@ -38,7 +38,7 @@ js/
     drone.js            → drone de minage (balle)
     capsule.js          → capsule de power-up
     materials.js        → 6 matériaux (roche, glace, lave, métal, cristal, obsidienne)
-    power-ups.js        → 8 power-ups déclaratifs (dont droneMulti)
+    power-ups.js        → 12 power-ups déclaratifs (P1 + P2 drone)
     patterns.js         → patterns ASCII de niveaux
     asteroid-render.js  → rendu visuel par matériau
     asteroid/           → génération procédurale d'astéroïdes
@@ -203,6 +203,7 @@ L'intensité contrôle les layers (fade in/out), le BPM (110→128), et sélecti
 Scheduling section-par-section (pas en bulk) pour permettre le mode adaptatif.
 Fills de transition (snare roll, arp rise) 2 beats avant les changements de section.
 Accents combo par paliers (×2: 1 note, ×3: 2 notes, ×5+: 3 notes).
+Stinger spécial aux paliers ronds (×5, ×10, ×15…) : arpège majeur 7 en square wave filtré.
 
 ### EffectDirector
 5 presets visuels (calm → climax), lerp progressif chaque frame (speed 0.06).
@@ -289,5 +290,15 @@ Le resize du canvas tient compte des panels (`resize.js` déduit leur largeur).
 
 ## Power-ups
 
-8 power-ups P1 implémentés (voir `power-ups.js` pour les définitions).
-Roadmap, backlog P2/P3 et idées d'upgrades dans `BACKLOG.md`.
+12 power-ups implémentés (P1 + P2 drone) dans `power-ups.js` :
+
+P1 : shipWide, shipNarrow, droneSticky, dronePiercing, extraLife, scoreDouble, weaken, droneMulti.
+P2 : droneLarge (radius ×1.8), droneMini (radius ×0.5), droneFast (speed ×1.8), droneWarp (traverse murs).
+
+Mécaniques :
+- Cumul taille vaisseau : réactivation multiplie (×1.5 → ×2.25), revert à l'original
+- Props numériques drone (radius, speed) : save/restore via PowerUpManager
+- Warp : Drone.update() wrap-around au lieu de rebond murs latéraux
+- Multiplicateur score combo : ×2 @5, ×3 @10, ×4 @15… (cumulable avec material et scoreDouble)
+
+Roadmap P2/P3 et idées dans `BACKLOG.md`.

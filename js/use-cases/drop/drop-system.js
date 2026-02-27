@@ -2,7 +2,7 @@
 // Décide quel power-up tombe quand un astéroïde est détruit.
 // Proba cumulative : dropWeight par matériau × multiplicateur taille.
 
-import { POWER_UPS, POWER_UP_IDS } from '../domain/power-ups.js';
+import { POWER_UPS, POWER_UP_IDS } from '../../domain/power-ups.js';
 
 const DEFAULT_SIZE_MULT = { large: 1.4, medium: 1.0, small: 0.6 };
 

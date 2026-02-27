@@ -2,8 +2,8 @@
 // Gère les effets actifs, timers, apply/revert.
 // gameState = { ship, drones, session, field }
 
-import { getPowerUp } from '../domain/power-ups.js';
-import { Drone } from '../domain/drone.js';
+import { getPowerUp } from '../../domain/power-ups.js';
+import { Drone } from '../../domain/drone.js';
 
 export class PowerUpManager {
   constructor() {

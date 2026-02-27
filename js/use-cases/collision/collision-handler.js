@@ -1,5 +1,5 @@
-import { Capsule } from '../domain/capsule.js';
-import { getPowerUp } from '../domain/power-ups.js';
+import { Capsule } from '../../domain/capsule.js';
+import { getPowerUp } from '../../domain/power-ups.js';
 
 const COMBO_FADE_DURATION = 90;
 const SLOW_MO_DURATION = 30;

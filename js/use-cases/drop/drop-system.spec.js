@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { DropSystem } from './drop-system.js';
-import { POWER_UP_IDS } from '../domain/power-ups.js';
+import { POWER_UP_IDS } from '../../domain/power-ups.js';
 
 function makeAsteroid(overrides = {}) {
   return { materialKey: 'rock', sizeName: 'medium', ...overrides };

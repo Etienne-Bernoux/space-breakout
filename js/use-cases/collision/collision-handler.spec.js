@@ -1,4 +1,4 @@
-import { CollisionHandler } from './collisions.js';
+import { CollisionHandler } from './collision-handler.js';
 
 // --- Helpers pour créer des mocks ---
 

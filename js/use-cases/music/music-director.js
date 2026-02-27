@@ -7,12 +7,12 @@ import {
   startMusic, isPlaying, fadeOutMusic,
   muffle, unmuffle,
   playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent,
-} from '../infra/music/index.js';
+} from '../../infra/music/index.js';
 
 import {
   playBounce, playAsteroidHit, playLoseLife,
   playWin, playGameOver, playLaunch, unlockAudio,
-} from '../infra/audio.js';
+} from '../../infra/audio.js';
 
 // BPM par niveau d'intensité : calm→climax
 const INTENSITY_BPM = [110, 114, 118, 122, 128];

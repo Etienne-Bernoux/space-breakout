@@ -2,8 +2,8 @@
 // Point d'entrée unique pour TOUS les événements gameplay.
 // Les consommateurs (collisions, input) n'appellent jamais directement audio/music.
 
-import { MusicDirector } from './music-director.js';
-import { EffectDirector } from './effect-director.js';
+import { MusicDirector } from '../music/music-director.js';
+import { EffectDirector } from '../effect/effect-director.js';
 
 const COMBO_DECAY_INTERVAL = 3000; // ms entre chaque -1 combo
 

@@ -6,7 +6,7 @@ let lastRequestedSection = null;
 let adaptiveEnabled = false;
 
 // Remplacer les imports en patchant le module
-import * as musicModule from '../infra/music/index.js';
+import * as musicModule from '../../infra/music/index.js';
 
 // On ne peut pas facilement mocker les imports ES, donc on teste
 // la logique d'intensité via une version testable du director.

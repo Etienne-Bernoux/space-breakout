@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { GameSession } from './game-logic.js';
+import { GameSession } from './game-session.js';
 
 const TEST_CONFIG = {
   canvas: { width: 800, height: 600 },

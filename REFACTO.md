@@ -271,16 +271,16 @@ export function gameScale(width = CONFIG.canvas.width) {
 
 ## Priorisation recommandée
 
-| Prio | Ticket | Effort | Valeur |
-|------|--------|--------|--------|
-| 1 | R1 — Strategy power-up | S | Débloque ajout facile de nouveaux power-ups |
-| 2 | R2 — gameState factory | S | Élimine 3 reconstructions manuelles |
-| 3 | R6 — Pause button layout | S | Quick fix, supprime un bug latent |
-| 4 | R8 — Magic numbers HUD | S | Quick fix, lisibilité |
-| 5 | R9 — Scale formula | S | Quick fix, DRY |
-| 6 | R7 — DI intensity director | S | Aligne le pattern DI existant |
-| 7 | R3 — Loop state dispatch | S | Lisibilité, testabilité |
-| 8 | R5 — Asteroid render split | M | Passe sous 300L, maintenabilité |
-| 9 | R4 — CollisionResolver extract | M | SRP, architecture propre |
-| 10 | R11 — DroneManager | M | Encapsule lifecycle drone |
-| 11 | R10 — Tests infra/domain | L | Filet de sécurité global |
+| Prio | Ticket | Effort | Valeur | Status |
+|------|--------|--------|--------|--------|
+| 1 | R1 — Strategy power-up | S | Débloque ajout facile de nouveaux power-ups | ✅ 04fe367 |
+| 2 | R2 — gameState factory | S | Élimine 3 reconstructions manuelles | ✅ b6b02a9 |
+| 3 | R6 — Pause button layout | S | Quick fix, supprime un bug latent | ✅ 7473acf |
+| 4 | R8 — Magic numbers HUD | S | Quick fix, lisibilité | ✅ 93b1b7c |
+| 5 | R9 — Scale formula | S | Quick fix, DRY | ✅ 28ce369 |
+| 6 | R7 — DI intensity director | S | Aligne le pattern DI existant | ✅ 9517fd3 |
+| 7 | R3 — Loop state dispatch | S | Lisibilité, testabilité | ✅ 9990282 |
+| 8 | R5 — Asteroid render split | M | Passe sous 300L, maintenabilité | |
+| 9 | R4 — CollisionResolver extract | M | SRP, architecture propre | |
+| 10 | R11 — DroneManager | M | Encapsule lifecycle drone | |
+| 11 | R10 — Tests infra/domain | L | Filet de sécurité global | |

@@ -28,71 +28,48 @@ export class GameLoop {
     this.loop();
   }
 
-  loop() {
-    const ctx = this.render.ctx;
+  // --- State handlers (chaque état a sa propre logique) ---
+
+  #loopMusicLab(ctx, fx) {
+    const mouse = this.infra.getMousePos();
+    this.infra.handleMusicLabHover(mouse.x, mouse.y);
+    this.infra.drawMusicLab(ctx);
+  }
+
+  #loopDevPanel(ctx, fx) {
+    const mouse = this.infra.getMousePos();
+    this.infra.handleDevHover(mouse.x, mouse.y);
+    this.infra.drawDevPanel(ctx);
+  }
+
+  #loopMenu(ctx, fx) {
+    const mouse = this.infra.getMousePos();
+    this.infra.updateMenuHover(mouse.x, mouse.y);
+    this.infra.updateMenu(ctx);
+  }
+
+  #loopPaused(ctx, fx) {
+    this.#drawScene(fx);
+    this.hud.drawPauseScreen();
+  }
+
+  #loopGameOver(ctx, fx) {
+    this.hud.drawEndScreen('GAME OVER');
+  }
+
+  #loopWon(ctx, fx) {
+    this.hud.drawEndScreen('ZONE NETTOYÉE !');
+  }
+
+  #loopPlaying(ctx, fx) {
     const { ship, drones, field } = this.entities;
     const infra = this.infra;
 
-    this.systems.intensity.update();
-    const fx = this.systems.intensity.getEffects();
-    infra.setAmbientShake(fx.microShake);
-
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    infra.updateStars(fx.starSpeed);
-
-    document.body.classList.toggle('menu', this.session.state === 'menu' || this.session.state === 'paused');
-
-    if (infra.isMusicLabActive()) {
-      const mouse = infra.getMousePos();
-      infra.handleMusicLabHover(mouse.x, mouse.y);
-      infra.drawMusicLab(ctx);
-      requestAnimationFrame(this.loop);
-      return;
-    }
-
-    if (infra.isDevPanelActive()) {
-      const mouse = infra.getMousePos();
-      infra.handleDevHover(mouse.x, mouse.y);
-      infra.drawDevPanel(ctx);
-      requestAnimationFrame(this.loop);
-      return;
-    }
-
-    if (this.session.state === 'menu') {
-      const mouse = infra.getMousePos();
-      infra.updateMenuHover(mouse.x, mouse.y);
-      infra.updateMenu(ctx);
-      requestAnimationFrame(this.loop);
-      return;
-    }
-
-    if (this.session.state === 'paused') {
-      infra.drawField(ctx, field);
-      infra.drawShip(ctx, ship);
-      for (const d of drones) infra.drawDrone(ctx, d);
-      this.hud.drawHUD(fx);
-      this.hud.drawPauseScreen();
-      requestAnimationFrame(this.loop);
-      return;
-    }
-
-    if (this.session.state === 'gameOver') {
-      this.hud.drawEndScreen('GAME OVER');
-      requestAnimationFrame(this.loop);
-      return;
-    }
-    if (this.session.state === 'won') {
-      this.hud.drawEndScreen('ZONE NETTOYÉE !');
-      requestAnimationFrame(this.loop);
-      return;
-    }
-
-    // Slow-motion
+    // Slow-motion : skip update 2 frames sur 3
     if (this.ui.slowMoTimer > 0) {
       this.ui.slowMoTimer--;
       if (this.ui.slowMoTimer % 3 !== 0) {
         this.#drawScene(fx);
-        requestAnimationFrame(this.loop);
         return;
       }
     }
@@ -109,9 +86,43 @@ export class GameLoop {
 
     this.#drawScene(fx);
     infra.updateDevOverlay();
+  }
+
+  // --- Main loop ---
+
+  loop() {
+    const ctx = this.render.ctx;
+
+    this.systems.intensity.update();
+    const fx = this.systems.intensity.getEffects();
+    this.infra.setAmbientShake(fx.microShake);
+
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.infra.updateStars(fx.starSpeed);
+
+    document.body.classList.toggle('menu', this.session.state === 'menu' || this.session.state === 'paused');
+
+    // Overlays prioritaires (interceptent tous les états)
+    if (this.infra.isMusicLabActive()) {
+      this.#loopMusicLab(ctx, fx);
+    } else if (this.infra.isDevPanelActive()) {
+      this.#loopDevPanel(ctx, fx);
+    } else {
+      // Dispatch par état de jeu
+      const handler = {
+        menu:     () => this.#loopMenu(ctx, fx),
+        paused:   () => this.#loopPaused(ctx, fx),
+        gameOver: () => this.#loopGameOver(ctx, fx),
+        won:      () => this.#loopWon(ctx, fx),
+        playing:  () => this.#loopPlaying(ctx, fx),
+      }[this.session.state];
+      if (handler) handler();
+    }
 
     requestAnimationFrame(this.loop);
   }
+
+  // --- Rendering helpers ---
 
   #drawScene(fx) {
     const ctx = this.render.ctx;

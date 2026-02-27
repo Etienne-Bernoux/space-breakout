@@ -101,3 +101,8 @@ export function unlockAudio() {
   const ctx = getCtx();
   if (ctx.state === 'suspended') ctx.resume();
 }
+
+// --- Utilitaire volume ---
+export function perceptualVolume(v) {
+  return v * v;
+}

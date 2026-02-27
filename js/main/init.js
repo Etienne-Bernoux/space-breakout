@@ -54,17 +54,6 @@ export function pauseBtnLayout() {
   return { x: CONFIG.canvas.width - size - 10, y: 8, size };
 }
 
-// --- Slow-motion ---
-const SLOW_MO_FACTOR = 0.3;
-export function getSlowMoFactor() {
-  return G.ui.slowMoTimer > 0 ? SLOW_MO_FACTOR : 1;
-}
-
-// --- Audio ---
-export function perceptualVolume(v) {
-  return v * v;
-}
-
 // --- Wiring dev-overlay ---
 initDevOverlay({
   entities: G.entities,

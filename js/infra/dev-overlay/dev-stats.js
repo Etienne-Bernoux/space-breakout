@@ -1,13 +1,18 @@
 // --- Dev Stats : panel droit (timer + intensité + combo) ---
 
-import { G } from '../../main/init.js';
-
 const statsContainer = document.getElementById('dev-stats');
 const INTENSITY_COLORS = ['#4488ff', '#44cc88', '#ffcc00', '#ff6600', '#ff2244'];
 let statsBuilt = false;
 let timerEl, intensityValEl, comboEl, barSegments;
 let gameStartTime = 0;
 let wasPlaying = false;
+
+/** @type {{ intensity: number, combo: number }} */
+let intensityRef = null;
+
+export function initDevStats(deps) {
+  intensityRef = deps.intensity;
+}
 
 function buildStats() {
   if (statsBuilt) return;
@@ -44,7 +49,7 @@ function updateStatsDisplay() {
   const secs = String(elapsed % 60).padStart(2, '0');
   timerEl.querySelector('.val').textContent = `${mins}:${secs}`;
 
-  const level = G.systems.intensity.intensity;
+  const level = intensityRef.intensity;
   intensityValEl.textContent = level;
   intensityValEl.style.color = INTENSITY_COLORS[level] || '#fff';
 
@@ -54,7 +59,7 @@ function updateStatsDisplay() {
     barSegments[i].style.background = on ? INTENSITY_COLORS[i] : 'transparent';
   }
 
-  comboEl.querySelector('.val').textContent = G.systems.intensity.combo;
+  comboEl.querySelector('.val').textContent = intensityRef.combo;
 }
 
 export function updateDevStats(playing) {

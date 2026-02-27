@@ -10,6 +10,7 @@ import { setupResize } from '../infra/resize.js';
 import { spawnExplosion } from '../infra/particles.js';
 import { triggerShake } from '../infra/screenshake.js';
 import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
+import { initDevOverlay } from '../infra/dev-overlay/index.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { HudRenderer } from './hud.js';
 import { GameLoop } from './loop.js';
@@ -63,6 +64,14 @@ export function getSlowMoFactor() {
 export function perceptualVolume(v) {
   return v * v;
 }
+
+// --- Wiring dev-overlay ---
+initDevOverlay({
+  entities: G.entities,
+  session: G.session,
+  systems: G.systems,
+  getGs: () => G.gs,
+});
 
 // --- Wiring des classes ---
 G.collisionHandler = new CollisionHandler({

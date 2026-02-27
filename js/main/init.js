@@ -52,9 +52,7 @@ export const G = {
 };
 
 // --- Utilitaires responsive ---
-export function gameScale() {
-  return Math.min(1.0, Math.max(0.6, CONFIG.canvas.width / 500));
-}
+export { gameScale } from '../shared/responsive.js';
 
 export function pauseBtnLayout() {
   const s = gameScale();

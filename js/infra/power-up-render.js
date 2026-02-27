@@ -2,6 +2,7 @@
 
 import { getPowerUp } from '../domain/power-ups.js';
 import { drawIcon } from './power-up-icons.js';
+import { gameScale } from '../shared/responsive.js';
 
 /** Dessiner une capsule qui tombe. */
 export function drawCapsule(ctx, capsule) {
@@ -47,7 +48,7 @@ export function drawCapsule(ctx, capsule) {
 export function drawPowerUpHUD(ctx, activeList, canvasWidth = 800) {
   if (activeList.length === 0) return;
 
-  const s = Math.min(1.0, Math.max(0.6, canvasWidth / 500));
+  const s = gameScale(canvasWidth);
   const fontSize = Math.round(14 * s);
   const iconSize = Math.round(5 * s);
   const pad = Math.round(15 * s);

@@ -1,14 +1,12 @@
 import { CONFIG } from '../../config.js';
+import { gameScale } from '../../shared/responsive.js';
 import state from './state.js';
 
 // Layout responsive
-// Scale basé sur la largeur, clampé à [0.6, 1.0].
-// Sur petit écran (400px) : 400/500 = 0.8 → textes lisibles.
-// Sur grand écran (800px+) : clampé à 1.0 → pas de surdimensionnement.
 export function layout() {
   const w = CONFIG.canvas.width;
   const h = CONFIG.canvas.height;
-  const scale = Math.min(1.0, Math.max(0.6, w / 500));
+  const scale = gameScale(w);
   return { w, h, cx: w / 2, scale };
 }
 

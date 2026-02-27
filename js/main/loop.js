@@ -8,6 +8,8 @@ import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { isDevPanelActive, drawDevPanel, handleDevHover } from '../infra/dev-panel/index.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover } from '../infra/music-lab/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
+import { drawShip } from '../infra/renderers/ship-render.js';
+import { drawDrone } from '../infra/renderers/drone-render.js';
 
 export class GameLoop {
   /**
@@ -76,8 +78,8 @@ export class GameLoop {
 
     if (this.session.state === 'paused') {
       field.draw(ctx);
-      ship.draw(ctx);
-      for (const d of drones) d.draw(ctx);
+      drawShip(ctx, ship);
+      for (const d of drones) drawDrone(ctx, d);
       this.hud.drawHUD(fx);
       this.hud.drawPauseScreen();
       requestAnimationFrame(this.loop);
@@ -131,8 +133,8 @@ export class GameLoop {
     updateParticles(ctx);
     for (const c of capsules) drawCapsule(ctx, c);
     if (ship.isMobile) this.hud.drawDeathLine(ship, fx);
-    ship.draw(ctx);
-    for (const d of drones) d.draw(ctx);
+    drawShip(ctx, ship);
+    for (const d of drones) drawDrone(ctx, d);
     ctx.restore();
     this.#drawVignette(ctx, fx);
     this.hud.drawHUD(fx);

@@ -1,5 +1,5 @@
 import { getMaterial } from '../materials.js';
-import { renderAsteroid } from '../asteroid-render.js';
+import { renderAsteroid } from '../../infra/renderers/asteroid-render.js';
 import { parsePattern } from '../patterns.js';
 import { generateShape, generateCraters, generateVeins } from './shape.js';
 

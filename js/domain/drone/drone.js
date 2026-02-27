@@ -72,17 +72,4 @@ export class Drone {
     }
   }
 
-  draw(ctx) {
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Halo lumineux
-    ctx.strokeStyle = 'rgba(255, 204, 0, 0.3)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
-    ctx.stroke();
-  }
 }

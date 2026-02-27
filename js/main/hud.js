@@ -1,4 +1,15 @@
 const COMBO_FADE_DURATION = 90;
+const COMBO_ALPHA_FRAMES = 30;       // frames pendant lesquelles le combo est pleinement opaque
+const COMBO_PULSE_AMP = 0.3;         // amplitude du pulse sinusoïdal
+const COMBO_MIN = 2;                 // combo minimum affiché
+const COMBO_MAX = 15;                // combo pour couleur max (rouge vif)
+const COMBO_HUE_START = 60;          // hue jaune
+const COMBO_HUE_END = 0;             // hue rouge
+const COMBO_LIT_START = 60;          // lightness au combo min (%)
+const COMBO_LIT_END = 75;            // lightness au combo max (%)
+const COMBO_GLOW_MIN = 12;           // glow minimum (px)
+const COMBO_GLOW_MAX = 20;           // glow maximum (px)
+const DEATH_LINE_MARGIN_RATIO = 0.4; // ratio de bottomMargin pour la death line
 
 export class HudRenderer {
   /**
@@ -47,11 +58,11 @@ export class HudRenderer {
     if (this.ui.comboFadeTimer <= 0) return;
     this.ui.comboFadeTimer--;
     const ctx = this.render.ctx;
-    const alpha = Math.min(1, this.ui.comboFadeTimer / 30);
+    const alpha = Math.min(1, this.ui.comboFadeTimer / COMBO_ALPHA_FRAMES);
     const progress = 1 - this.ui.comboFadeTimer / COMBO_FADE_DURATION;
     const s = this.gameScale();
     const baseSize = Math.round(36 * s);
-    const pulse = 1 + Math.sin(progress * Math.PI) * 0.3;
+    const pulse = 1 + Math.sin(progress * Math.PI) * COMBO_PULSE_AMP;
     const fontSize = Math.round(baseSize * pulse);
 
     const cx = this.canvas.width / 2;
@@ -62,12 +73,12 @@ export class HudRenderer {
     ctx.font = `bold ${fontSize}px monospace`;
     ctx.textAlign = 'center';
 
-    const t = Math.min(1, (this.ui.comboDisplay - 2) / 13);   // 0 @ ×2 → 1 @ ×15
-    const hue = Math.round(60 - t * 60);                       // 60 (yellow) → 0 (red)
-    const lit = Math.round(60 + t * 15);                       // 60% → 75% (brighter at max)
+    const t = Math.min(1, (this.ui.comboDisplay - COMBO_MIN) / (COMBO_MAX - COMBO_MIN));
+    const hue = Math.round(COMBO_HUE_START - t * (COMBO_HUE_START - COMBO_HUE_END));
+    const lit = Math.round(COMBO_LIT_START + t * (COMBO_LIT_END - COMBO_LIT_START));
     ctx.fillStyle = `hsl(${hue}, 100%, ${lit}%)`;
     ctx.shadowColor = `hsl(${hue}, 100%, ${lit - 20}%)`;
-    ctx.shadowBlur = Math.round(12 + t * 8);
+    ctx.shadowBlur = Math.round(COMBO_GLOW_MIN + t * (COMBO_GLOW_MAX - COMBO_GLOW_MIN));
     ctx.fillText(`×${this.ui.comboDisplay}`, cx, cy);
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
@@ -77,7 +88,7 @@ export class HudRenderer {
 
   drawDeathLine(ship, fx) {
     const ctx = this.render.ctx;
-    const lineY = ship.y + ship.height + ship.bottomMargin * 0.4;
+    const lineY = ship.y + ship.height + ship.bottomMargin * DEATH_LINE_MARGIN_RATIO;
     const w = this.canvas.width;
     const [r, g, b] = fx ? fx.deathLine : [0, 212, 255];
     const glowAlpha = fx ? fx.deathLineGlow : 0.07;

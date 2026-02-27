@@ -28,12 +28,12 @@ function drawScene(fx) {
   const shake = updateShake();
   ctx.save();
   ctx.translate(shake.x, shake.y);
-  G.field.draw(ctx);
+  G.entities.field.draw(ctx);
   updateParticles(ctx);
-  for (const c of G.capsules) drawCapsule(ctx, c);
-  if (G.ship.isMobile) drawDeathLine(G.ship, fx);
-  G.ship.draw(ctx);
-  for (const d of G.drones) d.draw(ctx);
+  for (const c of G.entities.capsules) drawCapsule(ctx, c);
+  if (G.entities.ship.isMobile) drawDeathLine(G.entities.ship, fx);
+  G.entities.ship.draw(ctx);
+  for (const d of G.entities.drones) d.draw(ctx);
   ctx.restore();
   drawVignette(ctx, fx);
   drawHUD(fx);
@@ -81,9 +81,9 @@ export function loop() {
   }
 
   if (G.session.state === 'paused') {
-    G.field.draw(ctx);
-    G.ship.draw(ctx);
-    for (const d of G.drones) d.draw(ctx);
+    G.entities.field.draw(ctx);
+    G.entities.ship.draw(ctx);
+    for (const d of G.entities.drones) d.draw(ctx);
     drawHUD(fx);
     drawPauseScreen();
     requestAnimationFrame(loop);
@@ -113,14 +113,14 @@ export function loop() {
     }
   }
 
-  G.field.update();
-  G.ship.update(getTouchX());
-  for (const d of G.drones) {
-    d.update(G.ship, CONFIG.canvas.width);
+  G.entities.field.update();
+  G.entities.ship.update(getTouchX());
+  for (const d of G.entities.drones) {
+    d.update(G.entities.ship, CONFIG.canvas.width);
     if (d.launched) spawnTrail(d.x, d.y);
   }
-  for (const c of G.capsules) c.update(CONFIG.canvas.height);
-  G.capsules = G.capsules.filter(c => c.alive);
+  for (const c of G.entities.capsules) c.update(CONFIG.canvas.height);
+  G.entities.capsules = G.entities.capsules.filter(c => c.alive);
   handleCollisions();
 
   drawScene(fx);

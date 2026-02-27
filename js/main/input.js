@@ -8,13 +8,13 @@ import { G, gameScale, pauseBtnLayout, startGame } from './init.js';
 /** Lance tous les drones non lancés en éventail.
  *  1 drone → centre (0), 2 → [-0.4, +0.4], 3 → [-0.5, 0, +0.5], etc. */
 function launchAllDrones() {
-  const unlaunched = G.drones.filter(d => !d.launched);
+  const unlaunched = G.entities.drones.filter(d => !d.launched);
   if (unlaunched.length === 0) return false;
   const n = unlaunched.length;
   const spread = 0.8; // amplitude totale de l'éventail (-0.4 .. +0.4 pour 2)
   unlaunched.forEach((d, i) => {
     const angle = n === 1 ? 0 : -spread / 2 + (spread * i) / (n - 1);
-    d.launchAtAngle(G.ship, angle);
+    d.launchAtAngle(G.entities.ship, angle);
   });
   return true;
 }
@@ -108,8 +108,8 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (G.session.state === 'playing') {
-    if (e.key === 'ArrowLeft') G.ship.movingLeft = true;
-    if (e.key === 'ArrowRight') G.ship.movingRight = true;
+    if (e.key === 'ArrowLeft') G.entities.ship.movingLeft = true;
+    if (e.key === 'ArrowRight') G.entities.ship.movingRight = true;
     if (e.key === ' ') { if (launchAllDrones()) G.intensityDirector.onLaunch(); }
     if (e.key === 'Escape') { G.session.pause(); G.intensityDirector.onPause(); return; }
   }
@@ -129,8 +129,8 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('keyup', (e) => {
   if (G.session.state === 'playing') {
-    if (e.key === 'ArrowLeft') G.ship.movingLeft = false;
-    if (e.key === 'ArrowRight') G.ship.movingRight = false;
+    if (e.key === 'ArrowLeft') G.entities.ship.movingLeft = false;
+    if (e.key === 'ArrowRight') G.entities.ship.movingRight = false;
   }
 });
 

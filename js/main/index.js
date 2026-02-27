@@ -28,7 +28,7 @@ setSfxVolume(perceptualVolume(getSfxVolume()));
 window.__GAME__ = {
   get state()    { return G.session.state; },
   get lives()    { return G.session.lives; },
-  get remaining(){ return G.field ? G.field.remaining : -1; },
+  get remaining(){ return G.entities.field ? G.entities.field.remaining : -1; },
   get devPanel() { return isDevPanelActive(); },
   get musicLab() { return isMusicLabActive(); },
 };

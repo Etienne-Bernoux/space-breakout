@@ -62,7 +62,7 @@ function buildButtons() {
   btnWin.textContent = '🏆 Win';
   btnWin.style.background = 'rgba(34,197,94,0.55)';
   btnWin.addEventListener('click', () => {
-    for (const a of G.field.grid) a.alive = false;
+    for (const a of G.entities.field.grid) a.alive = false;
   });
   container.appendChild(btnWin);
 
@@ -71,7 +71,7 @@ function buildButtons() {
   btnAstHp.textContent = '☄️ Ast -1';
   btnAstHp.style.background = 'rgba(239,68,68,0.55)';
   btnAstHp.addEventListener('click', () => {
-    for (const a of G.field.grid) {
+    for (const a of G.entities.field.grid) {
       if (!a.alive || !a.destructible) continue;
       a.hp = (a.hp ?? 1) - 1;
       if (a.hp <= 0) a.alive = false;

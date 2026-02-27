@@ -19,15 +19,21 @@ export const G = {
   // --- Rendering ---
   render: { canvas, ctx },
 
-  // --- Game entities ---
+  // --- Game session ---
   session: new GameSession(CONFIG),
-  ship: null,
-  drones: [],
-  get drone() { return this.drones[0] || null; },
-  get gs() { return { ship: this.ship, drones: this.drones, session: this.session, field: this.field }; },
-  field: null,
-  capsules: [],
-  totalAsteroids: 0,
+
+  // --- Game entities ---
+  entities: {
+    ship: null,
+    drones: [],
+    field: null,
+    capsules: [],
+    totalAsteroids: 0,
+  },
+  get gs() {
+    const e = this.entities;
+    return { ship: e.ship, drones: e.drones, session: this.session, field: e.field };
+  },
 
   // --- Systems ---
   dropSystem: new DropSystem(CONFIG.drop),
@@ -68,13 +74,14 @@ export function pauseBtnLayout() {
 setupResize(() => {
   // Repositionner le vaisseau en bas quand la hauteur change
   G.session.canvasHeight = CONFIG.canvas.height;
-  if (G.ship) {
-    if (G.ship.isMobile) {
-      G.ship.bottomMargin = Math.max(60, Math.round(CONFIG.canvas.height * G.ship._mobileRatio));
+  const ship = G.entities.ship;
+  if (ship) {
+    if (ship.isMobile) {
+      ship.bottomMargin = Math.max(60, Math.round(CONFIG.canvas.height * ship._mobileRatio));
     }
-    G.ship.y = CONFIG.canvas.height - G.ship.height - G.ship.bottomMargin;
-    G.ship.canvasWidth = CONFIG.canvas.width;
-    for (const d of G.drones) { if (!d.launched) d.reset(G.ship); }
+    ship.y = CONFIG.canvas.height - ship.height - ship.bottomMargin;
+    ship.canvasWidth = CONFIG.canvas.width;
+    for (const d of G.entities.drones) { if (!d.launched) d.reset(ship); }
   }
 });
 
@@ -86,15 +93,16 @@ export function perceptualVolume(v) {
 
 export function startGame() {
   const isMobile = 'ontouchstart' in window;
-  G.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
-  G.drones = [new Drone(CONFIG.drone, G.ship, isMobile, CONFIG.canvas.width)];
+  const ent = G.entities;
+  ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
+  ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width)];
   // En mode dev, utiliser la config enrichie (matériaux + densité)
   const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
-  G.field = new AsteroidField(astConfig);
-  G.capsules = [];
+  ent.field = new AsteroidField(astConfig);
+  ent.capsules = [];
   Object.assign(G.ui, { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 });
   G.puManager.clear(G.gs);
-  G.totalAsteroids = G.field.remaining;
+  ent.totalAsteroids = ent.field.remaining;
   G.intensityDirector.enable();
   G.session.start();
 }

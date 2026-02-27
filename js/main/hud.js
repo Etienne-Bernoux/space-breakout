@@ -9,14 +9,16 @@ export class HudRenderer {
    * @param {object} deps.canvas   - { width, height } (CONFIG.canvas)
    * @param {function} deps.gameScale
    * @param {function} deps.pauseBtnLayout
+   * @param {function} deps.pauseScreenLayout
    */
-  constructor({ render, session, ui, canvas, gameScale, pauseBtnLayout }) {
+  constructor({ render, session, ui, canvas, gameScale, pauseBtnLayout, pauseScreenLayout }) {
     this.render = render;
     this.session = session;
     this.ui = ui;
     this.canvas = canvas;
     this.gameScale = gameScale;
     this.pauseBtnLayout = pauseBtnLayout;
+    this.pauseScreenLayout = pauseScreenLayout;
   }
 
   drawHUD(fx) {
@@ -117,12 +119,8 @@ export class HudRenderer {
 
   drawPauseScreen() {
     const ctx = this.render.ctx;
-    const cx = this.canvas.width / 2;
-    const cy = this.canvas.height / 2;
-    const s = this.gameScale();
-    const halfW = Math.round(this.canvas.width * 0.4);
-    const btnH = Math.round(44 * s);
-    const gap = Math.round(16 * s);
+    const layout = this.pauseScreenLayout();
+    const { cx, cy, s, resumeBtn, menuBtn } = layout;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -135,27 +133,26 @@ export class HudRenderer {
     ctx.fillText('PAUSE', cx, cy - 40 * s);
 
     ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
-    ctx.fillRect(cx - halfW, cy, halfW * 2, btnH);
+    ctx.fillRect(resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h);
     ctx.strokeStyle = '#00d4ff';
     ctx.lineWidth = 1;
-    ctx.strokeRect(cx - halfW, cy, halfW * 2, btnH);
+    ctx.strokeRect(resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h);
     ctx.fillStyle = '#ffffff';
     ctx.font = `${Math.round(20 * s)}px monospace`;
-    ctx.fillText('REPRENDRE', cx, cy + btnH * 0.65);
+    ctx.fillText('REPRENDRE', cx, resumeBtn.y + resumeBtn.h * 0.65);
 
-    const menuY = cy + btnH + gap;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.fillRect(cx - halfW, menuY, halfW * 2, btnH);
+    ctx.fillRect(menuBtn.x, menuBtn.y, menuBtn.w, menuBtn.h);
     ctx.strokeStyle = '#334455';
-    ctx.strokeRect(cx - halfW, menuY, halfW * 2, btnH);
+    ctx.strokeRect(menuBtn.x, menuBtn.y, menuBtn.w, menuBtn.h);
     ctx.fillStyle = '#667788';
-    ctx.fillText('MENU', cx, menuY + btnH * 0.65);
+    ctx.fillText('MENU', cx, menuBtn.y + menuBtn.h * 0.65);
 
     const isMobile = 'ontouchstart' in window;
     if (!isMobile) {
       ctx.font = `${Math.round(12 * s)}px monospace`;
       ctx.fillStyle = '#445566';
-      ctx.fillText('ÉCHAP REPRENDRE  ·  R MENU', cx, menuY + btnH + 30 * s);
+      ctx.fillText('ÉCHAP REPRENDRE  ·  R MENU', cx, menuBtn.y + menuBtn.h + 30 * s);
     }
 
     ctx.restore();

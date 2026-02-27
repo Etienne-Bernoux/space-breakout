@@ -62,6 +62,20 @@ export function pauseBtnLayout() {
   return { x: CONFIG.canvas.width - size - 10, y: 8, size };
 }
 
+export function pauseScreenLayout() {
+  const s = gameScale();
+  const cx = CONFIG.canvas.width / 2;
+  const cy = CONFIG.canvas.height / 2;
+  const halfW = Math.round(CONFIG.canvas.width * 0.4);
+  const btnH = Math.round(44 * s);
+  const gap = Math.round(16 * s);
+  return {
+    cx, cy, halfW, btnH, gap, s,
+    resumeBtn: { x: cx - halfW, y: cy, w: halfW * 2, h: btnH },
+    menuBtn:   { x: cx - halfW, y: cy + btnH + gap, w: halfW * 2, h: btnH },
+  };
+}
+
 // --- Wiring dev-overlay ---
 initDevOverlay({
   entities: G.entities,
@@ -88,6 +102,7 @@ G.hud = new HudRenderer({
   canvas: CONFIG.canvas,
   gameScale,
   pauseBtnLayout,
+  pauseScreenLayout,
 });
 
 // startGame déclaré avant GameLoop/InputHandler car injecté en dépendance
@@ -152,6 +167,7 @@ G.inputHandler = new InputHandler({
   canvas: CONFIG.canvas,
   gameScale,
   pauseBtnLayout,
+  pauseScreenLayout,
   startGame,
   infra: inputInfra,
 });

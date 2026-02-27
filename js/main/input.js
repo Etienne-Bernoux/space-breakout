@@ -7,16 +7,18 @@ export class InputHandler {
    * @param {object} deps.canvas     - { width, height }
    * @param {function} deps.gameScale
    * @param {function} deps.pauseBtnLayout
+   * @param {function} deps.pauseScreenLayout
    * @param {function} deps.startGame
    * @param {object} deps.infra      - infra adapters (touch, menu, devPanel, musicLab)
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, startGame, infra }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, infra }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
     this.canvas = canvas;
     this.gameScale = gameScale;
     this.pauseBtnLayout = pauseBtnLayout;
+    this.pauseScreenLayout = pauseScreenLayout;
     this.startGame = startGame;
     this.infra = infra;
 
@@ -77,17 +79,12 @@ export class InputHandler {
         if (action === 'play') this.startGame();
       }
       if (this.session.state === 'paused') {
-        const cx = this.canvas.width / 2;
-        const cy = this.canvas.height / 2;
-        const s = this.gameScale();
-        const halfW = Math.round(this.canvas.width * 0.4);
-        const btnH = Math.round(44 * s);
-        const gap = Math.round(16 * s);
-        if (x >= cx - halfW && x <= cx + halfW && y >= cy && y <= cy + btnH) {
+        const { resumeBtn, menuBtn } = this.pauseScreenLayout();
+        if (x >= resumeBtn.x && x <= resumeBtn.x + resumeBtn.w && y >= resumeBtn.y && y <= resumeBtn.y + resumeBtn.h) {
           this.session.resume();
           this.systems.intensity.onResume();
         }
-        if (x >= cx - halfW && x <= cx + halfW && y >= cy + btnH + gap && y <= cy + btnH * 2 + gap) {
+        if (x >= menuBtn.x && x <= menuBtn.x + menuBtn.w && y >= menuBtn.y && y <= menuBtn.y + menuBtn.h) {
           infra.resetMenu();
           this.session.backToMenu();
           if (infra.isDevMode()) infra.showDevPanel();

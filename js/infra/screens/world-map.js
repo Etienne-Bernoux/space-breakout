@@ -23,6 +23,7 @@ export function getNodePositions(W, H, count) {
 
 /** Dessine la carte. */
 export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPhase) {
+  ctx.save();
   const s = gameScale(W);
   const nodes = getNodePositions(W, H, levels.length);
 
@@ -102,6 +103,7 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   ctx.fillText('← → pour naviguer  •  ESPACE pour jouer', W / 2, H * 0.94);
+  ctx.restore();
 }
 
 function _drawStars(ctx, cx, cy, count, s) {

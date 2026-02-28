@@ -42,7 +42,7 @@ function mockInfra() {
 
 function makeDeps(overrides = {}) {
   const ship = { x: 100, y: 600, width: 80, movingLeft: false, movingRight: false };
-  const drone = { launched: false, launchAtAngle: vi.fn() };
+  const drone = { launched: false, launch: vi.fn(), launchAtAngle: vi.fn() };
   const infra = mockInfra();
   return {
     entities: { ship, drones: [drone] },
@@ -111,7 +111,7 @@ describe('InputHandler', () => {
       d.session.state = 'playing';
       new InputHandler(d);
       d.infra._handlers.tap(100, 300);
-      expect(d.entities.drones[0].launchAtAngle).toHaveBeenCalled();
+      expect(d.entities.drones[0].launch).toHaveBeenCalled();
       expect(d.systems.intensity.onLaunch).toHaveBeenCalled();
     });
 

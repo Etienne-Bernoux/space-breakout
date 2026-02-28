@@ -135,7 +135,7 @@ G.hud = new HudRenderer({
 function spawnEntities(ent, levelAsteroids) {
   const isMobile = 'ontouchstart' in window;
   ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
-  ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width)];
+  ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width, CONFIG.canvas.height)];
   const astConfig = isDevMode()
     ? getDevAsteroidConfig()
     : levelAsteroids

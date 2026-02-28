@@ -36,11 +36,17 @@ export class InputHandler {
     const unlaunched = drones.filter(d => !d.launched);
     if (unlaunched.length === 0) return false;
     const n = unlaunched.length;
-    const spread = 0.8;
-    unlaunched.forEach((d, i) => {
-      const angle = n === 1 ? 0 : -spread / 2 + (spread * i) / (n - 1);
-      d.launchAtAngle(ship, angle);
-    });
+    if (n === 1) {
+      // Un seul drone : launch() utilise la position sur la raquette (sticky ou centré)
+      unlaunched[0].launch(ship);
+    } else {
+      // Multi-drone : éventail
+      const spread = 0.8;
+      unlaunched.forEach((d, i) => {
+        const angle = -spread / 2 + (spread * i) / (n - 1);
+        d.launchAtAngle(ship, angle);
+      });
+    }
     return true;
   }
 

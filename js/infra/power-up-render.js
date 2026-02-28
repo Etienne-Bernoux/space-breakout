@@ -56,6 +56,8 @@ export function drawPowerUpHUD(ctx, activeList, canvasWidth = 800) {
   const lineH = Math.round(18 * s);
 
   ctx.font = `${fontSize}px monospace`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 
   for (let i = 0; i < activeList.length; i++) {
     const { id, def, remaining } = activeList[i];

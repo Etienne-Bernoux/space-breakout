@@ -19,6 +19,7 @@ export const CONFIG = {
     radius: 6,
     mobileRadiusRatio: 0.02,       // mobile : 2% de la largeur canvas
     speed: 3,
+    mobileSpeedRatio: 0.006,       // mobile : 0.6% de la hauteur canvas
     color: '#ffcc00',
   },
 

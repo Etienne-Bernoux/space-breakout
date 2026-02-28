@@ -3,11 +3,13 @@ export class Drone {
    * @param {object} config - { radius, speed, color }
    * @param {object} ship
    */
-  constructor(config, ship, isMobile = false, canvasWidth = 800) {
+  constructor(config, ship, isMobile = false, canvasWidth = 800, canvasHeight = 600) {
     this._baseRadius = (isMobile && config.mobileRadiusRatio)
       ? Math.max(config.radius, Math.round(canvasWidth * config.mobileRadiusRatio))
       : config.radius;
-    this._baseSpeed = config.speed;
+    this._baseSpeed = (isMobile && config.mobileSpeedRatio)
+      ? Math.max(config.speed, canvasHeight * config.mobileSpeedRatio)
+      : config.speed;
     this.radius = this._baseRadius;
     this.speed = this._baseSpeed;
     this.color = config.color;
@@ -34,8 +36,13 @@ export class Drone {
   /** Lance la balle depuis le vaisseau. Angle basé sur la position relative.
    *  Centre → tout droit, bords → angle max (~60°) */
   launch(ship) {
-    const hit = (this.x - ship.x) / ship.width;   // 0..1
-    this.launchAtAngle(ship, (hit - 0.5) * 2);
+    // Sticky : utiliser l'offset stocké (évite le décalage si ship a bougé ce frame)
+    const offset = (this.sticky && this._stickyOffset !== undefined)
+      ? this._stickyOffset
+      : this.x - ship.x;
+    const hit = offset / ship.width;   // 0..1
+    const angle = (hit - 0.5) * 2;
+    this.launchAtAngle(ship, angle);
   }
 
   /** Lance avec un angle explicite (-1..1). 0 = tout droit. */
@@ -82,7 +89,9 @@ export class Drone {
     // Garantir un angle minimum pour éviter les trajectoires quasi-verticales
     const minDx = this.speed * 0.25;
     if (Math.abs(this.dx) < minDx) {
-      this.dx = this.dx >= 0 ? minDx : -minDx;
+      // Si dx === 0 (lancement tout droit), direction aléatoire
+      const sign = this.dx === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(this.dx);
+      this.dx = sign * minDx;
     }
   }
 

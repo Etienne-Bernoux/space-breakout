@@ -2,18 +2,11 @@
 
 Effort : S = quelques heures, M = demi-journée, L = journée+
 
-## Musique adaptative
-
-| Feature | Description | Effort |
-|---|---|---|
-| Variations mélodiques | 2-3 variantes du chorus/verse tirées aléatoirement pour casser la répétition | M |
-
 ## Game feel / Polish
 
 | Feature | Description | Effort |
 |---|---|---|
-| ~~Animation victoire~~ | ~~Le vaisseau traverse l'écran vers le haut (décollage) à la victoire~~ | ✅ |
-| ~~Animation défaite~~ | ~~Le vaisseau explose (particules + screenshake) au game over~~ | ✅ |
+| Variations mélodiques | 2-3 variantes du chorus/verse tirées aléatoirement pour casser la répétition | M |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |
 | Décor parallaxe v2 | Plus de diversité : gazeuses géantes, planètes rocheuses, lunes, comètes, amas d'étoiles | M |
 
@@ -35,7 +28,6 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 | Feature | Description | Effort |
 |---|---|---|
 | Récolte de matière | Fragments d'astéroïdes récupérables par le vaisseau | M |
-| ~~Niveaux multiples~~ | ~~Difficulté progressive, distribution matériaux par niveau~~ | ✅ |
 | Boss Zone 1 | Boss de fin de zone 1 (astéroïde géant multi-hits ou habité) | L |
 | Carte monde — polish | Animations vaisseau, déco roches flottantes, transitions fluides | M |
 | Zones supplémentaires | Nouvelles zones (glace, lave, cristal…) avec niveaux, thèmes visuels et matériaux spécifiques | L |

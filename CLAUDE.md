@@ -13,8 +13,8 @@ Le thème spatial influence le gameplay (prévu : récolte de matière, power-up
 
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
-- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, 280 tests)
-- Tests e2e : Playwright (dossier `e2e/`, 15 tests)
+- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~300 tests)
+- Tests e2e : Playwright (dossier `e2e/`, 16 tests)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
 
@@ -163,7 +163,7 @@ Mobile :
 - **Clean Architecture** : Domain (entités pures) → Use Cases (game logic) → Infra (DOM/Canvas/Audio)
 - **DI systématique** : config injectée par constructeur, toutes les dépendances via `{ deps }` (pas d'import CONFIG dans les entités)
 - GameSession est pur état (~72 lignes), CollisionResolver gère la détection, CollisionHandler orchestre
-- États du jeu : menu → playing → paused / gameOver / won → menu
+- États du jeu : menu → worldMap → playing → paused / gameOver / won → stats → worldMap
 - Canvas interne 800x600 (paysage) ou 800xN (portrait, hauteur dynamique)
 - Fond étoilé parallaxe sur un canvas séparé (bg-canvas, plein écran)
 - Touch & keyboard coexistent
@@ -233,6 +233,26 @@ Effets pilotés : starSpeed, vignetteAlpha/Hue, microShake, deathLine RGB, score
 - **Gameplay** : triggers simulés (destroy, combo, lives, PU) + override intensité 0-4
 - **Mix** : toggle layers ON/OFF, effets (muffle)
 
+### Delta-time (mouvement indépendant du framerate)
+Tout mouvement et toute animation **doivent** utiliser le paramètre `dt` (delta-time normalisé à 60fps).
+
+**Calcul** dans `loop.js` : `dt = (now - lastTime) / 16.667`, cap à 3 (anti-saut après tab switch).
+À 60fps dt≈1.0, à 120fps dt≈0.5, à 30fps dt≈2.0. Les vitesses dans `config.js` sont calibrées pour 60fps.
+
+**Convention** — toute méthode `update()` accepte `dt = 1` en dernier paramètre :
+```js
+update(ship, canvasWidth, dt = 1) {
+  this.x += this.dx * dt;        // linéaire
+}
+```
+
+**Patterns** :
+- Mouvement linéaire : `value += speed * dt`
+- Decay exponentiel : `value *= Math.pow(base, dt)` (ex: screenshake `Math.pow(0.85, dt)`)
+- Lerp framerate-indépendant : `value += diff * (1 - Math.pow(1 - factor, dt))` (ex: ship touch 0.3)
+- Timer : `timer -= dt` (les ratios `timer/duration` pour easing marchent sans changement)
+- Slow-mo : `dtEff = dt * 0.33` (pas de frame-skip)
+
 ### Constantes centralisées
 `config.js` regroupe tout : `scoring.basePoints`, `capsule` (bob/rotation/speed), `drop` (baseRate, sizeMult), ratios mobile. Aucune constante métier dans le code applicatif.
 
@@ -257,7 +277,7 @@ npm run test:all                  # unit + e2e
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 
-Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`.
+Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, et `forceWin()` (tue tous les astéroïdes).
 
 Modes spéciaux : `?dev` (dev panel pré-partie + overlay in-game), `?mus` ou `?music` (music lab).
 

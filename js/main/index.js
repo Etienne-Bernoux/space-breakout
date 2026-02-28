@@ -16,13 +16,18 @@ setVolumeChangeCallback((music, sfx) => {
 });
 setSfxVolume(perceptualVolume(getSfxVolume()));
 
-// --- Hook e2e (lecture seule) ---
+// --- Hook e2e (lecture seule + forceWin) ---
 window.__GAME__ = {
   get state()    { return G.session.state; },
   get lives()    { return G.session.lives; },
   get remaining(){ return G.entities.field ? G.entities.field.remaining : -1; },
   get devPanel() { return isDevPanelActive(); },
   get musicLab() { return isMusicLabActive(); },
+  /** Force la victoire en tuant tous les astéroïdes (usage e2e / dev). */
+  forceWin() {
+    if (!G.entities.field) return;
+    for (const a of G.entities.field.grid) a.alive = false;
+  },
 };
 
 // Start

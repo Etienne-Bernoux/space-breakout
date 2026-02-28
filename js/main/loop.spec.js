@@ -56,6 +56,10 @@ function mockInfra() {
     drawDrone: vi.fn(),
     drawField: vi.fn(),
     updateDebris: vi.fn(),
+    drawWorldMap: vi.fn(),
+    drawStatsScreen: vi.fn(),
+    getAllLevels: vi.fn(() => []),
+    finishLevel: vi.fn(),
   };
 }
 
@@ -89,6 +93,9 @@ function makeDeps(overrides = {}) {
     hud,
     collisionHandler,
     infra: mockInfra(),
+    progress: { isUnlocked: vi.fn(() => true), getStars: vi.fn(() => 0) },
+    mapState: { selectedIndex: 0 },
+    getLevelResult: vi.fn(() => ({ levelId: 'z1-1', stars: 2, timeSpent: 80, livesLost: 0, levelName: 'Test' })),
     ...overrides,
   };
 }

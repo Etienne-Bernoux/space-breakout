@@ -11,7 +11,7 @@ export class GameLoop {
    * @param {object} deps.collisionHandler - CollisionHandler instance
    * @param {object} deps.infra      - infra adapters (stars, touch, menu, particles, shake, renderers, panels, devOverlay)
    */
-  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra }) {
+  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, getLevelResult }) {
     this.render = render;
     this.entities = entities;
     this.session = session;
@@ -21,6 +21,9 @@ export class GameLoop {
     this.hud = hud;
     this.collisionHandler = collisionHandler;
     this.infra = infra;
+    this.progress = progress;
+    this.mapState = mapState;
+    this.getLevelResult = getLevelResult;
     this.loop = this.loop.bind(this);
   }
 
@@ -46,6 +49,24 @@ export class GameLoop {
     const mouse = this.infra.getMousePos();
     this.infra.updateMenuHover(mouse.x, mouse.y);
     this.infra.updateMenu(ctx);
+  }
+
+  #loopWorldMap(ctx, fx) {
+    if (!this.ui.mapAnimPhase) this.ui.mapAnimPhase = 0;
+    this.ui.mapAnimPhase++;
+    this.infra.drawWorldMap(
+      ctx, this.canvas.width, this.canvas.height,
+      this.infra.getAllLevels(), this.progress, this.mapState.selectedIndex, this.ui.mapAnimPhase,
+    );
+  }
+
+  #loopStats(ctx, fx) {
+    if (!this.ui.statsAnimPhase) this.ui.statsAnimPhase = 0;
+    this.ui.statsAnimPhase++;
+    this.infra.drawStatsScreen(
+      ctx, this.canvas.width, this.canvas.height,
+      this.getLevelResult(), this.ui.statsAnimPhase,
+    );
   }
 
   #loopPaused(ctx, fx) {
@@ -103,10 +124,15 @@ export class GameLoop {
       ship.y += (targetY - ship.y) * 0.04;
       this.#drawScene(fx);
     } else {
-      ship.y = targetY;
-      this.hud.drawEndScreen('ZONE NETTOYÉE !');
-      // Le vaisseau reste visible, dessiné au-dessus du texte
-      this.infra.drawShip(ctx, ship);
+      // Animation terminée → transition vers stats (si level mode)
+      if (this.session.currentLevelId && this.infra.finishLevel) {
+        this.ui.statsAnimPhase = 0;
+        this.infra.finishLevel();
+      } else {
+        ship.y = targetY;
+        this.hud.drawEndScreen('ZONE NETTOYÉE !');
+        this.infra.drawShip(ctx, ship);
+      }
     }
   }
 
@@ -149,7 +175,7 @@ export class GameLoop {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.infra.updateStars(fx.starSpeed);
 
-    document.body.classList.toggle('menu', this.session.state === 'menu' || this.session.state === 'paused');
+    document.body.classList.toggle('menu', ['menu', 'paused', 'worldMap', 'stats'].includes(this.session.state));
 
     // Overlays prioritaires (interceptent tous les états)
     if (this.infra.isMusicLabActive()) {
@@ -160,6 +186,8 @@ export class GameLoop {
       // Dispatch par état de jeu
       const handler = {
         menu:     () => this.#loopMenu(ctx, fx),
+        worldMap: () => this.#loopWorldMap(ctx, fx),
+        stats:    () => this.#loopStats(ctx, fx),
         paused:   () => this.#loopPaused(ctx, fx),
         gameOver: () => this.#loopGameOver(ctx, fx),
         won:      () => this.#loopWon(ctx, fx),

@@ -11,7 +11,7 @@ export class InputHandler {
    * @param {function} deps.startGame
    * @param {object} deps.infra      - infra adapters (touch, menu, devPanel, musicLab)
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, infra }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, goToWorldMap, finishLevel, progress, mapState, infra }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -20,6 +20,10 @@ export class InputHandler {
     this.pauseBtnLayout = pauseBtnLayout;
     this.pauseScreenLayout = pauseScreenLayout;
     this.startGame = startGame;
+    this.goToWorldMap = goToWorldMap;
+    this.finishLevel = finishLevel;
+    this.progress = progress;
+    this.mapState = mapState;
     this.infra = infra;
 
     infra.setupTouch();
@@ -54,10 +58,14 @@ export class InputHandler {
         }
         if (this.#launchAllDrones()) this.systems.intensity.onLaunch();
       }
-      if (this.session.state === 'gameOver' || this.session.state === 'won') {
-        infra.resetMenu();
-        this.session.backToMenu();
-        if (infra.isDevMode()) infra.showDevPanel();
+      if (this.session.state === 'gameOver') {
+        if (this.session.currentLevelId) {
+          this.goToWorldMap();
+        } else {
+          infra.resetMenu();
+          this.session.backToMenu();
+          if (infra.isDevMode()) infra.showDevPanel();
+        }
       }
     });
 
@@ -76,7 +84,13 @@ export class InputHandler {
       }
       if (this.session.state === 'menu') {
         const action = infra.handleMenuTap(x, y);
-        if (action === 'play') this.startGame();
+        if (action === 'play') this.goToWorldMap();
+      }
+      if (this.session.state === 'worldMap') {
+        this.#handleWorldMapTap(x, y);
+      }
+      if (this.session.state === 'stats') {
+        this.#handleStatsTap(x, y);
       }
       if (this.session.state === 'paused') {
         const { resumeBtn, menuBtn } = this.pauseScreenLayout();
@@ -103,6 +117,52 @@ export class InputHandler {
     });
   }
 
+  #handleWorldMapTap(x, y) {
+    const levels = this.infra.getAllLevels();
+    const nodes = this.infra.getNodePositions(this.canvas.width, this.canvas.height, levels.length);
+    const r = 22;
+    for (let i = 0; i < nodes.length; i++) {
+      const dx = x - nodes[i].x, dy = y - nodes[i].y;
+      if (dx * dx + dy * dy < r * r && this.progress.isUnlocked(levels[i].id)) {
+        this.mapState.selectedIndex = i;
+        this.#launchSelectedLevel();
+        return;
+      }
+    }
+  }
+
+  #handleStatsTap(x, y) {
+    const btns = this.infra.getStatsButtons(this.canvas.width, this.canvas.height);
+    if (this.#hitBtn(x, y, btns.next)) {
+      this.#nextLevelOrMap();
+    } else if (this.#hitBtn(x, y, btns.map)) {
+      this.goToWorldMap();
+    }
+  }
+
+  #hitBtn(x, y, btn) {
+    return x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h;
+  }
+
+  #launchSelectedLevel() {
+    const levels = this.infra.getAllLevels();
+    const lvl = levels[this.mapState.selectedIndex];
+    if (lvl && this.progress.isUnlocked(lvl.id)) {
+      this.startGame(lvl.id);
+    }
+  }
+
+  #nextLevelOrMap() {
+    const levels = this.infra.getAllLevels();
+    const nextIdx = this.mapState.selectedIndex + 1;
+    if (nextIdx < levels.length && this.progress.isUnlocked(levels[nextIdx].id)) {
+      this.mapState.selectedIndex = nextIdx;
+      this.startGame(levels[nextIdx].id);
+    } else {
+      this.goToWorldMap();
+    }
+  }
+
   #bindKeyboard() {
     const infra = this.infra;
 
@@ -114,7 +174,26 @@ export class InputHandler {
       }
       if (this.session.state === 'menu') {
         const action = infra.handleMenuInput(e.key);
-        if (action === 'play') this.startGame();
+        if (action === 'play') this.goToWorldMap();
+        return;
+      }
+
+      if (this.session.state === 'worldMap') {
+        const levels = infra.getAllLevels();
+        if (e.key === 'ArrowLeft' && this.mapState.selectedIndex > 0) {
+          this.mapState.selectedIndex--;
+        }
+        if (e.key === 'ArrowRight' && this.mapState.selectedIndex < levels.length - 1) {
+          this.mapState.selectedIndex++;
+        }
+        if (e.key === ' ' || e.key === 'Enter') this.#launchSelectedLevel();
+        if (e.key === 'Escape') this.session.backToMenu();
+        return;
+      }
+
+      if (this.session.state === 'stats') {
+        if (e.key === ' ' || e.key === 'Enter') this.#nextLevelOrMap();
+        if (e.key === 'Escape') this.goToWorldMap();
         return;
       }
 
@@ -131,10 +210,14 @@ export class InputHandler {
         return;
       }
 
-      if ((this.session.state === 'gameOver' || this.session.state === 'won') && e.key === 'r') {
-        infra.resetMenu();
-        this.session.backToMenu();
-        if (infra.isDevMode()) infra.showDevPanel();
+      if (this.session.state === 'gameOver' && (e.key === 'r' || e.key === ' ')) {
+        if (this.session.currentLevelId) {
+          this.goToWorldMap();
+        } else {
+          infra.resetMenu();
+          this.session.backToMenu();
+          if (infra.isDevMode()) infra.showDevPanel();
+        }
       }
     });
 

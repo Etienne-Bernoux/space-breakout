@@ -43,6 +43,8 @@ export class HudRenderer {
     ctx.save();
     ctx.fillStyle = color;
     ctx.font = `${fontSize}px monospace`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
     if (glow > 0) {
       ctx.shadowColor = color;
       ctx.shadowBlur = glow;

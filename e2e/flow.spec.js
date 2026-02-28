@@ -11,11 +11,13 @@ async function waitForState(page, expected, timeout = 3000) {
   );
 }
 
-/** Lance une partie depuis le menu (Enter = JOUER sélectionné par défaut). */
+/** Lance une partie depuis le menu : menu → worldMap → playing. */
 async function launchGame(page) {
   await page.goto(BASE);
   await page.waitForTimeout(500);
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');        // menu → worldMap
+  await waitForState(page, 'worldMap');
+  await page.keyboard.press('Enter');        // worldMap → playing (z1-1 sélectionné)
   await waitForState(page, 'playing');
 }
 
@@ -58,5 +60,27 @@ test.describe('Flow — menu → lancer → jouer → fin', () => {
     await launchGame(page);
     const remaining = await page.evaluate(() => window.__GAME__?.remaining);
     expect(remaining).toBeGreaterThan(0);
+  });
+});
+
+test.describe('Flow — worldMap → win → stats → carte', () => {
+  test('forceWin → stats → retour carte', async ({ page }) => {
+    await launchGame(page);
+
+    // Lancer la balle puis forcer la victoire
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(100);
+    await page.evaluate(() => window.__GAME__.forceWin());
+
+    // Le jeu détecte remaining === 0 → won → stats
+    await waitForState(page, 'stats', 5000);
+    const state = await page.evaluate(() => window.__GAME__?.state);
+    expect(state).toBe('stats');
+
+    // Escape depuis stats → retour carte
+    await page.keyboard.press('Escape');
+    await waitForState(page, 'worldMap');
+    const mapState = await page.evaluate(() => window.__GAME__?.state);
+    expect(mapState).toBe('worldMap');
   });
 });

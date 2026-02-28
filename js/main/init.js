@@ -2,6 +2,10 @@ import { CONFIG } from '../config.js';
 import { Ship } from '../domain/ship/ship.js';
 import { Drone } from '../domain/drone/drone.js';
 import { AsteroidField } from '../domain/asteroid/index.js';
+import { PlayerProgress } from '../domain/progression/player-progress.js';
+import { getLevel, getNextLevel, getAllLevels } from '../domain/progression/level-catalog.js';
+import { computeStars } from '../domain/progression/star-rating.js';
+import { loadProgress, saveProgress } from '../infra/persistence/progress-storage.js';
 import { GameSession } from '../use-cases/game-logic/game-session.js';
 import { DropSystem } from '../use-cases/drop/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up/power-up-manager.js';
@@ -22,6 +26,8 @@ import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
 import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
+import { drawWorldMap, getNodePositions } from '../infra/screens/world-map.js';
+import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
@@ -57,6 +63,9 @@ export const G = {
     droneManager: null, // wired below
   },
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null },
+  progress: new PlayerProgress(loadProgress()),
+  mapState: { selectedIndex: 0 },
+  levelResult: null,   // { levelId, stars, timeSpent, livesLost } — set après victoire
 };
 
 // --- Wiring PowerUpManager ↔ DroneManager ---
@@ -123,11 +132,15 @@ G.hud = new HudRenderer({
 });
 
 // startGame déclaré avant GameLoop/InputHandler car injecté en dépendance
-function spawnEntities(ent) {
+function spawnEntities(ent, levelAsteroids) {
   const isMobile = 'ontouchstart' in window;
   ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
   ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width)];
-  const astConfig = isDevMode() ? getDevAsteroidConfig() : CONFIG.asteroids;
+  const astConfig = isDevMode()
+    ? getDevAsteroidConfig()
+    : levelAsteroids
+      ? { ...CONFIG.asteroids, ...levelAsteroids, _autoSize: true }
+      : CONFIG.asteroids;
   ent.field = new AsteroidField(astConfig);
   ent.capsules = [];
   ent.totalAsteroids = ent.field.remaining;
@@ -139,11 +152,36 @@ function resetSystems(sys) {
   sys.intensity.enable();
 }
 
-export function startGame() {
-  spawnEntities(G.entities);
+/** Lance un niveau. Si levelId est fourni, charge sa config depuis le catalogue. */
+export function startGame(levelId) {
+  const level = levelId ? getLevel(levelId) : null;
+  spawnEntities(G.entities, level?.asteroids);
   resetSystems(G.systems);
-  G.session.start();
+  G.session.start(levelId);
 }
+
+/** Transition vers la carte du monde. */
+export function goToWorldMap() {
+  G.session.goToWorldMap();
+}
+
+/** Appelé après victoire : calcule les étoiles, sauvegarde, passe à l'écran stats. */
+export function finishLevel() {
+  const levelId = G.session.currentLevelId;
+  const level = getLevel(levelId);
+  const timeSpent = G.session.elapsedTime;
+  const livesLost = G.session.maxLives - G.session.lives;
+  const stars = computeStars(livesLost, timeSpent, level?.timeTarget || 120);
+
+  G.progress.complete(levelId, stars);
+  saveProgress(G.progress);
+
+  G.levelResult = { levelId, stars, timeSpent, livesLost, levelName: level?.name || '' };
+  G.session.goToStats();
+}
+
+/** Helpers exposés pour les écrans. */
+export { getLevel, getNextLevel, getAllLevels };
 
 // --- Infra adapters (regroupement des dépendances infra pour injection) ---
 const loopInfra = {
@@ -157,6 +195,8 @@ const loopInfra = {
   updateDevOverlay,
   drawShip, drawDrone, drawField,
   updateDebris,
+  drawWorldMap, drawStatsScreen, getAllLevels,
+  finishLevel,
 };
 
 const inputInfra = {
@@ -176,6 +216,9 @@ G.gameLoop = new GameLoop({
   hud: G.hud,
   collisionHandler: G.collisionHandler,
   infra: loopInfra,
+  progress: G.progress,
+  mapState: G.mapState,
+  getLevelResult: () => G.levelResult,
 });
 
 G.inputHandler = new InputHandler({
@@ -187,7 +230,11 @@ G.inputHandler = new InputHandler({
   pauseBtnLayout,
   pauseScreenLayout,
   startGame,
-  infra: inputInfra,
+  goToWorldMap,
+  finishLevel,
+  progress: G.progress,
+  mapState: G.mapState,
+  infra: { ...inputInfra, getNodePositions, getStatsButtons, getAllLevels },
 });
 
 // --- Resize handler ---

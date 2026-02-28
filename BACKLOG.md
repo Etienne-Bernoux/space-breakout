@@ -12,8 +12,8 @@ Effort : S = quelques heures, M = demi-journée, L = journée+
 
 | Feature | Description | Effort |
 |---|---|---|
-| Animation victoire | Le vaisseau traverse l'écran vers le haut (décollage) à la victoire | S |
-| Animation défaite | Le vaisseau explose (particules + screenshake) au game over | S |
+| ~~Animation victoire~~ | ~~Le vaisseau traverse l'écran vers le haut (décollage) à la victoire~~ | ✅ |
+| ~~Animation défaite~~ | ~~Le vaisseau explose (particules + screenshake) au game over~~ | ✅ |
 | Thème visuel matériau | Teinte du fond étoilé qui shift selon le matériau dominant restant | M |
 | Décor parallaxe v2 | Plus de diversité : gazeuses géantes, planètes rocheuses, lunes, comètes, amas d'étoiles | M |
 
@@ -35,7 +35,10 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 | Feature | Description | Effort |
 |---|---|---|
 | Récolte de matière | Fragments d'astéroïdes récupérables par le vaisseau | M |
-| Niveaux multiples | Difficulté progressive, distribution matériaux par niveau | L |
+| ~~Niveaux multiples~~ | ~~Difficulté progressive, distribution matériaux par niveau~~ | ✅ |
+| Boss Zone 1 | Boss de fin de zone 1 (astéroïde géant multi-hits ou habité) | L |
+| Carte monde — polish | Animations vaisseau, déco roches flottantes, transitions fluides | M |
+| Zones supplémentaires | Nouvelles zones (glace, lave, cristal…) avec niveaux, thèmes visuels et matériaux spécifiques | L |
 | Upgrades vaisseau | Drone renforcé, achetées avec matériaux récoltés (shop entre niveaux) | L |
 | Upgrades power-ups | 2-3 niveaux par power-up (ex: élargi ×1.5 → ×1.8 → ×2.0) | L |
 | Déverrouillage | Certains power-ups verrouillés par défaut, débloqués en progression | M |

@@ -29,6 +29,12 @@ function mockInfra() {
     isMusicLabActive: vi.fn(() => false),
     handleMusicLabTap: vi.fn(),
     handleMusicLabScroll: vi.fn(),
+    getAllLevels: vi.fn(() => [{ id: 'z1-1' }, { id: 'z1-2' }]),
+    getNodePositions: vi.fn(() => [{ x: 100, y: 200 }, { x: 300, y: 300 }]),
+    getStatsButtons: vi.fn(() => ({
+      next: { x: 200, y: 400, w: 180, h: 40 },
+      map:  { x: 200, y: 460, w: 180, h: 40 },
+    })),
     // Expose handlers for test access
     _handlers: handlers,
   };
@@ -51,6 +57,10 @@ function makeDeps(overrides = {}) {
       menuBtn:   { x: 50, y: 410, w: 400, h: 44 },
     }),
     startGame: vi.fn(),
+    goToWorldMap: vi.fn(),
+    finishLevel: vi.fn(),
+    progress: { isUnlocked: vi.fn(() => true), getStars: vi.fn(() => 0) },
+    mapState: { selectedIndex: 0 },
     infra,
     ...overrides,
   };
@@ -115,13 +125,23 @@ describe('InputHandler', () => {
       expect(d.systems.intensity.onLaunch).not.toHaveBeenCalled();
     });
 
-    it('retour au menu quand on tap en gameOver', () => {
+    it('retour au menu quand on tap en gameOver (sans level)', () => {
       const d = makeDeps();
       d.session.state = 'gameOver';
+      d.session.currentLevelId = null;
       new InputHandler(d);
       d.infra._handlers.tap(100, 300);
       expect(d.infra.resetMenu).toHaveBeenCalled();
       expect(d.session.backToMenu).toHaveBeenCalled();
+    });
+
+    it('retour à la carte quand on tap en gameOver (avec level)', () => {
+      const d = makeDeps();
+      d.session.state = 'gameOver';
+      d.session.currentLevelId = 'z1-1';
+      new InputHandler(d);
+      d.infra._handlers.tap(100, 300);
+      expect(d.goToWorldMap).toHaveBeenCalled();
     });
   });
 
@@ -133,7 +153,7 @@ describe('InputHandler', () => {
       new InputHandler(d);
       d.infra._handlers.menuTap(250, 400);
       expect(d.infra.handleMenuTap).toHaveBeenCalled();
-      expect(d.startGame).toHaveBeenCalled();
+      expect(d.goToWorldMap).toHaveBeenCalled();
     });
 
     it('délègue au devPanel quand actif', () => {

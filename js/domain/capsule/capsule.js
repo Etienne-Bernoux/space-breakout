@@ -16,12 +16,12 @@ export class Capsule {
     this.bobPhase = Math.random() * Math.PI * 2;
   }
 
-  update(canvasHeight) {
+  update(canvasHeight, dt = 1) {
     if (!this.alive) return;
-    this.y += this.speedY;
-    this.bobPhase += this.bobSpeed;
+    this.y += this.speedY * dt;
+    this.bobPhase += this.bobSpeed * dt;
     this.x += Math.sin(this.bobPhase) * this.bobAmplitude;
-    this.rotation += this.rotationSpeed;
+    this.rotation += this.rotationSpeed * dt;
 
     if (this.y - this.radius > canvasHeight) {
       this.alive = false;

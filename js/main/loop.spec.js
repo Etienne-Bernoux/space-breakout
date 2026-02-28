@@ -195,22 +195,25 @@ describe('GameLoop', () => {
     expect(d.infra.spawnTrail).not.toHaveBeenCalled();
   });
 
-  it('slow-mo saute des frames (2 sur 3)', () => {
+  it('slow-mo ralentit le dt à 0.33', () => {
     const d = makeDeps();
     d.ui.slowMoTimer = 10;
     const loop = new GameLoop(d);
     loop.loop();
-    // slowMoTimer was 10, decremented to 9. 9 % 3 === 0 → update runs
+    // field.update reçoit dtEff = dt * 0.33
     expect(d.entities.field.update).toHaveBeenCalled();
-    expect(d.ui.slowMoTimer).toBe(9);
+    const dtArg = d.entities.field.update.mock.calls[0][0];
+    expect(dtArg).toBeLessThan(1);
   });
 
-  it('slow-mo saute la frame quand timer % 3 !== 0', () => {
+  it('slow-mo décrémente le timer par dt', () => {
     const d = makeDeps();
-    d.ui.slowMoTimer = 11; // 11-1=10, 10 % 3 = 1 ≠ 0 → skip
+    d.ui.slowMoTimer = 11;
     const loop = new GameLoop(d);
     loop.loop();
-    expect(d.entities.field.update).not.toHaveBeenCalled();
+    // field.update IS called (slow-mo no longer skips frames)
+    expect(d.entities.field.update).toHaveBeenCalled();
+    expect(d.ui.slowMoTimer).toBeLessThan(11);
   });
 
   it('filtre les capsules mortes', () => {

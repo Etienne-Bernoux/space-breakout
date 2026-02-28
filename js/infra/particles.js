@@ -119,14 +119,14 @@ export function spawnTrail(x, y) {
 }
 
 // --- Update & Draw ---
-export function updateParticles(ctx) {
+export function updateParticles(ctx, dt = 1) {
   // Particules d'explosion
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.dx;
-    p.y += p.dy;
-    p.life -= p.decay;
-    if (!p.noGravity) p.dy += 0.05; // légère gravité
+    p.x += p.dx * dt;
+    p.y += p.dy * dt;
+    p.life -= p.decay * dt;
+    if (!p.noGravity) p.dy += 0.05 * dt; // légère gravité
 
     if (p.life <= 0) {
       particles.splice(i, 1);
@@ -143,7 +143,7 @@ export function updateParticles(ctx) {
   // Trainée du drone
   for (let i = trail.length - 1; i >= 0; i--) {
     const t = trail[i];
-    t.life -= t.decay;
+    t.life -= t.decay * dt;
 
     if (t.life <= 0) {
       trail.splice(i, 1);

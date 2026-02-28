@@ -262,15 +262,16 @@ export class AsteroidField {
     return fragments;
   }
 
-  update() {
+  update(dt = 1) {
     for (const a of this.grid) {
       if (!a.alive) continue;
-      a.rotation += a.rotSpeed;
-      a.floatPhase += a.floatFreq;
+      a.rotation += a.rotSpeed * dt;
+      a.floatPhase += a.floatFreq * dt;
       a.y = a.baseY + Math.sin(a.floatPhase) * a.floatAmp;
       // Décroissance de l'offset de fragmentation
-      a.fragOffsetX *= 0.9;
-      a.fragOffsetY *= 0.9;
+      const decay = Math.pow(0.9, dt);
+      a.fragOffsetX *= decay;
+      a.fragOffsetY *= decay;
       if (Math.abs(a.fragOffsetX) < 0.1) a.fragOffsetX = 0;
       if (Math.abs(a.fragOffsetY) < 0.1) a.fragOffsetY = 0;
     }

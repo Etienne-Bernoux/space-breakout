@@ -15,11 +15,11 @@ export function setAmbientShake(amount) {
   ambientAmount = amount;
 }
 
-export function updateShake() {
+export function updateShake(dt = 1) {
   let total = ambientAmount;
   if (intensity >= 0.5) {
     total += intensity;
-    intensity *= decay;
+    intensity *= Math.pow(decay, dt);
   } else {
     intensity = 0;
   }

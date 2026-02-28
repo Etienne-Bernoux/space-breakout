@@ -39,11 +39,11 @@ export function spawnDebris(shipX, shipY, shipW, shipH, color) {
 /**
  * Met à jour et dessine les débris.
  */
-export function updateDebris(ctx, debris) {
+export function updateDebris(ctx, debris, dt = 1) {
   for (const d of debris) {
-    d.x += d.dx;
-    d.y += d.dy;
-    d.rot += d.dRot;
+    d.x += d.dx * dt;
+    d.y += d.dy * dt;
+    d.rot += d.dRot * dt;
 
     ctx.save();
     ctx.translate(d.x, d.y);

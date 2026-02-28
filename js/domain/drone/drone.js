@@ -45,7 +45,7 @@ export class Drone {
     this.dy = -this.speed;
   }
 
-  update(ship, canvasWidth) {
+  update(ship, canvasWidth, dt = 1) {
     if (!this.launched) {
       if (this.sticky && this._stickyOffset !== undefined) {
         // Sticky : garder l'offset relatif au vaisseau
@@ -57,8 +57,8 @@ export class Drone {
       return;
     }
 
-    this.x += this.dx;
-    this.y += this.dy;
+    this.x += this.dx * dt;
+    this.y += this.dy * dt;
 
     // Murs latéraux : warp (traverse) ou rebond
     if (this.warp) {

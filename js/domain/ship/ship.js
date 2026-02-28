@@ -28,16 +28,16 @@ export class Ship {
     this.visible = true;
   }
 
-  update(touchX) {
+  update(touchX, dt = 1) {
     const prevX = this.x;
     if (touchX !== null && touchX !== undefined) {
-      // Tactile : le vaisseau suit le doigt
+      // Tactile : le vaisseau suit le doigt (lerp indépendant du framerate)
       const target = touchX - this.width / 2;
       const diff = target - this.x;
-      this.x += diff * 0.3; // Lissage
+      this.x += diff * (1 - Math.pow(1 - 0.3, dt));
     } else {
-      if (this.movingLeft) this.x -= this.speed;
-      if (this.movingRight) this.x += this.speed;
+      if (this.movingLeft) this.x -= this.speed * dt;
+      if (this.movingRight) this.x += this.speed * dt;
     }
     this.x = Math.max(0, Math.min(this.canvasWidth - this.width, this.x));
     this.vx = this.x - prevX;

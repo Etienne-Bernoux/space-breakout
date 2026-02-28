@@ -56,9 +56,9 @@ export class HudRenderer {
     ctx.restore();
   }
 
-  drawCombo() {
+  drawCombo(dt = 1) {
     if (this.ui.comboFadeTimer <= 0) return;
-    this.ui.comboFadeTimer--;
+    this.ui.comboFadeTimer -= dt;
     const ctx = this.render.ctx;
     const alpha = Math.min(1, this.ui.comboFadeTimer / COMBO_ALPHA_FRAMES);
     const progress = 1 - this.ui.comboFadeTimer / COMBO_FADE_DURATION;

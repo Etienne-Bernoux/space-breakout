@@ -11,7 +11,7 @@ export const ZONE_1 = {
     { id: 'z1-3', name: 'Ceinture dense',  asteroids: { rows: 6, cols: 8,  density: 0.55, materials: { rock: 0.85, metal: 0.15 } },      timeTarget: 110 },
     { id: 'z1-4', name: 'Corridor étroit',  asteroids: { rows: 5, cols: 10, density: 0.5,  materials: { rock: 0.8, metal: 0.2 } },       timeTarget: 110 },
     { id: 'z1-5', name: 'Noyau rocheux',   asteroids: { rows: 6, cols: 10, density: 0.55, materials: { rock: 0.75, metal: 0.25 } },      timeTarget: 120 },
-    { id: 'z1-6', name: 'Dernier mur',     asteroids: { rows: 6, cols: 10, density: 0.6,  materials: { rock: 0.7, metal: 0.3 } },        timeTarget: 130 },
+    { id: 'z1-6', name: 'Dernier mur',     asteroids: { rows: 6, cols: 10, density: 0.6,  materials: { rock: 0.6, metal: 0.25, alien: 0.15 } }, timeTarget: 130 },
   ],
 };
 

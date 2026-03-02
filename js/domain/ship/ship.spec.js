@@ -56,6 +56,34 @@ describe('Ship', () => {
     expect(s.width).to.equal(Math.round(800 * 0.15));
   });
 
+  it('stun empêche le mouvement', () => {
+    const s = new Ship(CFG, 800, 600);
+    const x0 = s.x;
+    s.stun(10);
+    s.movingRight = true;
+    s.update(null);
+    expect(s.x).to.equal(x0);
+    expect(s.vx).to.equal(0);
+  });
+
+  it('stun se décrémente par dt', () => {
+    const s = new Ship(CFG, 800, 600);
+    s.stun(10);
+    s.update(null, 3);
+    expect(s.stunTimer).to.equal(7);
+  });
+
+  it('mouvement reprend après fin du stun', () => {
+    const s = new Ship(CFG, 800, 600);
+    s.stun(1);
+    s.movingRight = true;
+    s.update(null, 2); // dt=2 > stunTimer=1 → stun expiré, mais ce frame est skip
+    // Le stun frame ne bouge pas, mais au frame suivant ça marche
+    const x0 = s.x;
+    s.update(null);
+    expect(s.x).to.be.greaterThan(x0);
+  });
+
   it('mobile : marge basse plus grande', () => {
     const mobileCfg = { ...CFG, bottomMarginMobileRatio: 0.1 };
     const s = new Ship(mobileCfg, 800, 600, true);

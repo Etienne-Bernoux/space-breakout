@@ -170,6 +170,75 @@ function styleObsidian(ctx, a, rx, ry, tp) {
   ctx.stroke();
 }
 
+function styleAlien(ctx, a, rx, ry, tp) {
+  // Base rocheuse sombre
+  tp(ctx, a.shape, rx, ry);
+  const grad = ctx.createRadialGradient(-rx * 0.3, -ry * 0.3, 1, 0, 0, Math.max(rx, ry));
+  grad.addColorStop(0, '#3a4a3a');
+  grad.addColorStop(0.4, '#2a3a2a');
+  grad.addColorStop(0.8, '#1a2a1a');
+  grad.addColorStop(1, '#0a1a0a');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.save();
+  tp(ctx, a.shape, rx, ry);
+  ctx.clip();
+  drawCraters(ctx, a, rx, ry);
+
+  const pulse = 0.12 + Math.sin(a.floatPhase * 2.5) * 0.06;
+
+  // Veines bioluminescentes vertes
+  for (const v of a.veins) {
+    ctx.beginPath();
+    ctx.moveTo(v.x1, v.y1);
+    ctx.lineTo(v.x2, v.y2);
+    ctx.strokeStyle = `rgba(80,255,120,${0.3 + pulse})`;
+    ctx.lineWidth = v.width * 0.7;
+    ctx.stroke();
+    // Glow autour de la veine
+    ctx.strokeStyle = `rgba(50,200,80,${0.1 + pulse * 0.5})`;
+    ctx.lineWidth = v.width * 2;
+    ctx.stroke();
+  }
+
+  // Œil central (tourelle organique)
+  const eyeR = Math.min(rx, ry) * 0.28;
+  // Cavité sombre
+  ctx.beginPath();
+  ctx.arc(0, 0, eyeR * 1.4, 0, Math.PI * 2);
+  ctx.fillStyle = '#0a1a0a';
+  ctx.fill();
+  // Iris vert pulsant
+  const irisGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, eyeR);
+  irisGrad.addColorStop(0, `rgba(150,255,100,${0.9 + pulse})`);
+  irisGrad.addColorStop(0.5, `rgba(50,220,80,${0.7 + pulse})`);
+  irisGrad.addColorStop(1, 'rgba(20,100,30,0.3)');
+  ctx.beginPath();
+  ctx.arc(0, 0, eyeR, 0, Math.PI * 2);
+  ctx.fillStyle = irisGrad;
+  ctx.fill();
+  // Pupille
+  ctx.beginPath();
+  ctx.arc(0, 0, eyeR * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = '#001a00';
+  ctx.fill();
+  // Reflet
+  ctx.beginPath();
+  ctx.arc(-eyeR * 0.2, -eyeR * 0.2, eyeR * 0.12, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fill();
+
+  ctx.restore();
+
+  // Contour vert lumineux (au lieu du rim standard)
+  tp(ctx, a.shape, rx, ry);
+  ctx.strokeStyle = `rgba(80,255,120,${0.25 + pulse * 0.3})`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  drawDamageOverlay(ctx, tp, a, rx, ry);
+}
+
 // ========== Dispatch ==========
 
 const STYLE_MAP = {
@@ -179,6 +248,7 @@ const STYLE_MAP = {
   metal: styleMetal,
   crystal: styleCrystal,
   obsidian: styleObsidian,
+  alien: styleAlien,
 };
 
 /** Dessine un astéroïde selon son matériau */

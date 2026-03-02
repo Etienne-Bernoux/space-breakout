@@ -30,6 +30,7 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 | Récolte de matière | Fragments d'astéroïdes récupérables par le vaisseau | M |
 | Boss Zone 1 | Boss de fin de zone 1 (astéroïde géant multi-hits ou habité) | L |
 | Carte monde — polish | Animations vaisseau, déco roches flottantes, transitions fluides | M |
+| Menu pause → carte | Depuis le menu pause, pouvoir retourner directement à la carte monde | S |
 | Zones supplémentaires | Nouvelles zones (glace, lave, cristal…) avec niveaux, thèmes visuels et matériaux spécifiques | L |
 | Upgrades vaisseau | Drone renforcé, achetées avec matériaux récoltés (shop entre niveaux) | L |
 | Upgrades power-ups | 2-3 niveaux par power-up (ex: élargi ×1.5 → ×1.8 → ×2.0) | L |

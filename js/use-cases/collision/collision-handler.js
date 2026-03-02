@@ -30,6 +30,7 @@ export class CollisionHandler {
   /** Appelé à chaque frame de jeu */
   update() {
     this.#handleDroneCollisions();
+    this.#handleProjectileCollisions();
     this.#handleCapsulePickup();
     this.#handlePowerUpExpiry();
     this.#handleLostDrones();
@@ -83,6 +84,41 @@ export class CollisionHandler {
     this.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, this.ui.combo);
     if (field.remaining === 0) {
       this.ui.slowMoTimer = SLOW_MO_DURATION;
+    }
+  }
+
+  #handleProjectileCollisions() {
+    const projectiles = this.entities.projectiles;
+    if (!projectiles) return;
+    const { ship, field } = this.entities;
+
+    for (const p of projectiles) {
+      if (!p.alive) continue;
+
+      // Collision projectile → ship (circle vs rect)
+      const cx = Math.max(ship.x, Math.min(p.x, ship.x + ship.width));
+      const cy = Math.max(ship.y, Math.min(p.y, ship.y + ship.height));
+      if (Math.hypot(p.x - cx, p.y - cy) < p.radius + 2) {
+        p.alive = false;
+        ship.stun(150); // ~2.5s à 60fps
+        this.effects.spawnExplosion(p.x, p.y, p.color || '#33ff66');
+        this.effects.triggerShake(6);
+        continue;
+      }
+
+      // Collision projectile → astéroïde non-alien (renforce)
+      for (const a of field.grid) {
+        if (!a.alive || a.materialKey === 'alien') continue;
+        if (
+          p.x + p.radius > a.x && p.x - p.radius < a.x + a.width &&
+          p.y + p.radius > a.y && p.y - p.radius < a.y + a.height
+        ) {
+          p.alive = false;
+          a.hp = Math.min(a.maxHp + 2, a.hp + 1); // renforce (+1 hp, cap maxHp+2)
+          this.effects.spawnExplosion(p.x, p.y, a.color);
+          break;
+        }
+      }
     }
   }
 

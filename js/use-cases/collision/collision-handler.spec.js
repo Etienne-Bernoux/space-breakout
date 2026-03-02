@@ -11,7 +11,7 @@ function makeShip() {
 }
 
 function makeField(remaining = 5) {
-  return { remaining };
+  return { remaining, grid: [] };
 }
 
 function makeDeps(overrides = {}) {
@@ -235,5 +235,51 @@ describe('CollisionHandler', () => {
     handler.update();
 
     expect(deps.session.checkWin).not.toHaveBeenCalled();
+  });
+
+  // 14. Projectile touche le ship → stun
+  it('stun le ship quand un projectile le touche', () => {
+    deps.entities.ship.stun = vi.fn();
+    deps.entities.projectiles = [
+      { alive: true, x: 130, y: 405, radius: 5, color: '#33ff66' },
+    ];
+
+    handler.update();
+
+    expect(deps.entities.ship.stun).toHaveBeenCalledWith(150);
+    expect(deps.entities.projectiles[0].alive).toBe(false);
+    expect(deps.effects.spawnExplosion).toHaveBeenCalled();
+    expect(deps.effects.triggerShake).toHaveBeenCalledWith(6);
+  });
+
+  // 15. Projectile touche un astéroïde non-alien → renforce
+  it('renforce un astéroïde non-alien quand touché par un projectile', () => {
+    deps.entities.projectiles = [
+      { alive: true, x: 55, y: 55, radius: 5, color: '#33ff66' },
+    ];
+    deps.entities.field.grid = [
+      { alive: true, x: 50, y: 50, width: 30, height: 30, hp: 2, maxHp: 2, materialKey: 'rock', color: '#888' },
+    ];
+
+    handler.update();
+
+    expect(deps.entities.projectiles[0].alive).toBe(false);
+    expect(deps.entities.field.grid[0].hp).toBe(3);
+  });
+
+  // 16. Projectile ignore les astéroïdes alien
+  it('un projectile ne renforce pas un astéroïde alien', () => {
+    deps.entities.projectiles = [
+      { alive: true, x: 55, y: 55, radius: 5, color: '#33ff66' },
+    ];
+    deps.entities.field.grid = [
+      { alive: true, x: 50, y: 50, width: 30, height: 30, hp: 3, maxHp: 3, materialKey: 'alien', color: '#3c5' },
+    ];
+
+    handler.update();
+
+    // Projectile passe à travers l'alien
+    expect(deps.entities.projectiles[0].alive).toBe(true);
+    expect(deps.entities.field.grid[0].hp).toBe(3);
   });
 });

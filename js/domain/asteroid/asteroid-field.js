@@ -178,6 +178,12 @@ export class AsteroidField {
       floatAmp: 0.3 + Math.random() * 0.4,
       floatFreq: 0.012 + Math.random() * 0.008,
       fragOffsetX: 0, fragOffsetY: 0,
+      // Alien : timer de tir (seulement si le matériau a fireRate)
+      ...(mat.fireRate ? {
+        fireRate: mat.fireRate,
+        fireTimer: mat.fireRate * (0.5 + Math.random() * 0.5), // premier tir entre 50-100% du fireRate
+        projectileSpeed: mat.projectileSpeed || 1.5,
+      } : {}),
     };
   }
 
@@ -260,6 +266,20 @@ export class AsteroidField {
 
     this.grid.push(...fragments);
     return fragments;
+  }
+
+  /** Décrémente les timers aliens et retourne ceux prêts à tirer. */
+  getReadyToFire(dt = 1) {
+    const ready = [];
+    for (const a of this.grid) {
+      if (!a.alive || !a.fireRate) continue;
+      a.fireTimer -= dt;
+      if (a.fireTimer <= 0) {
+        a.fireTimer = a.fireRate + Math.random() * a.fireRate * 0.2; // +0-20% de jitter
+        ready.push(a);
+      }
+    }
+    return ready;
   }
 
   update(dt = 1) {

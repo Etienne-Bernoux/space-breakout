@@ -22,7 +22,7 @@ export const PRESETS = [
 const state = {
   devConfig: {
     density: CONFIG.asteroids.density,
-    materials: { rock: 1.0, ice: 0, lava: 0, metal: 0, crystal: 0, obsidian: 0 },
+    materials: { rock: 1.0, ice: 0, lava: 0, metal: 0, crystal: 0, alien: 0, obsidian: 0 },
     patternKey: 'random',
     gridKey: 'small', // taille grille pour mode aléatoire
   },

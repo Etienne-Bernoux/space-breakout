@@ -60,6 +60,8 @@ function mockInfra() {
     drawStatsScreen: vi.fn(),
     getAllLevels: vi.fn(() => []),
     finishLevel: vi.fn(),
+    AlienProjectile: vi.fn(),
+    drawProjectile: vi.fn(),
   };
 }
 
@@ -67,7 +69,7 @@ function makeDeps(overrides = {}) {
   const ctx = mockCtx();
   const ship = { x: 100, y: 600, width: 80, height: 20, bottomMargin: 10, isMobile: false, update: vi.fn(), color: '#00aaff' };
   const drone = { x: 140, y: 580, launched: true, update: vi.fn(), radius: 6, color: '#ffcc00' };
-  const field = { draw: vi.fn(), update: vi.fn(), remaining: 5 };
+  const field = { draw: vi.fn(), update: vi.fn(), remaining: 5, getReadyToFire: vi.fn(() => []) };
   const hud = {
     drawHUD: vi.fn(), drawCombo: vi.fn(), drawDeathLine: vi.fn(),
     drawPauseButton: vi.fn(), drawPauseScreen: vi.fn(), drawEndScreen: vi.fn(),
@@ -85,7 +87,7 @@ function makeDeps(overrides = {}) {
 
   return {
     render: { ctx },
-    entities: { ship, drones: [drone], field, capsules: [] },
+    entities: { ship, drones: [drone], field, capsules: [], projectiles: [] },
     session: { state: 'playing', lives: 3, score: 0 },
     systems: { intensity, powerUp },
     ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },

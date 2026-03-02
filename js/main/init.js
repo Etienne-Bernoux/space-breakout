@@ -26,8 +26,10 @@ import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
 import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
+import { drawProjectile } from '../infra/renderers/projectile-render.js';
 import { drawWorldMap, getNodePositions } from '../infra/screens/world-map.js';
 import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';
+import { AlienProjectile } from '../domain/projectile/index.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
@@ -47,6 +49,7 @@ export const G = {
     drones: [],
     field: null,
     capsules: [],
+    projectiles: [],
     totalAsteroids: 0,
   },
   get gs() {
@@ -143,6 +146,7 @@ function spawnEntities(ent, levelAsteroids) {
       : CONFIG.asteroids;
   ent.field = new AsteroidField(astConfig);
   ent.capsules = [];
+  ent.projectiles = [];
   ent.totalAsteroids = ent.field.remaining;
 }
 
@@ -197,6 +201,8 @@ const loopInfra = {
   updateDebris,
   drawWorldMap, drawStatsScreen, getAllLevels,
   finishLevel,
+  AlienProjectile,
+  drawProjectile,
 };
 
 const inputInfra = {

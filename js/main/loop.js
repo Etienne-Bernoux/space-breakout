@@ -156,6 +156,22 @@ export class GameLoop {
     }
     for (const c of this.entities.capsules) c.update(this.canvas.height, dtEff);
     this.entities.capsules = this.entities.capsules.filter(c => c.alive);
+
+    // Projectiles aliens : spawn + update + cleanup
+    const readyAliens = field.getReadyToFire(dtEff);
+    for (const a of readyAliens) {
+      const px = a.x + a.width / 2;
+      const py = a.y + a.height;
+      const target = { x: ship.x + ship.width / 2, y: ship.y };
+      this.entities.projectiles.push(
+        new infra.AlienProjectile(px, py, target, {
+          speed: a.projectileSpeed,
+        })
+      );
+    }
+    for (const p of this.entities.projectiles) p.update(this.canvas.width, this.canvas.height, ship, dtEff);
+    this.entities.projectiles = this.entities.projectiles.filter(p => p.alive);
+
     this.collisionHandler.update();
 
     this.#drawScene(fx, dtEff);
@@ -213,6 +229,7 @@ export class GameLoop {
     infra.drawField(ctx, field);
     infra.updateParticles(ctx, dt);
     for (const c of capsules) infra.drawCapsule(ctx, c);
+    for (const p of this.entities.projectiles) infra.drawProjectile(ctx, p);
     if (ship.isMobile) this.hud.drawDeathLine(ship, fx);
     infra.drawShip(ctx, ship);
     for (const d of drones) infra.drawDrone(ctx, d);

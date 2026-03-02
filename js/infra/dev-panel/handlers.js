@@ -69,7 +69,8 @@ export function handleDevTap(x, y) {
   const resetX = launchX + 220;
   if (x >= resetX && x <= resetX + 80 && y >= PANEL.launchY && y <= PANEL.launchY + 36) {
     state.devConfig.density = CONFIG.asteroids.density;
-    state.devConfig.materials = { rock: 1.0, ice: 0, lava: 0, metal: 0, crystal: 0, obsidian: 0 };
+    state.devConfig.materials = {};
+    for (const k of MAT_KEYS) state.devConfig.materials[k] = k === 'rock' ? 1.0 : 0;
     state.devConfig.patternKey = 'random';
     state.devConfig.gridKey = 'small';
     saveDevConfig();

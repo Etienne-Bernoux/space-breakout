@@ -17,14 +17,18 @@ const PANEL = {
   // Colonne gauche : matériaux + densité
   sliderX: 160, sliderW: 280, trackH: TRACK_H, thumbR: THUMB_R,
   matStartY: 140, matSpacing: MAT_SPACING,
-  densityY: 370,
+  get densityY() { return this.matStartY + MAT_KEYS.length * this.matSpacing + 20; },
   // Colonne droite : patterns + grille + presets
   rightX: 490, rightW: 280,
   patternStartY: 135, patternH: 22, patternSpacing: PATTERN_SPACING,
   get gridStartY() { return this.patternStartY + PATTERN_KEYS.length * this.patternSpacing + 20; },
   gridH: 22, gridSpacing: GRID_SPACING,
-  // Bas
-  launchY: 530,
+  // Bas — dynamique selon densité + presets (2 rangées de 28px + marge)
+  get launchY() {
+    const presetY = this.densityY + 35;
+    const presetRows = Math.ceil(PRESETS.length / 3);
+    return presetY + 10 + presetRows * 28 + 20;
+  },
 };
 
 // --- Draw helpers ---

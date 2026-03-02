@@ -47,6 +47,17 @@ export const MATERIALS = {
     colors: ['#cc66ff', '#dd88ff', '#bb44ee', '#aa55dd'],
     style: 'crystal', // facettes angulaires, brillance
   },
+  alien: {
+    name: 'Alien',
+    hp: 3,
+    destructible: true,
+    pointsMult: 2.5,
+    noFragment: false,
+    colors: ['#33cc55', '#22aa44', '#44dd66', '#119933'],
+    style: 'alien', // base organique + canon, pulsation
+    fireRate: 360,          // frames entre tirs (≈6s à 60fps)
+    projectileSpeed: 1.5,   // vitesse du projectile
+  },
   obsidian: {
     name: 'Obsidienne',
     hp: Infinity,

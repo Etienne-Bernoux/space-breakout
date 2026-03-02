@@ -26,9 +26,20 @@ export class Ship {
     this.canvasWidth = canvasWidth;
     this.vx = 0; // vélocité horizontale (pour le rendu des flammes)
     this.visible = true;
+    this.stunTimer = 0; // immobilisation (frames, décrémenté par dt)
+  }
+
+  /** Applique un stun (immobilisation). durée en frames (~150 ≈ 2.5s à 60fps). */
+  stun(duration = 150) {
+    this.stunTimer = duration;
   }
 
   update(touchX, dt = 1) {
+    if (this.stunTimer > 0) {
+      this.stunTimer -= dt;
+      this.vx = 0;
+      return;
+    }
     const prevX = this.x;
     if (touchX !== null && touchX !== undefined) {
       // Tactile : le vaisseau suit le doigt (lerp indépendant du framerate)

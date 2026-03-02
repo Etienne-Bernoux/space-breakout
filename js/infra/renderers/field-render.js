@@ -2,7 +2,7 @@
 // Rendu canvas du champ d'astéroïdes, extrait de AsteroidField.draw() + _tracePath()
 
 import { renderAsteroid } from './asteroid-render.js';
-import { drawAlienCreatures } from './alien-creature-render.js';
+import { drawAlienCreatures } from './alien-creature-render/index.js';
 
 // Trace le contour lissé (courbes de Bézier quadratiques)
 function tracePath(ctx, shape, rx, ry) {

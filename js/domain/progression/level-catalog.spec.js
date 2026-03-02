@@ -43,8 +43,11 @@ describe('level-catalog', () => {
       expect(l).toHaveProperty('timeTarget');
       expect(l.asteroids).toHaveProperty('rows');
       expect(l.asteroids).toHaveProperty('cols');
-      expect(l.asteroids).toHaveProperty('density');
       expect(l.asteroids).toHaveProperty('materials');
+      // density obligatoire sauf pour les niveaux à pattern
+      if (!l.asteroids.pattern) {
+        expect(l.asteroids).toHaveProperty('density');
+      }
     }
   });
 });

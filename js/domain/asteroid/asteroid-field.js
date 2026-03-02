@@ -221,7 +221,7 @@ export class AsteroidField {
   /** Tue tous les tentacules vivants — appelé quand le core est détruit */
   killTentacles() {
     for (const a of this.grid) {
-      if (a.alive && a.materialKey === 'tentacle') a.alive = false;
+      if (a.alive && a.material?.creaturePart && !a.material?.isBoss) a.alive = false;
     }
   }
 

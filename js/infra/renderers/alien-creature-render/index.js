@@ -14,7 +14,7 @@ import { drawCorePart } from './core-draw.js';
 export function drawAlienCreatures(ctx, field) {
   const visited = new Set();
   const alienParts = field.grid.filter(
-    (a) => a.alive && (a.materialKey === 'tentacle' || a.materialKey === 'alienCore'),
+    (a) => a.alive && a.material?.creaturePart,
   );
 
   for (const part of alienParts) {

@@ -90,7 +90,7 @@ export class CollisionResolver {
         const ev = {
           type: fragments.length > 0 ? 'asteroidFragment' : 'asteroidHit',
           points, x: hitX, y: hitY, color: a.color, fragments,
-          materialKey: a.materialKey, sizeName: a.sizeName,
+          materialKey: a.materialKey, material: a.material, sizeName: a.sizeName,
         };
         if (!effectivePiercing) return ev;
         if (!firstEvent) firstEvent = ev;

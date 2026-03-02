@@ -288,7 +288,7 @@ describe('CollisionHandler', () => {
       { alive: true, x: 55, y: 55, radius: 5, color: '#33ff66' },
     ];
     deps.entities.field.grid = [
-      { alive: true, x: 50, y: 50, width: 30, height: 30, hp: 3, maxHp: 3, materialKey: 'tentacle', color: '#3c5' },
+      { alive: true, x: 50, y: 50, width: 30, height: 30, hp: 3, maxHp: 3, materialKey: 'tentacle', material: { creaturePart: true }, color: '#3c5' },
     ];
 
     handler.update();

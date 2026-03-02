@@ -54,6 +54,7 @@ export const MATERIALS = {
     pointsMult: 2.5,
     noFragment: true,
     piercingImmune: true,
+    creaturePart: true,     // fait partie d'une créature alien (rendu unifié, skip projectile shield)
     optional: true,         // ne compte pas pour la victoire
     colors: ['#33cc55', '#22aa44', '#44dd66', '#119933'],
     style: 'tentacle', // tentacule organique, pulsation, tir
@@ -67,6 +68,7 @@ export const MATERIALS = {
     pointsMult: 5,
     noFragment: true,
     piercingImmune: true,
+    creaturePart: true,     // fait partie d'une créature alien
     isBoss: true,           // détruire = victoire + tue les tentacules
     colors: ['#888899', '#33cc55', '#999aab', '#22aa44'],
     style: 'alienCore',     // métal parasité (base métal + excroissances organiques)

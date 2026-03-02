@@ -74,7 +74,7 @@ export class CollisionHandler {
     this.effects.triggerShake(shakeAmount);
 
     // Boss détruit → tue les tentacules
-    if (ev.materialKey === 'alienCore') {
+    if (ev.material?.isBoss) {
       field.killTentacles();
     }
 
@@ -113,7 +113,7 @@ export class CollisionHandler {
 
       // Collision projectile → astéroïde non-alien (bouclier)
       for (const a of field.grid) {
-        if (!a.alive || a.materialKey === 'tentacle' || a.materialKey === 'alienCore') continue;
+        if (!a.alive || a.material?.creaturePart) continue;
         if (
           p.x + p.radius > a.x && p.x - p.radius < a.x + a.width &&
           p.y + p.radius > a.y && p.y - p.radius < a.y + a.height

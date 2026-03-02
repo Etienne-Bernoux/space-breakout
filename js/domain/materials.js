@@ -52,7 +52,7 @@ export const MATERIALS = {
     hp: 3,
     destructible: true,
     pointsMult: 2.5,
-    noFragment: false,
+    noFragment: true,
     colors: ['#33cc55', '#22aa44', '#44dd66', '#119933'],
     style: 'alien', // base organique + canon, pulsation
     fireRate: 360,          // frames entre tirs (≈6s à 60fps)

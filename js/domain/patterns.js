@@ -3,15 +3,15 @@
 // Chaque caractère mappe une cellule de la grille :
 //   .  = vide
 //   ?  = aléatoire (selon la distribution materials du niveau)
-//   R  = rock, I = ice, L = lava, M = metal, C = crystal, O = obsidian
+//   R  = rock, I = ice, L = lava, M = metal, C = crystal, O = obsidian, A = alien
 //
 // Les dimensions de la grille sont déduites du pattern (rows = lignes, cols = longueur max).
 // Le constructeur AsteroidField tente de merger les cellules adjacentes de même matériau
 // en astéroïdes plus gros (2×2, 2×1, 1×2) via un algo glouton.
 
 const CHAR_TO_MAT = {
-  R: 'rock', I: 'ice', L: 'lava', M: 'metal', C: 'crystal', O: 'obsidian',
-  r: 'rock', i: 'ice', l: 'lava', m: 'metal', c: 'crystal', o: 'obsidian',
+  R: 'rock', I: 'ice', L: 'lava', M: 'metal', C: 'crystal', O: 'obsidian', A: 'alien',
+  r: 'rock', i: 'ice', l: 'lava', m: 'metal', c: 'crystal', o: 'obsidian', a: 'alien',
 };
 
 /** Parse un pattern ASCII → matrice de materialKey|'?'|null */
@@ -199,6 +199,24 @@ export const PATTERNS = {
       'MMMMMMMMMMMMMMMM',
       'MMMMMMMMMMMMMMMM',
       'OOOOOOOOOOOOOOOO',
+    ],
+  },
+
+  // --- Invasion (aliens placés manuellement) ---
+  invasion1: {
+    name: 'Invasion 1',
+    grid: GRID_PRESETS.medium,
+    lines: [
+      '??????????????',
+      '??????????????',
+      '??????????????',
+      '??????AA??????',
+      '??????AA??????',
+      '??????????????',
+      '??????????????',
+      '??????????????',
+      '??????????????',
+      '??????????????',
     ],
   },
 

@@ -147,5 +147,6 @@ function applyPreset(index) {
   state.devConfig.density = p.density;
   for (const k of MAT_KEYS) state.devConfig.materials[k] = 0;
   for (const [k, v] of Object.entries(p.mats)) state.devConfig.materials[k] = v;
+  if (p.patternKey) state.devConfig.patternKey = p.patternKey;
   saveDevConfig();
 }

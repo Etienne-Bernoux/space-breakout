@@ -16,6 +16,7 @@ export const PRESETS = [
   { name: 'Niveau 4 — Forteresse', density: 0.6, mats: { rock: 0.2, metal: 0.35, obsidian: 0.2, lava: 0.15, crystal: 0.1 } },
   { name: 'Endgame — Chaos',      density: 0.65, mats: { rock: 0.15, ice: 0.1, lava: 0.2, metal: 0.25, crystal: 0.1, obsidian: 0.2 } },
   { name: 'Cristaux purs',        density: 0.4, mats: { crystal: 0.7, ice: 0.3 } },
+  { name: 'Invasion 1',          density: 0.5, mats: { rock: 0.6, ice: 0.2, lava: 0.2 }, patternKey: 'invasion1' },
 ];
 
 // --- State (mutable state object) ---

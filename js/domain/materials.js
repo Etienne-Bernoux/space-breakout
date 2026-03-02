@@ -62,7 +62,7 @@ export const MATERIALS = {
     projectileSpeed: 1.5,   // vitesse du projectile
   },
   alienCore: {
-    name: 'Alien (corps)',
+    name: 'Noyau alien',
     hp: 5,
     destructible: true,
     pointsMult: 5,

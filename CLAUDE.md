@@ -36,13 +36,16 @@ js/
     ship/ship.js        → vaisseau (raquette)
     drone/drone.js      → drone de minage (balle)
     capsule/capsule.js  → capsule de power-up
-    materials.js        → 6 matériaux (roche, glace, lave, métal, cristal, obsidienne)
+    materials.js        → 8 matériaux (roche, glace, lave, métal, cristal, obsidienne, tentacule, noyau alien)
     power-ups.js        → 12 power-ups déclaratifs (P1 + P2 drone)
     patterns.js         → patterns ASCII de niveaux
     asteroid/           → génération procédurale d'astéroïdes
       shape.js          → géométrie procédurale (polygones, cratères, veines)
       asteroid-field.js → AsteroidField (grille, merge glouton, fragmentation)
       index.js          → façade (re-export AsteroidField)
+    projectile/           → projectiles alien
+      alien-projectile.js → AlienProjectile (balle guidée)
+      index.js            → re-export
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic/
       game-session.js   → GameSession : état, score, vies (~72 lignes)
@@ -55,6 +58,8 @@ js/
       drone-manager.js  → lifecycle drone centralisé (spawn, remove, reset)
     intensity/
       game-intensity-director.js → chef d'orchestre (intensité 0-4 → music + effects, DI)
+    alien-combat/
+      alien-combat-manager.js → tir alien, firePulse decay, projectiles (DI)
     drop/
       drop-system.js    → probabilité de drop
   infra/                → DOM, Canvas, Audio, Input
@@ -75,8 +80,14 @@ js/
       ship-render.js    → rendu vaisseau
       drone-render.js   → rendu drone
       field-render.js   → rendu champ d'astéroïdes
-      asteroid-render.js → rendu par matériau (188 lignes)
+      asteroid-render.js → rendu par matériau (6 styles minéraux)
       asteroid-render-helpers.js → helpers partagés (couleurs, cratères, veines, rim)
+      alien-creature-render/ → rendu créature alien (dossier-module)
+        index.js          → façade (drawAlienCreatures, flood-fill, grouping)
+        tentacle-draw.js  → tentacule effilé (ondulation, œil, firePulse)
+        core-draw.js      → noyau (métal parasité, mousse, veines, œil central)
+        bridge-draw.js    → ponts organiques corps↔tentacules
+        utils.js          → isAdjacent, partsBBox
     music/              → musique procédurale (Web Audio)
       audio-core.js     → contexte audio, master gain/filter, layers
       instruments-main.js → instruments piste Space Synth

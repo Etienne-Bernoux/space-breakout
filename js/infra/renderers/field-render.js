@@ -2,6 +2,7 @@
 // Rendu canvas du champ d'astéroïdes, extrait de AsteroidField.draw() + _tracePath()
 
 import { renderAsteroid } from './asteroid-render.js';
+import { drawAlienCreatures } from './alien-creature-render.js';
 
 // Trace le contour lissé (courbes de Bézier quadratiques)
 function tracePath(ctx, shape, rx, ry) {
@@ -24,8 +25,12 @@ function tracePath(ctx, shape, rx, ry) {
 }
 
 export function drawField(ctx, field) {
+  // Passe 1 : créatures alien (rendu cohérent corps + tentacules)
+  const alienParts = drawAlienCreatures(ctx, field);
+
+  // Passe 2 : astéroïdes normaux (skip les aliens déjà dessinés)
   for (const a of field.grid) {
-    if (!a.alive) continue;
+    if (!a.alive || alienParts.has(a)) continue;
     const cx = a.x + a.width / 2 + (a.fragOffsetX || 0);
     const cy = a.y + a.height / 2 + (a.fragOffsetY || 0);
     const rx = a.width / 2;

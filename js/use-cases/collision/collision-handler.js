@@ -73,6 +73,11 @@ export class CollisionHandler {
       || this.config.screenshake.intensity.small;
     this.effects.triggerShake(shakeAmount);
 
+    // Boss détruit → tue les tentacules
+    if (ev.materialKey === 'alienCore') {
+      field.killTentacles();
+    }
+
     const puId = drop.decideDrop({
       materialKey: ev.materialKey || 'rock',
       sizeName: ev.sizeName || 'small',
@@ -106,16 +111,16 @@ export class CollisionHandler {
         continue;
       }
 
-      // Collision projectile → astéroïde non-alien (renforce)
+      // Collision projectile → astéroïde non-alien (bouclier)
       for (const a of field.grid) {
-        if (!a.alive || a.materialKey === 'alien') continue;
+        if (!a.alive || a.materialKey === 'tentacle' || a.materialKey === 'alienCore') continue;
         if (
           p.x + p.radius > a.x && p.x - p.radius < a.x + a.width &&
           p.y + p.radius > a.y && p.y - p.radius < a.y + a.height
         ) {
           p.alive = false;
-          a.hp = Math.min(a.maxHp + 2, a.hp + 1); // renforce (+1 hp, cap maxHp+2)
-          this.effects.spawnExplosion(p.x, p.y, a.color);
+          if (!a.shield) a.shield = true; // bouclier 1 HP, non cumulable
+          this.effects.spawnExplosion(p.x, p.y, '#33ff66');
           break;
         }
       }

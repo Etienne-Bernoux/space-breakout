@@ -157,9 +157,17 @@ export class GameLoop {
     for (const c of this.entities.capsules) c.update(this.canvas.height, dtEff);
     this.entities.capsules = this.entities.capsules.filter(c => c.alive);
 
+    // Decay firePulse des aliens (animation tir)
+    if (field.grid) {
+      for (const a of field.grid) {
+        if (a.firePulse > 0) a.firePulse = Math.max(0, a.firePulse - 0.06 * dtEff);
+      }
+    }
+
     // Projectiles aliens : spawn + update + cleanup
     const readyAliens = field.getReadyToFire(dtEff);
     for (const a of readyAliens) {
+      if (!a.alive) continue;
       const px = a.x + a.width / 2;
       const py = a.y + a.height;
       const target = { x: ship.x + ship.width / 2, y: ship.y };
@@ -168,6 +176,8 @@ export class GameLoop {
           speed: a.projectileSpeed,
         })
       );
+      a.firePulse = 1.0; // animation de tir (décroît chaque frame)
+      infra.playAlienShoot();
     }
     for (const p of this.entities.projectiles) p.update(this.canvas.width, this.canvas.height, ship, dtEff);
     this.entities.projectiles = this.entities.projectiles.filter(p => p.alive);

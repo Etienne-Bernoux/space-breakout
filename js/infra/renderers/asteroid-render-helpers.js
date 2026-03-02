@@ -96,6 +96,27 @@ export function drawFractureGlow(ctx, tracePath, a, rx, ry, glowColor = 'rgba(25
   ctx.restore();
 }
 
+/** Aura verte de bouclier alien (non cumulable) */
+export function drawShieldAura(ctx, tracePath, a, rx, ry) {
+  if (!a.shield) return;
+  const pulse = 0.6 + Math.sin((a.floatPhase || 0) * 3) * 0.15;
+  // Halo externe
+  tracePath(ctx, a.shape, rx * 1.15, ry * 1.15);
+  ctx.strokeStyle = `rgba(50,255,100,${0.15 * pulse})`;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  // Halo moyen
+  tracePath(ctx, a.shape, rx * 1.08, ry * 1.08);
+  ctx.strokeStyle = `rgba(50,255,100,${0.3 * pulse})`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Halo interne
+  tracePath(ctx, a.shape, rx * 1.02, ry * 1.02);
+  ctx.strokeStyle = `rgba(80,255,120,${0.5 * pulse})`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
 /** Indicateur de dégât (fissure assombrie proportionnelle aux HP perdus) */
 export function drawDamageOverlay(ctx, tracePath, a, rx, ry) {
   if (a.hp >= a.maxHp || !a.destructible) return;

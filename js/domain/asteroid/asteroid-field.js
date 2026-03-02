@@ -203,9 +203,26 @@ export class AsteroidField {
     return 'rock'; // fallback
   }
 
-  /** Nombre d'astéroïdes destructibles encore vivants */
+  /** Nombre d'astéroïdes destructibles encore vivants (exclut les optional comme les tentacules) */
   get remaining() {
-    return this.grid.filter((a) => a.alive && a.destructible).length;
+    return this.grid.filter((a) => a.alive && a.destructible && !a.material?.optional).length;
+  }
+
+  /** Le champ contient-il un boss ? */
+  get hasBoss() {
+    return this.grid.some(a => a.material?.isBoss);
+  }
+
+  /** Le boss est-il encore vivant ? */
+  get bossAlive() {
+    return this.grid.some(a => a.alive && a.material?.isBoss);
+  }
+
+  /** Tue tous les tentacules vivants — appelé quand le core est détruit */
+  killTentacles() {
+    for (const a of this.grid) {
+      if (a.alive && a.materialKey === 'tentacle') a.alive = false;
+    }
   }
 
   /**

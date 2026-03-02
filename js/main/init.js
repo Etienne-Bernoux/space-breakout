@@ -14,6 +14,7 @@ import { MusicDirector } from '../infra/orchestrators/music-director.js';
 import { EffectDirector } from '../infra/orchestrators/effect-director.js';
 import { setupResize } from '../infra/resize.js';
 import { spawnExplosion, spawnShipExplosion, spawnTrail, updateParticles } from '../infra/particles.js';
+import { playAlienShoot } from '../infra/audio.js';
 import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
 import { isDevMode, getDevAsteroidConfig, isDevPanelActive, drawDevPanel, handleDevHover, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
@@ -153,7 +154,8 @@ function spawnEntities(ent, levelAsteroids) {
 function resetSystems(sys) {
   Object.assign(G.ui, { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null });
   sys.powerUp.clear(G.gs);
-  sys.intensity.enable();
+  const hasBoss = G.entities.field.grid.some(a => a.material?.isBoss);
+  sys.intensity.enable({ boss: hasBoss });
 }
 
 /** Lance un niveau. Si levelId est fourni, charge sa config depuis le catalogue. */
@@ -203,6 +205,7 @@ const loopInfra = {
   finishLevel,
   AlienProjectile,
   drawProjectile,
+  playAlienShoot,
 };
 
 const inputInfra = {

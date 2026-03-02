@@ -3,7 +3,7 @@
 import { CONFIG } from '../../config.js';
 import { MATERIALS } from '../../domain/materials.js';
 import { PATTERNS, PATTERN_KEYS, GRID_PRESETS } from '../../domain/patterns.js';
-import state, { MAT_KEYS, GRID_KEYS, PRESETS } from './state.js';
+import state, { SLIDER_MAT_KEYS, GRID_KEYS, PRESETS } from './state.js';
 
 // --- Layout Constants (2 colonnes : gauche = sliders, droite = patterns/grille/presets) ---
 const TRACK_H = 6;
@@ -17,7 +17,7 @@ const PANEL = {
   // Colonne gauche : matériaux + densité
   sliderX: 160, sliderW: 280, trackH: TRACK_H, thumbR: THUMB_R,
   matStartY: 140, matSpacing: MAT_SPACING,
-  get densityY() { return this.matStartY + MAT_KEYS.length * this.matSpacing + 20; },
+  get densityY() { return this.matStartY + SLIDER_MAT_KEYS.length * this.matSpacing + 20; },
   // Colonne droite : patterns + grille + presets
   rightX: 490, rightW: 280,
   patternStartY: 135, patternH: 22, patternSpacing: PATTERN_SPACING,
@@ -92,8 +92,8 @@ export function drawDevPanel(ctx) {
     ctx.fillText('(pour les cases "?" du pattern)', 120, PANEL.matStartY - 18);
   }
 
-  for (let i = 0; i < MAT_KEYS.length; i++) {
-    const key = MAT_KEYS[i];
+  for (let i = 0; i < SLIDER_MAT_KEYS.length; i++) {
+    const key = SLIDER_MAT_KEYS[i];
     const mat = MATERIALS[key];
     const y = PANEL.matStartY + i * PANEL.matSpacing;
     const val = state.devConfig.materials[key] || 0;

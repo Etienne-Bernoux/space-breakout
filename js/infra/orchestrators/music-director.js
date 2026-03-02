@@ -6,6 +6,7 @@ import {
   getCurrentSection, setBPM,
   startMusic, isPlaying, fadeOutMusic,
   muffle, unmuffle,
+  setTrack,
   playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent, playComboMilestone,
 } from '../music/index.js';
 
@@ -41,10 +42,11 @@ export class MusicDirector {
 
   // === Lifecycle ===
 
-  enable() {
+  enable({ boss = false } = {}) {
     this.enabled = true;
     this.intensity = 0;
     unlockAudio();
+    setTrack(boss ? 'dark' : 'main');
     enableAdaptiveMode();
     this._applyLayers();
     this._ensureMusic();

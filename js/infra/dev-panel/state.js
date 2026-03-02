@@ -6,6 +6,8 @@ import { PATTERNS, GRID_PRESETS } from '../../domain/patterns.js';
 
 export const STORAGE_KEY = 'space-breakout-dev';
 export const MAT_KEYS = Object.keys(MATERIALS);
+/** Matériaux affichés dans les sliders (tentacle/alienCore = placement manuel uniquement) */
+export const SLIDER_MAT_KEYS = MAT_KEYS.filter(k => k !== 'tentacle' && k !== 'alienCore');
 export const GRID_KEYS = Object.keys(GRID_PRESETS);
 
 // --- Presets ---
@@ -23,7 +25,7 @@ export const PRESETS = [
 const state = {
   devConfig: {
     density: CONFIG.asteroids.density,
-    materials: { rock: 1.0, ice: 0, lava: 0, metal: 0, crystal: 0, alien: 0, obsidian: 0 },
+    materials: { rock: 1.0, ice: 0, lava: 0, metal: 0, crystal: 0, obsidian: 0 },
     patternKey: 'random',
     gridKey: 'small', // taille grille pour mode aléatoire
   },

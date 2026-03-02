@@ -252,8 +252,8 @@ describe('CollisionHandler', () => {
     expect(deps.effects.triggerShake).toHaveBeenCalledWith(6);
   });
 
-  // 15. Projectile touche un astéroïde non-alien → renforce
-  it('renforce un astéroïde non-alien quand touché par un projectile', () => {
+  // 15. Projectile touche un astéroïde non-alien → bouclier
+  it('ajoute un bouclier à un astéroïde non-alien quand touché par un projectile', () => {
     deps.entities.projectiles = [
       { alive: true, x: 55, y: 55, radius: 5, color: '#33ff66' },
     ];
@@ -264,21 +264,36 @@ describe('CollisionHandler', () => {
     handler.update();
 
     expect(deps.entities.projectiles[0].alive).toBe(false);
-    expect(deps.entities.field.grid[0].hp).toBe(3);
+    expect(deps.entities.field.grid[0].shield).toBe(true);
+    expect(deps.entities.field.grid[0].hp).toBe(2); // HP inchangé
   });
 
-  // 16. Projectile ignore les astéroïdes alien
-  it('un projectile ne renforce pas un astéroïde alien', () => {
+  // 15b. Bouclier non cumulable
+  it('le bouclier n\'est pas cumulable', () => {
+    deps.entities.field.grid = [
+      { alive: true, x: 50, y: 50, width: 30, height: 30, hp: 2, maxHp: 2, materialKey: 'rock', color: '#888', shield: true },
+    ];
     deps.entities.projectiles = [
       { alive: true, x: 55, y: 55, radius: 5, color: '#33ff66' },
-    ];
-    deps.entities.field.grid = [
-      { alive: true, x: 50, y: 50, width: 30, height: 30, hp: 3, maxHp: 3, materialKey: 'alien', color: '#3c5' },
     ];
 
     handler.update();
 
-    // Projectile passe à travers l'alien
+    expect(deps.entities.field.grid[0].shield).toBe(true); // toujours true, pas de double
+  });
+
+  // 16. Projectile ignore les tentacules
+  it('un projectile ne renforce pas une tentacule', () => {
+    deps.entities.projectiles = [
+      { alive: true, x: 55, y: 55, radius: 5, color: '#33ff66' },
+    ];
+    deps.entities.field.grid = [
+      { alive: true, x: 50, y: 50, width: 30, height: 30, hp: 3, maxHp: 3, materialKey: 'tentacle', color: '#3c5' },
+    ];
+
+    handler.update();
+
+    // Projectile passe à travers la tentacule
     expect(deps.entities.projectiles[0].alive).toBe(true);
     expect(deps.entities.field.grid[0].hp).toBe(3);
   });

@@ -54,14 +54,27 @@ export class CollisionResolver {
           continue;
         }
 
-        // Rebond normal (sauf piercing)
-        if (!piercing && !firstEvent) drone.dy = -drone.dy;
+        // Alien piercingImmune → rebond forcé (le piercing ne traverse pas)
+        const isPiercingImmune = !!a.material?.piercingImmune;
+        const effectivePiercing = piercing && !isPiercingImmune;
+
+        // Rebond normal (sauf piercing effectif)
+        if (!effectivePiercing && !firstEvent) drone.dy = -drone.dy;
+
+        // Bouclier alien absorbe le coup
+        if (a.shield) {
+          a.shield = false;
+          const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: '#33ff66', hpLeft: a.hp, maxHp: a.maxHp };
+          if (!effectivePiercing) return ev;
+          if (!firstEvent) firstEvent = ev;
+          continue;
+        }
 
         // Décrémenter HP
         a.hp--;
         if (a.hp > 0) {
           const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: a.color, hpLeft: a.hp, maxHp: a.maxHp };
-          if (!piercing) return ev;
+          if (!effectivePiercing) return ev;
           if (!firstEvent) firstEvent = ev;
           continue;
         }
@@ -79,7 +92,7 @@ export class CollisionResolver {
           points, x: hitX, y: hitY, color: a.color, fragments,
           materialKey: a.materialKey, sizeName: a.sizeName,
         };
-        if (!piercing) return ev;
+        if (!effectivePiercing) return ev;
         if (!firstEvent) firstEvent = ev;
       }
     }
@@ -106,9 +119,10 @@ export class CollisionResolver {
     return events;
   }
 
-  /** Tous les astéroïdes détruits */
+  /** Victoire : tous détruits OU boss tué */
   checkWin(field, session) {
-    if (field.remaining === 0) {
+    const won = field.remaining === 0 || (field.hasBoss && !field.bossAlive);
+    if (won) {
       session.state = 'won';
       return { type: 'win' };
     }

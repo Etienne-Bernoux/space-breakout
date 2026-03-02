@@ -47,16 +47,29 @@ export const MATERIALS = {
     colors: ['#cc66ff', '#dd88ff', '#bb44ee', '#aa55dd'],
     style: 'crystal', // facettes angulaires, brillance
   },
-  alien: {
-    name: 'Alien',
-    hp: 3,
+  tentacle: {
+    name: 'Tentacule',
+    hp: 4,
     destructible: true,
     pointsMult: 2.5,
     noFragment: true,
+    piercingImmune: true,
+    optional: true,         // ne compte pas pour la victoire
     colors: ['#33cc55', '#22aa44', '#44dd66', '#119933'],
-    style: 'alien', // base organique + canon, pulsation
+    style: 'tentacle', // tentacule organique, pulsation, tir
     fireRate: 360,          // frames entre tirs (≈6s à 60fps)
     projectileSpeed: 1.5,   // vitesse du projectile
+  },
+  alienCore: {
+    name: 'Alien (corps)',
+    hp: 5,
+    destructible: true,
+    pointsMult: 5,
+    noFragment: true,
+    piercingImmune: true,
+    isBoss: true,           // détruire = victoire + tue les tentacules
+    colors: ['#888899', '#33cc55', '#999aab', '#22aa44'],
+    style: 'alienCore',     // métal parasité (base métal + excroissances organiques)
   },
   obsidian: {
     name: 'Obsidienne',

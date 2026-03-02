@@ -2,7 +2,7 @@
 
 import { CONFIG } from '../../config.js';
 import { PATTERNS, PATTERN_KEYS, GRID_PRESETS } from '../../domain/patterns.js';
-import state, { MAT_KEYS, GRID_KEYS, PRESETS, saveDevConfig } from './state.js';
+import state, { MAT_KEYS, SLIDER_MAT_KEYS, GRID_KEYS, PRESETS, saveDevConfig } from './state.js';
 import { PANEL } from './draw.js';
 
 // --- Input handlers ---
@@ -70,7 +70,7 @@ export function handleDevTap(x, y) {
   if (x >= resetX && x <= resetX + 80 && y >= PANEL.launchY && y <= PANEL.launchY + 36) {
     state.devConfig.density = CONFIG.asteroids.density;
     state.devConfig.materials = {};
-    for (const k of MAT_KEYS) state.devConfig.materials[k] = k === 'rock' ? 1.0 : 0;
+    for (const k of SLIDER_MAT_KEYS) state.devConfig.materials[k] = k === 'rock' ? 1.0 : 0;
     state.devConfig.patternKey = 'random';
     state.devConfig.gridKey = 'small';
     saveDevConfig();
@@ -78,10 +78,10 @@ export function handleDevTap(x, y) {
   }
 
   // --- Sliders matériaux ---
-  for (let i = 0; i < MAT_KEYS.length; i++) {
+  for (let i = 0; i < SLIDER_MAT_KEYS.length; i++) {
     const sy = PANEL.matStartY + i * PANEL.matSpacing;
     if (hitTrack(x, y, sy)) {
-      state.draggingSlider = { key: MAT_KEYS[i], type: 'mat' };
+      state.draggingSlider = { key: SLIDER_MAT_KEYS[i], type: 'mat' };
       updateDragValue(x);
       return null;
     }
@@ -145,7 +145,7 @@ export function handleDevHover(x, y) {
 function applyPreset(index) {
   const p = PRESETS[index];
   state.devConfig.density = p.density;
-  for (const k of MAT_KEYS) state.devConfig.materials[k] = 0;
+  for (const k of SLIDER_MAT_KEYS) state.devConfig.materials[k] = 0;
   for (const [k, v] of Object.entries(p.mats)) state.devConfig.materials[k] = v;
   if (p.patternKey) state.devConfig.patternKey = p.patternKey;
   saveDevConfig();

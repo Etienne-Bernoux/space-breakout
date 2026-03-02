@@ -10,8 +10,9 @@ export class GameLoop {
    * @param {object} deps.hud        - HudRenderer instance
    * @param {object} deps.collisionHandler - CollisionHandler instance
    * @param {object} deps.infra      - infra adapters (stars, touch, menu, particles, shake, renderers, panels, devOverlay)
+   * @param {object} deps.alienCombat - AlienCombatManager instance
    */
-  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, getLevelResult }) {
+  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, getLevelResult, alienCombat }) {
     this.render = render;
     this.entities = entities;
     this.session = session;
@@ -24,6 +25,7 @@ export class GameLoop {
     this.progress = progress;
     this.mapState = mapState;
     this.getLevelResult = getLevelResult;
+    this.alienCombat = alienCombat;
     this.lastTime = 0;
     this.loop = this.loop.bind(this);
   }
@@ -157,30 +159,12 @@ export class GameLoop {
     for (const c of this.entities.capsules) c.update(this.canvas.height, dtEff);
     this.entities.capsules = this.entities.capsules.filter(c => c.alive);
 
-    // Decay firePulse des aliens (animation tir)
-    if (field.grid) {
-      for (const a of field.grid) {
-        if (a.firePulse > 0) a.firePulse = Math.max(0, a.firePulse - 0.06 * dtEff);
-      }
-    }
-
-    // Projectiles aliens : spawn + update + cleanup
-    const readyAliens = field.getReadyToFire(dtEff);
-    for (const a of readyAliens) {
-      if (!a.alive) continue;
-      const px = a.x + a.width / 2;
-      const py = a.y + a.height;
-      const target = { x: ship.x + ship.width / 2, y: ship.y };
-      this.entities.projectiles.push(
-        new infra.AlienProjectile(px, py, target, {
-          speed: a.projectileSpeed,
-        })
+    // Combat alien (firePulse, tirs, projectiles)
+    if (this.alienCombat) {
+      this.entities.projectiles = this.alienCombat.update(
+        field, ship, this.entities.projectiles, dtEff, this.canvas,
       );
-      a.firePulse = 1.0; // animation de tir (décroît chaque frame)
-      infra.playAlienShoot();
     }
-    for (const p of this.entities.projectiles) p.update(this.canvas.width, this.canvas.height, ship, dtEff);
-    this.entities.projectiles = this.entities.projectiles.filter(p => p.alive);
 
     this.collisionHandler.update();
 

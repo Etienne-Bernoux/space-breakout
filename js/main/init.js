@@ -32,6 +32,7 @@ import { drawWorldMap, getNodePositions } from '../infra/screens/world-map.js';
 import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';
 import { AlienProjectile } from '../domain/projectile/index.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
+import { AlienCombatManager } from '../use-cases/alien-combat/alien-combat-manager.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
@@ -215,6 +216,11 @@ const inputInfra = {
   isMusicLabActive, handleMusicLabTap, handleMusicLabScroll,
 };
 
+G.alienCombat = new AlienCombatManager({
+  createProjectile: (px, py, target, opts) => new AlienProjectile(px, py, target, opts),
+  onShoot: playAlienShoot,
+});
+
 G.gameLoop = new GameLoop({
   render: G.render,
   entities: G.entities,
@@ -228,6 +234,7 @@ G.gameLoop = new GameLoop({
   progress: G.progress,
   mapState: G.mapState,
   getLevelResult: () => G.levelResult,
+  alienCombat: G.alienCombat,
 });
 
 G.inputHandler = new InputHandler({

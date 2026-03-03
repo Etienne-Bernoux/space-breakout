@@ -2,6 +2,8 @@
 // Logique pure de détection/résolution de collisions.
 // Reçoit des entités, retourne des events. Aucun side-effect sur le state global.
 
+import { polyBounds, circleIntersectsPolygon } from '../../domain/shape/polygon-collision.js';
+
 export class CollisionResolver {
   constructor({ basePoints }) {
     this.basePoints = basePoints || { large: 40, medium: 20, small: 10 };
@@ -34,21 +36,24 @@ export class CollisionResolver {
     const piercing = !!drone.piercing;
     let firstEvent = null;
 
+    // Anti-doublon : si le drone vient de rebondir sur un astéroïde,
+    // on l'ignore tant qu'il est encore dedans (polygon plus petit que AABB)
+    if (drone._lastHitAsteroid && !this._droneHitsAsteroid(drone, drone._lastHitAsteroid)) {
+      drone._lastHitAsteroid = null; // sorti → reset
+    }
+
     const snapshot = [...field.grid];
     for (const a of snapshot) {
       if (!a.alive) continue;
-      if (
-        drone.x + drone.radius > a.x &&
-        drone.x - drone.radius < a.x + a.width &&
-        drone.y + drone.radius > a.y &&
-        drone.y - drone.radius < a.y + a.height
-      ) {
+      if (a === drone._lastHitAsteroid) continue;
+      if (!this._droneHitsAsteroid(drone, a)) continue;
+      {
         const hitX = drone.x;
         const hitY = drone.y;
 
         // Indestructible → rebond (même en piercing)
         if (!a.destructible) {
-          if (!piercing) drone.dy = -drone.dy;
+          if (!piercing) { drone.dy = -drone.dy; drone._lastHitAsteroid = a; }
           if (!firstEvent) firstEvent = { type: 'bounce', x: hitX, y: hitY, color: a.color };
           if (!piercing) return firstEvent;
           continue;
@@ -59,7 +64,10 @@ export class CollisionResolver {
         const effectivePiercing = piercing && !isPiercingImmune;
 
         // Rebond normal (sauf piercing effectif)
-        if (!effectivePiercing && !firstEvent) drone.dy = -drone.dy;
+        if (!effectivePiercing && !firstEvent) {
+          drone.dy = -drone.dy;
+          drone._lastHitAsteroid = a;
+        }
 
         // Bouclier alien absorbe le coup
         if (a.shield) {
@@ -97,6 +105,27 @@ export class CollisionResolver {
       }
     }
     return firstEvent;
+  }
+
+  /**
+   * Test de collision drone ↔ astéroïde.
+   * Si l'astéroïde a un collisionPoly : broadphase AABB + narrowphase polygon.
+   * Sinon fallback AABB classique.
+   */
+  _droneHitsAsteroid(drone, a) {
+    if (a.collisionPoly && a.collisionPoly.length >= 3) {
+      const b = polyBounds(a.collisionPoly);
+      if (drone.x + drone.radius < b.x || drone.x - drone.radius > b.x + b.w ||
+          drone.y + drone.radius < b.y || drone.y - drone.radius > b.y + b.h) {
+        return false;
+      }
+      return circleIntersectsPolygon(drone.x, drone.y, drone.radius, a.collisionPoly);
+    }
+    // Fallback AABB
+    return drone.x + drone.radius > a.x &&
+           drone.x - drone.radius < a.x + a.width &&
+           drone.y + drone.radius > a.y &&
+           drone.y - drone.radius < a.y + a.height;
   }
 
   /** Drone perdu en bas de l'écran */

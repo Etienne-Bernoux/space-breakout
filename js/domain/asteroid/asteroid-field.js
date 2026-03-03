@@ -1,27 +1,21 @@
-import { getMaterial } from '../materials.js';
-import { parsePattern } from '../patterns.js';
-import { generateShape, generateCraters, generateVeins } from './shape.js';
+// --- AsteroidField : état du champ + mutations + queries ---
+// La construction est déléguée à field-builder.js (SRP).
 
-// Types d'astéroïdes : nom, taille en cases, nb cratères, quota (% des cases cibles)
-const SIZES = [
-  { name: 'large',  cw: 2, ch: 2, craterCount: 6, shapePoints: 16, veinCount: 5, quota: 0.2 },
-  { name: 'medium', cw: 2, ch: 1, craterCount: 4, shapePoints: 14, veinCount: 3, quota: 0.17 },
-  { name: 'medium', cw: 1, ch: 2, craterCount: 4, shapePoints: 14, veinCount: 3, quota: 0.18 },
-  { name: 'small',  cw: 1, ch: 1, craterCount: 2, shapePoints: 10, veinCount: 1, quota: 0.45 },
-];
+import { buildRandom, buildFromPattern, makeAsteroid, pickMaterial } from './field-builder.js';
+import { polarToCartesian } from '../shape/polygon-collision.js';
+import { computeTentaclePoly } from '../shape/tentacle-shape.js';
+import { computeCorePoly } from '../shape/core-shape.js';
 
 export class AsteroidField {
   /**
    * @param {object} config - { rows, cols, cellW, cellH, padding, offsetTop, offsetLeft, density, colors, materials, pattern }
-   *   pattern : { lines: string[] } — optionnel, ASCII art du niveau
-   *   Si rows/cols changent, cellW/cellH sont recalculés pour rentrer dans le canvas (800×~400).
    */
   constructor(config) {
     const c = { ...config };
 
-    // --- Calcul dynamique de cellW/cellH si la grille change ---
+    // Calcul dynamique de cellW/cellH si la grille change
     const canvasW = 800;
-    const areaH = 400; // zone dédiée aux astéroïdes (haut du canvas)
+    const areaH = 400;
     if (!c.cellW || c._autoSize) {
       c.cellW = Math.floor((canvasW - 2 * c.offsetLeft - (c.cols - 1) * c.padding) / c.cols);
     }
@@ -30,178 +24,30 @@ export class AsteroidField {
     }
 
     this.config = c;
-    this.grid = [];
 
     if (c.pattern && c.pattern.lines) {
-      this._buildFromPattern(c);
+      this.grid = buildFromPattern(c);
     } else {
-      this._buildRandom(c);
+      this.grid = buildRandom(c);
     }
-  }
 
-  /** Génération aléatoire (algo original : gros d'abord) */
-  _buildRandom(c) {
-    const density = c.density;
-    const occupied = Array.from({ length: c.rows }, () => Array(c.cols).fill(false));
-    const totalCells = c.rows * c.cols;
-    let filledCells = 0;
-    const targetCells = Math.floor(totalCells * density);
+    // Cache du core pour les calculs tentacules
+    this._core = this.grid.find(a => a.material?.isBoss) || null;
 
-    for (const size of SIZES) {
-      const quotaCells = Math.floor(targetCells * size.quota);
-      let sizeFilled = 0;
-      const maxAttempts = totalCells * 10;
-      for (let attempt = 0; attempt < maxAttempts && filledCells < targetCells && sizeFilled < quotaCells; attempt++) {
-        const row = Math.floor(Math.random() * c.rows);
-        const col = Math.floor(Math.random() * c.cols);
-        if (row + size.ch > c.rows || col + size.cw > c.cols) continue;
-        let fits = true;
-        for (let dr = 0; dr < size.ch && fits; dr++) {
-          for (let dc = 0; dc < size.cw && fits; dc++) {
-            if (occupied[row + dr][col + dc]) fits = false;
-          }
-        }
-        if (!fits) continue;
-        for (let dr = 0; dr < size.ch; dr++) {
-          for (let dc = 0; dc < size.cw; dc++) {
-            occupied[row + dr][col + dc] = true;
-          }
-        }
-        filledCells += size.cw * size.ch;
-        sizeFilled += size.cw * size.ch;
-        const matKey = this._pickMaterial(c);
-        this.grid.push(this._makeAsteroid(col, row, size.cw, size.ch, c, matKey));
+    // Initialiser les collisionPoly des créatures alien (avant la première frame)
+    if (this._core) {
+      this._core.collisionPoly = computeCorePoly(this._core);
+      const coreCx = this._core.x + this._core.width / 2;
+      const coreCy = this._core.y + this._core.height / 2;
+      for (const a of this.grid) {
+        if (a.materialKey !== 'tentacle') continue;
+        const bb = { cx: a.x + a.width / 2, cy: a.y + a.height / 2, w: a.width, h: a.height };
+        a.collisionPoly = computeTentaclePoly(bb, coreCx, coreCy, a.floatPhase);
       }
     }
   }
 
-  /** Génération depuis un pattern ASCII : résoudre → merger → créer */
-  _buildFromPattern(c) {
-    const matrix = parsePattern(c.pattern.lines);
-    const rows = Math.min(matrix.length, c.rows);
-    const cols = Math.min(matrix[0]?.length || 0, c.cols);
-
-    // 1. Résoudre les '?' en matériau aléatoire
-    const resolved = Array.from({ length: rows }, (_, r) =>
-      Array.from({ length: cols }, (_, col) => {
-        const cell = matrix[r]?.[col];
-        if (!cell) return null;
-        if (cell === '?') return this._pickMaterial(c);
-        return cell;
-      })
-    );
-
-    // 2. Merger glouton : 2×2, puis 2×1/1×2, puis 1×1
-    const used = Array.from({ length: rows }, () => Array(cols).fill(false));
-
-    // Passe 2×2
-    for (let r = 0; r < rows - 1; r++) {
-      for (let col = 0; col < cols - 1; col++) {
-        if (used[r][col]) continue;
-        const m = resolved[r][col];
-        if (!m) continue;
-        if (resolved[r][col + 1] === m && resolved[r + 1][col] === m && resolved[r + 1][col + 1] === m
-            && !used[r][col + 1] && !used[r + 1][col] && !used[r + 1][col + 1]) {
-          used[r][col] = used[r][col + 1] = used[r + 1][col] = used[r + 1][col + 1] = true;
-          this.grid.push(this._makeAsteroid(col, r, 2, 2, c, m));
-        }
-      }
-    }
-
-    // Passe 2×1 (horizontal)
-    for (let r = 0; r < rows; r++) {
-      for (let col = 0; col < cols - 1; col++) {
-        if (used[r][col]) continue;
-        const m = resolved[r][col];
-        if (!m) continue;
-        if (resolved[r][col + 1] === m && !used[r][col + 1]) {
-          used[r][col] = used[r][col + 1] = true;
-          this.grid.push(this._makeAsteroid(col, r, 2, 1, c, m));
-        }
-      }
-    }
-
-    // Passe 1×2 (vertical)
-    for (let r = 0; r < rows - 1; r++) {
-      for (let col = 0; col < cols; col++) {
-        if (used[r][col]) continue;
-        const m = resolved[r][col];
-        if (!m) continue;
-        if (resolved[r + 1][col] === m && !used[r + 1][col]) {
-          used[r][col] = used[r + 1][col] = true;
-          this.grid.push(this._makeAsteroid(col, r, 1, 2, c, m));
-        }
-      }
-    }
-
-    // Passe 1×1 (restants)
-    for (let r = 0; r < rows; r++) {
-      for (let col = 0; col < cols; col++) {
-        if (used[r][col]) continue;
-        const m = resolved[r][col];
-        if (!m) continue;
-        used[r][col] = true;
-        this.grid.push(this._makeAsteroid(col, r, 1, 1, c, m));
-      }
-    }
-  }
-
-  /** Fabrique un astéroïde à partir de ses coordonnées grille
-   *  @param {string} materialKey - clé du matériau ('rock','ice',…)
-   *  @param {string|null} fracturedSide - 'left'|'right'|'top'|'bottom' ou null
-   */
-  _makeAsteroid(col, row, cw, ch, c, materialKey = 'rock', fracturedSide = null) {
-    const pw = cw * c.cellW + (cw - 1) * c.padding;
-    const ph = ch * c.cellH + (ch - 1) * c.padding;
-    const px = c.offsetLeft + col * (c.cellW + c.padding);
-    const py = c.offsetTop + row * (c.cellH + c.padding);
-    const sizeDef = SIZES.find(s => s.cw === cw && s.ch === ch) || SIZES[3];
-    const mat = getMaterial(materialKey);
-    return {
-      x: px, y: py, baseY: py,
-      width: pw, height: ph,
-      gridCol: col, gridRow: row, cw, ch,
-      alive: true,
-      sizeName: sizeDef.name,
-      materialKey,
-      material: mat,
-      hp: mat.hp,
-      maxHp: mat.hp,
-      destructible: mat.destructible,
-      fracturedSide,
-      color: mat.colors[Math.floor(Math.random() * mat.colors.length)],
-      shape: generateShape(sizeDef.shapePoints, fracturedSide),
-      craters: generateCraters(fracturedSide ? Math.max(1, sizeDef.craterCount - 1) : sizeDef.craterCount, pw / 2, ph / 2),
-      veins: generateVeins(sizeDef.veinCount, pw / 2, ph / 2),
-      rotation: 0, rotSpeed: 0,
-      floatPhase: Math.random() * Math.PI * 2,
-      floatAmp: 0.3 + Math.random() * 0.4,
-      floatFreq: 0.012 + Math.random() * 0.008,
-      fragOffsetX: 0, fragOffsetY: 0,
-      // Alien : timer de tir (seulement si le matériau a fireRate)
-      ...(mat.fireRate ? {
-        fireRate: mat.fireRate,
-        fireTimer: mat.fireRate * (0.5 + Math.random() * 0.5), // premier tir entre 50-100% du fireRate
-        projectileSpeed: mat.projectileSpeed || 1.5,
-      } : {}),
-    };
-  }
-
-  /** Choisit un matériau selon la distribution du niveau (config.materials)
-   *  Format attendu : { rock: 0.6, ice: 0.2, lava: 0.1, ... }
-   *  Si absent, 100% rock.
-   */
-  _pickMaterial(c) {
-    const dist = c.materials;
-    if (!dist) return 'rock';
-    const r = Math.random();
-    let cumul = 0;
-    for (const [key, weight] of Object.entries(dist)) {
-      cumul += weight;
-      if (r < cumul) return key;
-    }
-    return 'rock'; // fallback
-  }
+  // --- Queries ---
 
   /** Nombre d'astéroïdes destructibles encore vivants (exclut les optional comme les tentacules) */
   get remaining() {
@@ -217,6 +63,8 @@ export class AsteroidField {
   get bossAlive() {
     return this.grid.some(a => a.alive && a.material?.isBoss);
   }
+
+  // --- Mutations ---
 
   /** Tue tous les tentacules vivants — appelé quand le core est détruit */
   killTentacles() {
@@ -246,37 +94,34 @@ export class AsteroidField {
     const hitRow = Math.min(ch - 1, Math.max(0, Math.floor(localY / (c.cellH + c.padding))));
 
     const fragments = [];
-    const sepForce = 3; // force de séparation initiale
-
+    const sepForce = 3;
     const mk = asteroid.materialKey;
 
     if (cw === 2 && ch === 2) {
-      // Large 2×2 → medium (2×1) + small (1×1)
       const medRow = hitRow === 0 ? 1 : 0;
       const medFrac = hitRow === 0 ? 'top' : 'bottom';
-      const med = this._makeAsteroid(gridCol, gridRow + medRow, 2, 1, c, mk, medFrac);
+      const med = makeAsteroid(gridCol, gridRow + medRow, 2, 1, c, mk, medFrac);
       med.fragOffsetY = (medRow - hitRow) * sepForce;
       fragments.push(med);
       const smlCol = hitCol === 0 ? 1 : 0;
       const smlFrac = hitCol === 0 ? 'left' : 'right';
-      const sml = this._makeAsteroid(gridCol + smlCol, gridRow + hitRow, 1, 1, c, mk, smlFrac);
+      const sml = makeAsteroid(gridCol + smlCol, gridRow + hitRow, 1, 1, c, mk, smlFrac);
       sml.fragOffsetX = (smlCol - hitCol) * sepForce;
       fragments.push(sml);
     } else if (cw === 2 && ch === 1) {
       const smlCol = hitCol === 0 ? 1 : 0;
       const smlFrac = hitCol === 0 ? 'left' : 'right';
-      const sml = this._makeAsteroid(gridCol + smlCol, gridRow, 1, 1, c, mk, smlFrac);
+      const sml = makeAsteroid(gridCol + smlCol, gridRow, 1, 1, c, mk, smlFrac);
       sml.fragOffsetX = (smlCol - hitCol) * sepForce;
       fragments.push(sml);
     } else if (cw === 1 && ch === 2) {
       const smlRow = hitRow === 0 ? 1 : 0;
       const smlFrac = hitRow === 0 ? 'top' : 'bottom';
-      const sml = this._makeAsteroid(gridCol, gridRow + smlRow, 1, 1, c, mk, smlFrac);
+      const sml = makeAsteroid(gridCol, gridRow + smlRow, 1, 1, c, mk, smlFrac);
       sml.fragOffsetY = (smlRow - hitRow) * sepForce;
       fragments.push(sml);
     }
 
-    // Hériter la couleur du parent
     for (const f of fragments) {
       f.color = asteroid.color;
     }
@@ -285,6 +130,8 @@ export class AsteroidField {
     return fragments;
   }
 
+  // --- Alien fire ---
+
   /** Décrémente les timers aliens et retourne ceux prêts à tirer. */
   getReadyToFire(dt = 1) {
     const ready = [];
@@ -292,12 +139,14 @@ export class AsteroidField {
       if (!a.alive || !a.fireRate) continue;
       a.fireTimer -= dt;
       if (a.fireTimer <= 0) {
-        a.fireTimer = a.fireRate + Math.random() * a.fireRate * 0.2; // +0-20% de jitter
+        a.fireTimer = a.fireRate + Math.random() * a.fireRate * 0.2;
         ready.push(a);
       }
     }
     return ready;
   }
+
+  // --- Update ---
 
   update(dt = 1) {
     for (const a of this.grid) {
@@ -305,13 +154,44 @@ export class AsteroidField {
       a.rotation += a.rotSpeed * dt;
       a.floatPhase += a.floatFreq * dt;
       a.y = a.baseY + Math.sin(a.floatPhase) * a.floatAmp;
-      // Décroissance de l'offset de fragmentation
       const decay = Math.pow(0.9, dt);
       a.fragOffsetX *= decay;
       a.fragOffsetY *= decay;
       if (Math.abs(a.fragOffsetX) < 0.1) a.fragOffsetX = 0;
       if (Math.abs(a.fragOffsetY) < 0.1) a.fragOffsetY = 0;
+
+      // Recalculer le polygone de collision world-space
+      if (a.material?.isBoss) {
+        // Core alien : ellipse dynamique (pulse via firePulse)
+        a.collisionPoly = computeCorePoly(a, a.firePulse || 0);
+      } else if (a.materialKey === 'tentacle') {
+        // Tentacule : polygone effilé dynamique (ondulation)
+        if (this._core && this._core.alive) {
+          const bb = {
+            cx: a.x + a.width / 2, cy: a.y + a.height / 2,
+            w: a.width, h: a.height,
+          };
+          a.collisionPoly = computeTentaclePoly(
+            bb,
+            this._core.x + this._core.width / 2,
+            this._core.y + this._core.height / 2,
+            a.floatPhase,
+          );
+        }
+      } else if (a.shape) {
+        // Astéroïde normal : polygone polaire → cartésien
+        const rx = a.width / 2;
+        const ry = a.height / 2;
+        a.collisionPoly = polarToCartesian(
+          a.shape, rx, ry, a.rotation,
+          a.x + rx + (a.fragOffsetX || 0),
+          a.y + ry + (a.fragOffsetY || 0),
+        );
+      }
     }
   }
 
+  // --- Compat : délégation vers le builder (utilisé par les tests existants) ---
+  _makeAsteroid(col, row, cw, ch, c, mk, frac) { return makeAsteroid(col, row, cw, ch, c, mk, frac); }
+  _pickMaterial(c) { return pickMaterial(c); }
 }

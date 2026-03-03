@@ -78,7 +78,8 @@ function groupTentacles(tentacles) {
 function drawCreature(ctx, group) {
   const core = group.find((a) => a.materialKey === 'alienCore');
   const tentacles = group.filter((a) => a.materialKey === 'tentacle');
-  const pulse = core ? 0.12 + Math.sin((core.floatPhase || 0) * 2.5) * 0.06 : 0.12;
+  const phase = core?.floatPhase || 0;
+  const pulse = core ? 0.15 + Math.sin(phase * 2.5) * 0.12 : 0.15;
 
   const tentacleGroups = groupTentacles(tentacles);
 
@@ -97,6 +98,6 @@ function drawCreature(ctx, group) {
 
   // 3. Corps (par-dessus)
   if (core) {
-    drawCorePart(ctx, core, pulse);
+    drawCorePart(ctx, core, pulse, phase);
   }
 }

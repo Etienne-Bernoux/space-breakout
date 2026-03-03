@@ -13,7 +13,7 @@ Le thème spatial influence le gameplay (prévu : récolte de matière, power-up
 
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
-- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~300 tests)
+- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~370 tests)
 - Tests e2e : Playwright (dossier `e2e/`, 16 tests)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
@@ -39,9 +39,15 @@ js/
     materials.js        → 8 matériaux (roche, glace, lave, métal, cristal, obsidienne, tentacule, noyau alien)
     power-ups.js        → 12 power-ups déclaratifs (P1 + P2 drone)
     patterns.js         → patterns ASCII de niveaux
+    shape/              → formes domain (collision + guide rendu)
+      polygon-collision.js → géométrie pure (circle↔polygon, point-in-poly, AABB)
+      tentacle-shape.js → forme tentacule effilée dynamique (ondulation)
+      core-shape.js     → forme core elliptique (pulsation)
+      index.js          → façade re-export
     asteroid/           → génération procédurale d'astéroïdes
-      shape.js          → géométrie procédurale (polygones, cratères, veines)
-      asteroid-field.js → AsteroidField (grille, merge glouton, fragmentation)
+      shape.js          → géométrie procédurale (polygones polaires, cratères, veines)
+      field-builder.js  → construction + merge glouton (SRP)
+      asteroid-field.js → AsteroidField (état, queries, mutations, update collisionPoly)
       index.js          → façade (re-export AsteroidField)
     projectile/           → projectiles alien
       alien-projectile.js → AlienProjectile (balle guidée)
@@ -189,6 +195,26 @@ extraLife: { effect: { target: 'session',  prop: 'lives',  delta: 1 } }
 weaken:    { effect: { target: 'field',    action: 'weakenAll', delta: -1 } }
 ```
 `PowerUpManager` utilise un **strategy pattern** (STRATEGIES map) pour apply/revert/cumul. Ajouter un nouveau type d'effet = 1 objet strategy, pas 3 méthodes.
+
+### Domain Shapes (collision = ce qu'on voit)
+Chaque entité porte un `collisionPoly: [{x, y}]` (world-space) qui sert à la collision ET guide le rendu.
+
+**Principe** : la forme domain est dynamique (mise à jour chaque frame dans `AsteroidField.update()`).
+Le renderer peut ajouter des effets visuels (couleurs, glow, textures) mais doit rester dans la **tolérance** :
+```
+maxDeviation = min(entityRadius * 0.05, 3px)
+```
+Double garde-fou : pourcentage (5%) + distance absolue max (3px).
+
+**Types de formes** :
+- Astéroïde normal : polygone polaire (`shape.js`) → converti en Cartésien via `polarToCartesian()` (rotation + position)
+- Tentacule alien : polygone effilé dynamique via `computeTentaclePoly()` (ondulation sinusoïdale, 22 points)
+- Core alien : ellipse via `computeCorePoly()` (12 points, pulsation)
+
+**Collision** : broadphase AABB (`polyBounds`) + narrowphase cercle↔polygone (`circleIntersectsPolygon`).
+Fallback AABB si pas de `collisionPoly` (entités legacy).
+
+**Fichiers** : `js/domain/shape/` (polygon-collision, tentacle-shape, core-shape).
 
 ### Responsive Canvas (pas de rem)
 Canvas API ne supporte que des px pour les fonts/tailles. Tout le scaling est manuel.

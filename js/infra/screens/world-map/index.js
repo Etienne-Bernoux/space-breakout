@@ -2,7 +2,7 @@
 // Exports : getNodePositions, drawWorldMap.
 
 import { gameScale } from '../../../shared/responsive.js';
-import { drawNebula, drawDustTrail, drawDebris, drawStars, drawMiniShip } from './draw-effects.js';
+import { drawNebula, drawPaths, drawDebris, drawStars, drawMiniShip } from './draw-effects.js';
 import { drawAsteroidNode } from './draw-nodes.js';
 
 /** Calcule les positions des nœuds en zigzag. */
@@ -40,7 +40,7 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
 
   // Couches de fond
   drawNebula(ctx, nodes, s, t);
-  drawDustTrail(ctx, nodes, s, t);
+  drawPaths(ctx, nodes, levels, progress, s, t);
   drawDebris(ctx, nodes, W, H, s, t);
 
   // Nœuds-astéroïdes

@@ -21,36 +21,103 @@ export function drawNebula(ctx, nodes, s, t) {
   }
 }
 
-/** Chemin de poussière (courbe épaisse + shimmer doré). */
-export function drawDustTrail(ctx, nodes, s, t) {
+/** Chemins segment par segment : discret si locked, flux d'énergie si unlocked. */
+export function drawPaths(ctx, nodes, levels, progress, s, t) {
   if (nodes.length < 2) return;
-  const shimmer = t * 30;
-
   ctx.save();
-  ctx.lineWidth = 8 * s;
-  ctx.strokeStyle = 'rgba(139, 105, 20, 0.06)';
   ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(nodes[0].x, nodes[0].y);
-  for (let i = 1; i < nodes.length; i++) {
-    const prev = nodes[i - 1], cur = nodes[i];
-    const cpx = (prev.x + cur.x) / 2, cpy = (prev.y + cur.y) / 2;
-    ctx.quadraticCurveTo(prev.x, prev.y, cpx, cpy);
-  }
-  ctx.lineTo(nodes[nodes.length - 1].x, nodes[nodes.length - 1].y);
-  ctx.stroke();
 
-  ctx.lineWidth = 1.5 * s;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-  ctx.setLineDash([4, 8]);
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const a = nodes[i], b = nodes[i + 1];
+    // Un segment est « unlocked » si les DEUX nœuds qu'il relie sont débloqués
+    const segUnlocked = progress.isUnlocked(levels[i].id) && progress.isUnlocked(levels[i + 1].id);
+
+    if (segUnlocked) {
+      _drawEnergyFlow(ctx, a, b, i, s, t);
+    } else {
+      _drawLockedPath(ctx, a, b, s, t);
+    }
+  }
+  ctx.restore();
+}
+
+/** Segment verrouillé : ligne discrète, pointillés sombres. */
+function _drawLockedPath(ctx, a, b, s, t) {
+  const shimmer = t * 20;
+  // Trait fin semi-transparent
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = 'rgba(80, 70, 50, 0.12)';
+  ctx.lineWidth = 3 * s;
+  ctx.setLineDash([]);
+  ctx.stroke();
+  // Pointillés
+  ctx.strokeStyle = 'rgba(100, 90, 60, 0.15)';
+  ctx.lineWidth = 1 * s;
+  ctx.setLineDash([4, 10]);
   ctx.lineDashOffset = -shimmer;
   ctx.stroke();
-  ctx.strokeStyle = 'rgba(139, 105, 20, 0.12)';
-  ctx.lineDashOffset = -shimmer + 6;
-  ctx.stroke();
   ctx.setLineDash([]);
-  ctx.restore();
+}
+
+/** Segment débloqué : flux d'énergie cyan/doré animé. */
+function _drawEnergyFlow(ctx, a, b, segIdx, s, t) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const dist = Math.hypot(dx, dy);
+
+  // Glow de fond du segment (trait large semi-transparent)
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = 'rgba(0, 180, 220, 0.07)';
+  ctx.lineWidth = 10 * s;
+  ctx.setLineDash([]);
+  ctx.stroke();
+
+  // Trait central plus lumineux
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = 'rgba(0, 212, 255, 0.15)';
+  ctx.lineWidth = 2.5 * s;
+  ctx.stroke();
+
+  // Particules d'énergie qui se déplacent de a → b
+  const particleCount = Math.max(3, Math.round(dist / (30 * s)));
+  const speed = t * 0.6 + segIdx * 0.3;
+  for (let p = 0; p < particleCount; p++) {
+    // Position le long du segment (0→1), animée
+    const phase = ((p / particleCount) + speed) % 1;
+    const px = a.x + dx * phase;
+    const py = a.y + dy * phase;
+    // Oscillation perpendiculaire (ondulation)
+    const nx = -dy / dist, ny = dx / dist;
+    const wave = Math.sin(phase * Math.PI * 4 + t * 3 + segIdx) * 3 * s;
+    const fx = px + nx * wave;
+    const fy = py + ny * wave;
+
+    // Taille et opacité (fade in/out aux extrémités)
+    const edgeFade = Math.min(phase * 4, (1 - phase) * 4, 1);
+    const alpha = (0.4 + Math.sin(t * 5 + p * 1.7) * 0.15) * edgeFade;
+    const r = (1.5 + Math.sin(t * 3 + p) * 0.5) * s;
+
+    // Particule cyan avec halo
+    const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, r * 2.5);
+    grad.addColorStop(0, `rgba(100, 230, 255, ${alpha})`);
+    grad.addColorStop(0.4, `rgba(0, 180, 230, ${alpha * 0.5})`);
+    grad.addColorStop(1, 'rgba(0, 100, 180, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(fx, fy, r * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Point central brillant
+    ctx.fillStyle = `rgba(200, 240, 255, ${alpha * 0.8})`;
+    ctx.beginPath();
+    ctx.arc(fx, fy, r * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 /** Débris flottants (petits cailloux le long du chemin). */

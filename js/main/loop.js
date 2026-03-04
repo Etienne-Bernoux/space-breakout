@@ -154,7 +154,7 @@ export class GameLoop {
     ship.update(infra.getTouchX(), dtEff);
     for (const d of drones) {
       d.update(ship, this.canvas.width, dtEff);
-      if (d.launched) infra.spawnTrail(d.x, d.y);
+      if (d.launched) infra.spawnTrail(d.x, d.y, d.dx, d.dy);
     }
     for (const c of this.entities.capsules) c.update(this.canvas.height, dtEff);
     this.entities.capsules = this.entities.capsules.filter(c => c.alive);

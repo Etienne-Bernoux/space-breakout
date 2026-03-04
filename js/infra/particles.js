@@ -199,15 +199,31 @@ export function spawnBossExplosion(x, y) {
   }
 }
 
-// --- Trainée du drone ---
-export function spawnTrail(x, y) {
-  trail.push({
-    x,
-    y,
-    size: 2 + Math.random() * 1.5,
-    life: 1,
-    decay: 0.06,
-  });
+// --- Trainée du drone (améliorée : taille + couleur selon vitesse) ---
+export function spawnTrail(x, y, dx = 0, dy = 0) {
+  const speed = Math.sqrt(dx * dx + dy * dy);
+  const fast = Math.min(speed / 6, 1); // 0→1 normalisé
+
+  // Taille proportionnelle à la vitesse + jitter
+  const size = 1.5 + fast * 2 + Math.random() * 1.5;
+  // Couleur : jaune → blanc quand rapide
+  const r = 255;
+  const g = Math.round(200 + fast * 55);
+  const b = Math.round(fast * 200);
+
+  trail.push({ x, y, size, life: 1, decay: 0.05 + Math.random() * 0.02, color: `rgb(${r},${g},${b})` });
+
+  // Deuxième particule quand vitesse élevée
+  if (speed > 4) {
+    trail.push({
+      x: x + (Math.random() - 0.5) * 3,
+      y: y + (Math.random() - 0.5) * 3,
+      size: 1 + Math.random() * 1.5,
+      life: 0.8,
+      decay: 0.06 + Math.random() * 0.03,
+      color: `rgb(255,${Math.round(230 + Math.random() * 25)},${Math.round(100 + Math.random() * 100)})`,
+    });
+  }
 }
 
 // --- Update & Draw ---
@@ -243,7 +259,7 @@ export function updateParticles(ctx, dt = 1) {
     }
 
     ctx.globalAlpha = t.life * 0.5;
-    ctx.fillStyle = '#ffcc00';
+    ctx.fillStyle = t.color || '#ffcc00';
     ctx.beginPath();
     ctx.arc(t.x, t.y, t.size * t.life, 0, Math.PI * 2);
     ctx.fill();

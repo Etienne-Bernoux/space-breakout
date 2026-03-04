@@ -68,7 +68,7 @@ function mockInfra() {
 function makeDeps(overrides = {}) {
   const ctx = mockCtx();
   const ship = { x: 100, y: 600, width: 80, height: 20, bottomMargin: 10, isMobile: false, update: vi.fn(), color: '#00aaff' };
-  const drone = { x: 140, y: 580, launched: true, update: vi.fn(), radius: 6, color: '#ffcc00' };
+  const drone = { x: 140, y: 580, launched: true, update: vi.fn(), radius: 6, color: '#ffcc00', dx: 2, dy: -3 };
   const field = { draw: vi.fn(), update: vi.fn(), remaining: 5, getReadyToFire: vi.fn(() => []) };
   const hud = {
     drawHUD: vi.fn(), drawCombo: vi.fn(), drawDeathLine: vi.fn(),
@@ -186,7 +186,7 @@ describe('GameLoop', () => {
     const d = makeDeps();
     const loop = new GameLoop(d);
     loop.loop();
-    expect(d.infra.spawnTrail).toHaveBeenCalledWith(140, 580);
+    expect(d.infra.spawnTrail).toHaveBeenCalledWith(140, 580, 2, -3);
   });
 
   it('ne spawne pas trail pour les drones non lancés', () => {

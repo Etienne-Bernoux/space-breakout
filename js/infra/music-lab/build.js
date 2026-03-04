@@ -33,6 +33,9 @@ export function buildMusicLab(root) {
 
   // --- Header ---
   const header = el('div', 'ml-header');
+  const backBtn = txt('button', 'lab-back-btn', '\u2190 LAB');
+  backBtn.setAttribute('data-action', 'back');
+  header.appendChild(backBtn);
   header.appendChild(txt('span', 'ml-title', 'MUSIC LAB'));
   root.appendChild(header);
 

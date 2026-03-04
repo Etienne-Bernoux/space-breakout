@@ -17,7 +17,8 @@ import { MusicDirector } from '../infra/orchestrators/music-director.js';
 import { EffectDirector } from '../infra/orchestrators/effect-director.js';
 import { setupResize } from '../infra/resize.js';
 import { playAlienShoot } from '../infra/audio.js';
-import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
+import { getDevAsteroidConfig } from '../infra/dev-panel/index.js';
+import { isLabMode } from '../infra/lab-hub/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { AlienCombatManager } from '../use-cases/alien-combat/alien-combat-manager.js';
@@ -136,7 +137,7 @@ G.hud = new HudRenderer({
   pauseBtnLayout,
   pauseScreenLayout,
   getLevel,
-  isDevMode,
+  isDevMode: isLabMode,
 });
 
 // startGame déclaré avant GameLoop/InputHandler car injecté en dépendance
@@ -144,7 +145,7 @@ function spawnEntities(ent, levelAsteroids) {
   const isMobile = 'ontouchstart' in window;
   ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
   ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width, CONFIG.canvas.height)];
-  const astConfig = isDevMode()
+  const astConfig = isLabMode()
     ? getDevAsteroidConfig()
     : levelAsteroids
       ? { ...CONFIG.asteroids, ...levelAsteroids, _autoSize: true }

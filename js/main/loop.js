@@ -52,6 +52,8 @@ export class GameLoop {
   }
 
   #loopMenu(ctx, fx) {
+    // En mode lab, ne pas dessiner le menu d'accueil
+    if (this.infra.isLabHubActive && this.infra.isLabHubActive()) return;
     const mouse = this.infra.getMousePos();
     this.infra.updateMenuHover(mouse.x, mouse.y);
     this.infra.updateMenu(ctx);

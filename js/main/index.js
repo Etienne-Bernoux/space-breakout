@@ -1,9 +1,10 @@
 import { loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from '../infra/menu/index.js';
-import { loadDevConfig, isDevMode, isDevPanelActive, showDevPanel, initDevPanel } from '../infra/dev-panel/index.js';
+import { loadDevConfig, isDevPanelActive, showDevPanel, hideDevPanel, initDevPanel } from '../infra/dev-panel/index.js';
 import { setVolume as setMusicVolume } from '../infra/music/index.js';
 import { setSfxVolume, perceptualVolume } from '../infra/audio.js';
-import { isMusicLab, isMusicLabActive, showMusicLab, initMusicLab } from '../infra/music-lab/index.js';
-import { isProgressLabMode, isProgressLabActive, initProgressLab, showProgressLab } from '../infra/progress-lab/index.js';
+import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../infra/music-lab/index.js';
+import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/progress-lab/index.js';
+import { isLabMode, initLabHub, showLabHub, hideLabHub, isLabHubActive } from '../infra/lab-hub/index.js';
 import { getAllLevels } from '../domain/progression/level-catalog.js';
 import { saveProgress } from '../infra/persistence/progress-storage.js';
 import { G, startGame } from './init.js';
@@ -11,13 +12,24 @@ import { G, startGame } from './init.js';
 loadSettings();
 loadDevConfig();
 
+// --- Lab Hub ---
+initLabHub({
+  openDev: () => { hideLabHub(); showDevPanel(); },
+  openMusic: () => { hideLabHub(); showMusicLab(); },
+  openProgress: () => { hideLabHub(); showProgressLab(); },
+});
+if (isLabMode()) showLabHub();
+
 // Init dev panel DOM (toujours, pour que le div existe)
-initDevPanel({ onLaunch: () => startGame() });
-if (isDevMode()) showDevPanel();
+initDevPanel({
+  onLaunch: () => startGame(),
+  onBack: () => { hideDevPanel(); showLabHub(); },
+});
 
 // Init music lab DOM (toujours, pour que le div existe)
-initMusicLab();
-if (isMusicLab()) showMusicLab();
+initMusicLab({
+  onBack: () => { hideMusicLab(); showLabHub(); },
+});
 
 // Init progress lab DOM (toujours, pour que le div existe)
 initProgressLab({
@@ -26,8 +38,8 @@ initProgressLab({
   progress: G.progress,
   levels: getAllLevels(),
   saveProgress,
+  onBack: () => { hideProgressLab(); showLabHub(); },
 });
-if (isProgressLabMode()) showProgressLab();
 
 setVolumeChangeCallback((music, sfx) => {
   setMusicVolume(perceptualVolume(music) * 0.3);
@@ -43,6 +55,7 @@ window.__GAME__ = {
   get devPanel() { return isDevPanelActive(); },
   get musicLab() { return isMusicLabActive(); },
   get mineralLab() { return isProgressLabActive(); },
+  get labHub() { return isLabHubActive(); },
   get wallet() { return G.wallet; },
   get upgrades() { return G.upgrades; },
   /** Force la victoire en tuant tous les astéroïdes (usage e2e / dev). */

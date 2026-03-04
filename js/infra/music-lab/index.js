@@ -9,11 +9,6 @@ let refs = null;
 let rafId = null;
 
 // Public API
-export function isMusicLab() {
-  const p = new URLSearchParams(window.location.search);
-  return p.has('music') || p.has('mus');
-}
-
 export function isMusicLabActive() {
   return isActive();
 }
@@ -36,7 +31,7 @@ export function hideMusicLab() {
 /**
  * Initialise le music lab DOM. Construit le DOM, attache les handlers.
  */
-export function initMusicLab() {
+export function initMusicLab({ onBack } = {}) {
   const root = document.getElementById('music-lab');
   if (!root) return;
 
@@ -46,6 +41,7 @@ export function initMusicLab() {
 
   attachMusicHandlers(root, refs, {
     onClose: hideMusicLab,
+    onBack,
     refresh,
   });
 

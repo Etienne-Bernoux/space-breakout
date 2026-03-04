@@ -23,6 +23,9 @@ export function buildDevPanel(root) {
 
   // Header
   const header = el('div', 'dp-header');
+  const backBtn = txt('button', 'lab-back-btn', '\u2190 LAB');
+  backBtn.setAttribute('data-action', 'back');
+  header.appendChild(backBtn);
   header.appendChild(txt('span', 'dp-title', 'DEV PANEL'));
   root.appendChild(header);
 

@@ -4,7 +4,8 @@
 import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnTrail, updateParticles } from '../infra/particles.js';
 import { playAlienShoot, playMineralPickup } from '../infra/audio.js';
 import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
-import { isDevMode, isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
+import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
+import { isLabMode, isLabHubActive } from '../infra/lab-hub/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { updateStars } from '../infra/stars.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
@@ -12,7 +13,7 @@ import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenu
 import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { drawMineralCapsule, drawMineralHUD } from '../infra/mineral-render.js';
 import { isMusicLabActive } from '../infra/music-lab/index.js';
-import { isMineralLabMode, isMineralLabActive, showMineralLab, hideMineralLab, isProgressLabMode, initProgressLab, showProgressLab, hideProgressLab } from '../infra/progress-lab/index.js';
+import { isMineralLabActive, showMineralLab, hideMineralLab, isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/progress-lab/index.js';
 import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
@@ -33,6 +34,7 @@ export const loopInfra = {
   isDevPanelActive,
   isMusicLabActive,
   isMineralLabActive,
+  isLabHubActive,
   updateDevOverlay,
   drawShip, drawDrone, drawField,
   updateDebris,
@@ -45,10 +47,10 @@ export const loopInfra = {
 export const inputInfra = {
   setupTouch, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler,
   handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu,
-  isDevPanelActive, hideDevPanel, isDevMode, showDevPanel,
-  isMusicLabActive,
-  isMineralLabMode, isMineralLabActive, showMineralLab, hideMineralLab,
-  isProgressLabMode, initProgressLab, showProgressLab, hideProgressLab,
+  isDevPanelActive, hideDevPanel, isLabMode, showDevPanel,
+  isMusicLabActive, isLabHubActive,
+  isMineralLabActive, showMineralLab, hideMineralLab,
+  isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab,
   getNodePositions, getUpgradeButtonRect, getStatsButtons, getUpgradeScreenButtons,
   nextCategory, prevCategory, nextUpgrade, prevUpgrade, getVisibleUpgrades,
   getAllLevels,

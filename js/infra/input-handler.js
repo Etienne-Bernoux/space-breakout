@@ -74,7 +74,7 @@ export class InputHandler {
         if (this.#launchAllDrones()) this.systems.intensity.onLaunch();
       }
       if (this.session.state === 'gameOver') {
-        if (infra.isDevMode()) {
+        if (infra.isLabMode()) {
           this.#backToDevPanel();
         } else if (this.session.currentLevelId) {
           this.goToWorldMap();
@@ -86,7 +86,8 @@ export class InputHandler {
     });
 
     infra.setMenuTapHandler((x, y) => {
-      // Music lab et dev panel gèrent leurs propres events DOM
+      // Lab panels gèrent leurs propres events DOM
+      if (infra.isLabHubActive()) return;
       if (infra.isMusicLabActive()) return;
       if (infra.isDevPanelActive()) return;
       if (this.session.state === 'menu') {
@@ -108,7 +109,7 @@ export class InputHandler {
           this.session.resume();
           this.systems.intensity.onResume();
         }
-        if (infra.isDevMode()) {
+        if (infra.isLabMode()) {
           // En dev mode, mapBtn = "DEV PANEL", pas de menuBtn
           if (this.#hitBtn(x, y, mapBtn)) this.#backToDevPanel();
         } else {
@@ -288,7 +289,7 @@ export class InputHandler {
 
       if (this.session.state === 'paused') {
         if (e.key === 'Escape') { this.session.resume(); this.systems.intensity.onResume(); }
-        if (infra.isDevMode()) {
+        if (infra.isLabMode()) {
           if (e.key === 'r') this.#backToDevPanel();
         } else {
           if (e.key === 'c') this.goToWorldMap();
@@ -298,7 +299,7 @@ export class InputHandler {
       }
 
       if (this.session.state === 'gameOver' && (e.key === 'r' || e.key === ' ')) {
-        if (infra.isDevMode()) {
+        if (infra.isLabMode()) {
           this.#backToDevPanel();
         } else if (this.session.currentLevelId) {
           this.goToWorldMap();

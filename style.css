@@ -676,3 +676,84 @@ body.menu #game {
   width: 100%;
   margin-top: 2px;
 }
+
+/* ==================== Lab Hub ==================== */
+#lab-hub {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  width: 360px;
+  max-width: 95vw;
+  background: rgba(10, 10, 26, 0.94);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 8px;
+  font: 13px/1.5 monospace;
+  color: #ccc;
+}
+#lab-hub.active { display: flex; flex-direction: column; }
+
+.lh-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.lh-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffd700;
+  letter-spacing: 2px;
+}
+
+.lh-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 14px;
+}
+
+.lh-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+}
+.lh-card:hover {
+  background: rgba(255, 215, 0, 0.08);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+.lh-card-label {
+  font: bold 14px monospace;
+  color: #ffd700;
+}
+.lh-card-desc {
+  font-size: 11px;
+  color: #778899;
+}
+
+/* Back button (shared pattern for all panels) */
+.lab-back-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #889999;
+  font: 11px monospace;
+  padding: 3px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-right: 10px;
+}
+.lab-back-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: #ffd700;
+  border-color: rgba(255, 215, 0, 0.4);
+}

@@ -10,13 +10,14 @@ import { updateDevPanel } from './update.js';
  * @param {object} refs - from build.js
  * @param {object} opts - { onLaunch, onClose }
  */
-export function attachDevHandlers(root, refs, { onLaunch }) {
+export function attachDevHandlers(root, refs, { onLaunch, onBack }) {
   // Click delegation
   root.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
 
+    if (action === 'back') { if (onBack) onBack(); return; }
     if (action === 'launch') { saveDevConfig(); onLaunch(); return; }
 
     if (action === 'reset') {

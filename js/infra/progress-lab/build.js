@@ -16,11 +16,11 @@ export function buildProgressLab(root, levels) {
 
   // --- Header ---
   const header = el('div', 'pl-header');
+  const backBtn = el('button', 'lab-back-btn');
+  backBtn.textContent = '\u2190 LAB';
+  backBtn.dataset.action = 'back';
+  header.appendChild(backBtn);
   header.appendChild(txt('span', 'PROGRESS LAB', 'pl-title'));
-  const closeBtn = el('button', 'pl-close');
-  closeBtn.textContent = '✕';
-  closeBtn.dataset.action = 'close';
-  header.appendChild(closeBtn);
   root.appendChild(header);
 
   // --- Tabs ---

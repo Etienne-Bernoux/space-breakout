@@ -10,11 +10,7 @@ import { attachDevHandlers } from './handlers.js';
 let refs = null;
 let onLaunchCb = null;
 
-// --- Public API: Mode and visibility ---
-export function isDevMode() {
-  return new URLSearchParams(window.location.search).has('dev');
-}
-
+// --- Public API: visibility ---
 export function isDevPanelActive() {
   return state.active;
 }
@@ -74,7 +70,7 @@ export function getDevAsteroidConfig() {
  * Initialise le dev panel DOM. Construit le DOM, attache les handlers.
  * @param {object} opts - { onLaunch: function }
  */
-export function initDevPanel({ onLaunch }) {
+export function initDevPanel({ onLaunch, onBack }) {
   onLaunchCb = onLaunch;
   const root = document.getElementById('dev-panel-lab');
   if (!root) return;
@@ -87,5 +83,6 @@ export function initDevPanel({ onLaunch }) {
       hideDevPanel();
       if (onLaunchCb) onLaunchCb();
     },
+    onBack,
   });
 }

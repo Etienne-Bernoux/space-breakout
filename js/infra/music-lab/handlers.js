@@ -31,12 +31,14 @@ const LOOP_ORDER = [
  * @param {object} refs - from build.js
  * @param {object} opts - { onClose, refresh }
  */
-export function attachMusicHandlers(root, refs, { onClose, refresh }) {
+export function attachMusicHandlers(root, refs, { onClose, onBack, refresh }) {
   root.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
     const sim = getSim();
+
+    if (action === 'back') { if (onBack) onBack(); return; }
 
     // Tabs
     if (action === 'tab') {

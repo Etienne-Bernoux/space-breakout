@@ -14,9 +14,15 @@ const SIM_STEP = 1;  // +/- par clic pour simulator minerals
  */
 export function attachHandlers(root, deps) {
   root.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action]');
+    const btn = e.target.closest('[data-action], [data-tab]');
     if (!btn) return;
     const action = btn.dataset.action;
+
+    // --- Back to hub ---
+    if (action === 'back') {
+      if (deps.onBack) deps.onBack();
+      return;
+    }
 
     // --- Close ---
     if (action === 'close') {

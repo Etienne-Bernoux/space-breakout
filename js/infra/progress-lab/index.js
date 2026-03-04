@@ -1,4 +1,4 @@
-// --- Façade progress lab (?progress) ---
+// --- Façade progress lab ---
 
 import state from './state.js';
 import { buildProgressLab } from './build.js';
@@ -8,11 +8,6 @@ import { applySimulation } from '../../use-cases/simulator/run-simulator.js';
 
 let refs = null;
 let deps = null;
-
-/** Vérifie si ?progress est dans l'URL. */
-export function isProgressLabMode() {
-  return new URLSearchParams(window.location.search).has('progress');
-}
 
 export function isProgressLabActive() {
   return state.active;
@@ -39,6 +34,7 @@ export function initProgressLab(d) {
     saveProgress: d.saveProgress,
     refs,
     refresh,
+    onBack: d.onBack,
     onClose: hideProgressLab,
     onSimulate: (sim) => {
       const level = d.levels[sim.levelIndex];
@@ -76,7 +72,6 @@ export function hideProgressLab() {
 }
 
 // Aliases for backward compat (adapters use these names)
-export { isProgressLabMode as isMineralLabMode };
 export { isProgressLabActive as isMineralLabActive };
 export { showProgressLab as showMineralLab };
 export { hideProgressLab as hideMineralLab };

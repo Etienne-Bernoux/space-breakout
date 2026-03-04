@@ -4,7 +4,7 @@ import { CONFIG } from '../../config.js';
 import { isActive, setActive, getScrollY, getCurrentTab, setScrollY } from './state.js';
 import { drawHeader, HEADER_H } from './draw-header.js';
 import { drawFooter, FOOTER_H } from './draw-footer.js';
-import { drawTabSons } from './tab-sons.js';
+import { drawTabSons, drawTabStingers } from './tab-sons.js';
 import { drawTabGameplay } from './tab-gameplay.js';
 import { drawTabMix } from './tab-mix.js';
 import { handleMusicLabTap, handleMusicLabHover, handleMusicLabScroll } from './handlers.js';
@@ -54,9 +54,10 @@ export function drawMusicLab(ctx) {
 
   const currentTab = getCurrentTab();
   const activeSec = getActiveLoopSection();
-  if (currentTab === 0) endY = drawTabSons(ctx, col1, startY, W, activeSec);
-  else if (currentTab === 1) endY = drawTabGameplay(ctx, col1, startY, W);
-  else if (currentTab === 2) endY = drawTabMix(ctx, col1, startY, W);
+  if (currentTab === 0) endY = drawTabStingers(ctx, col1, startY);
+  else if (currentTab === 1) endY = drawTabSons(ctx, col1, startY, W, activeSec);
+  else if (currentTab === 2) endY = drawTabGameplay(ctx, col1, startY, W);
+  else if (currentTab === 3) endY = drawTabMix(ctx, col1, startY, W);
 
   const totalContentH = endY + 8;
   ctx.restore();

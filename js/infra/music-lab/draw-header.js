@@ -4,7 +4,7 @@ import { getHovered, getCurrentTab } from './state.js';
 
 export const HEADER_H = 80; // hauteur réservée au header (hors scroll)
 
-const TABS = ['Sons', 'Gameplay', 'Mix'];
+const TABS = ['Stingers', 'Sons', 'Gameplay', 'Mix'];
 
 export function drawHeader(ctx, W) {
   const currentTab = getCurrentTab();

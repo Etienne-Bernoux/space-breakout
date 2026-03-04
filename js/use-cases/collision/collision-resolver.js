@@ -72,7 +72,7 @@ export class CollisionResolver {
         // Bouclier alien absorbe le coup
         if (a.shield) {
           a.shield = false;
-          const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: '#33ff66', hpLeft: a.hp, maxHp: a.maxHp };
+          const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: '#33ff66', hpLeft: a.hp, maxHp: a.maxHp, materialKey: a.materialKey };
           if (!effectivePiercing) return ev;
           if (!firstEvent) firstEvent = ev;
           continue;
@@ -81,7 +81,7 @@ export class CollisionResolver {
         // Décrémenter HP
         a.hp--;
         if (a.hp > 0) {
-          const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: a.color, hpLeft: a.hp, maxHp: a.maxHp };
+          const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: a.color, hpLeft: a.hp, maxHp: a.maxHp, materialKey: a.materialKey };
           if (!effectivePiercing) return ev;
           if (!firstEvent) firstEvent = ev;
           continue;

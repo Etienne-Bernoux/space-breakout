@@ -1,7 +1,7 @@
 // Sons tab content and data
 
 import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../music/index.js';
-import { playShipExplosion } from '../audio.js';
+import { playShipExplosion, playAlienHit, playBossExplosion } from '../audio.js';
 import { drawBtn, drawLabel } from './draw-helpers.js';
 import { getHovered } from './state.js';
 
@@ -51,6 +51,8 @@ const STINGERS = [
   { id: 'gameover',  label: 'GAMEOVER',  color: '#ff4444', fn: playGameOverStinger },
   { id: 'powerup',   label: 'POWER-UP',  color: '#ffcc00', fn: playPowerUpAccent },
   { id: 'explosion', label: 'EXPLOSION', color: '#ff8800', fn: playShipExplosion },
+  { id: 'alienhit',  label: 'ALIEN HIT', color: '#33cc55', fn: playAlienHit },
+  { id: 'bossexpl',  label: 'BOSS EXPL', color: '#44dd66', fn: playBossExplosion },
 ];
 
 export function getStingers() {
@@ -111,15 +113,29 @@ export function drawTabSons(ctx, col1, startY, W, activeSec) {
   const instRows = Math.ceil(instruments.length / instPerRow);
   y += instRows * (btnH + gap) + 8;
 
-  // Stingers
-  drawLabel(ctx, 'STINGERS', col1, y);
+  return y;
+}
+
+export function drawTabStingers(ctx, col1, startY) {
+  const hovered = getHovered();
+  const btnW = 120;
+  const btnH = 32;
+  const gap = 8;
+  let y = startY;
+
+  drawLabel(ctx, 'STINGERS / SFX', col1, y);
   y += 14;
+  const perRow = 3;
   for (let i = 0; i < STINGERS.length; i++) {
     const s = STINGERS[i];
-    const bx = col1 + i * (btnW + gap);
-    drawBtn(ctx, bx, y, btnW, btnH, s.label, s.color, hovered === `stinger-${s.id}`, false);
+    const row = Math.floor(i / perRow);
+    const col = i % perRow;
+    const bx = col1 + col * (btnW + gap);
+    const by = y + row * (btnH + gap);
+    drawBtn(ctx, bx, by, btnW, btnH, s.label, s.color, hovered === `stinger-${s.id}`, false);
   }
-  y += btnH + 16;
+  const rows = Math.ceil(STINGERS.length / perRow);
+  y += rows * (btnH + gap) + 16;
 
   return y;
 }

@@ -16,7 +16,7 @@ export function getButtonLayout() {
   const buttons = [];
 
   // Onglets (position absolue, pas scrollé)
-  const TABS = ['Sons', 'Gameplay', 'Mix'];
+  const TABS = ['Stingers', 'Sons', 'Gameplay', 'Mix'];
   const tabW = 100;
   const tabH = 28;
   const tabGap = 6;
@@ -37,8 +37,19 @@ export function getButtonLayout() {
   const currentTab = getCurrentTab();
 
   if (currentTab === 0) {
+    // Stingers tab
+    const STINGERS = getStingers();
+    y += 14;
+    const perRow = 3;
+    for (let i = 0; i < STINGERS.length; i++) {
+      const row = Math.floor(i / perRow);
+      const col = i % perRow;
+      buttons.push({ id: `stinger-${STINGERS[i].id}`, x: col1 + col * (btnW + gap), y: y + row * (btnH + gap), w: btnW, h: btnH });
+    }
+
+  } else if (currentTab === 1) {
     // Track selector
-    y += 14; // piste label
+    y += 14;
     const trackBtnW = 130;
     for (let i = 0; i < TRACKS.length; i++) {
       buttons.push({ id: `track-${TRACKS[i].id}`, x: col1 + i * (trackBtnW + gap), y, w: trackBtnW, h: btnH });
@@ -46,8 +57,8 @@ export function getButtonLayout() {
     y += btnH + gap;
 
     // Sections
-    y += 24; // gap avant section (comme drawTabSons)
-    y += 14; // sections label
+    y += 24;
+    y += 14;
     const SECTIONS = getSections();
     const secPerRow = 4;
     for (let i = 0; i < SECTIONS.length; i++) {
@@ -58,7 +69,7 @@ export function getButtonLayout() {
     const secRows = Math.ceil(SECTIONS.length / secPerRow);
     y += secRows * (btnH + gap) + 8;
 
-    // Instruments (dynamique par piste)
+    // Instruments
     const instruments = getInstruments();
     y += 14;
     const instPerRow = 4;
@@ -67,17 +78,8 @@ export function getButtonLayout() {
       const col = i % instPerRow;
       buttons.push({ id: `inst-${instruments[i].id}`, x: col1 + col * (btnW + gap), y: y + row * (btnH + gap), w: btnW, h: btnH });
     }
-    const instRows = Math.ceil(instruments.length / instPerRow);
-    y += instRows * (btnH + gap) + 8;
 
-    // Stingers
-    const STINGERS = getStingers();
-    y += 14;
-    for (let i = 0; i < STINGERS.length; i++) {
-      buttons.push({ id: `stinger-${STINGERS[i].id}`, x: col1 + i * (btnW + gap), y, w: btnW, h: btnH });
-    }
-
-  } else if (currentTab === 1) {
+  } else if (currentTab === 2) {
     // Intensity override
     y += 14; // label
     const ovX = col1 + 180;
@@ -101,7 +103,7 @@ export function getButtonLayout() {
     buttons.push({ id: 'gp-powerup', x: col1 + btnW + gap, y, w: btnW, h: btnH });
     buttons.push({ id: 'gp-reset', x: col1 + (btnW + gap) * 2, y, w: btnW, h: btnH });
 
-  } else if (currentTab === 2) {
+  } else if (currentTab === 3) {
     // Layers toggle
     y += 14;
     const layerBtnW = 110;

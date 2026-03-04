@@ -53,6 +53,12 @@ export class InputHandler {
     return true;
   }
 
+  #backToDevPanel() {
+    this.infra.resetMenu();
+    this.session.backToMenu();
+    this.infra.showDevPanel();
+  }
+
   #bindTouchHandlers() {
     const infra = this.infra;
 
@@ -68,12 +74,13 @@ export class InputHandler {
         if (this.#launchAllDrones()) this.systems.intensity.onLaunch();
       }
       if (this.session.state === 'gameOver') {
-        if (this.session.currentLevelId) {
+        if (infra.isDevMode()) {
+          this.#backToDevPanel();
+        } else if (this.session.currentLevelId) {
           this.goToWorldMap();
         } else {
           infra.resetMenu();
           this.session.backToMenu();
-          if (infra.isDevMode()) infra.showDevPanel();
         }
       }
     });
@@ -101,13 +108,15 @@ export class InputHandler {
           this.session.resume();
           this.systems.intensity.onResume();
         }
-        if (this.#hitBtn(x, y, mapBtn)) {
-          this.goToWorldMap();
-        }
-        if (this.#hitBtn(x, y, menuBtn)) {
-          infra.resetMenu();
-          this.session.backToMenu();
-          if (infra.isDevMode()) infra.showDevPanel();
+        if (infra.isDevMode()) {
+          // En dev mode, mapBtn = "DEV PANEL", pas de menuBtn
+          if (this.#hitBtn(x, y, mapBtn)) this.#backToDevPanel();
+        } else {
+          if (this.#hitBtn(x, y, mapBtn)) this.goToWorldMap();
+          if (this.#hitBtn(x, y, menuBtn)) {
+            infra.resetMenu();
+            this.session.backToMenu();
+          }
         }
       }
     });
@@ -279,18 +288,23 @@ export class InputHandler {
 
       if (this.session.state === 'paused') {
         if (e.key === 'Escape') { this.session.resume(); this.systems.intensity.onResume(); }
-        if (e.key === 'c') { this.goToWorldMap(); }
-        if (e.key === 'r') { infra.resetMenu(); this.session.backToMenu(); if (infra.isDevMode()) infra.showDevPanel(); }
+        if (infra.isDevMode()) {
+          if (e.key === 'r') this.#backToDevPanel();
+        } else {
+          if (e.key === 'c') this.goToWorldMap();
+          if (e.key === 'r') { infra.resetMenu(); this.session.backToMenu(); }
+        }
         return;
       }
 
       if (this.session.state === 'gameOver' && (e.key === 'r' || e.key === ' ')) {
-        if (this.session.currentLevelId) {
+        if (infra.isDevMode()) {
+          this.#backToDevPanel();
+        } else if (this.session.currentLevelId) {
           this.goToWorldMap();
         } else {
           infra.resetMenu();
           this.session.backToMenu();
-          if (infra.isDevMode()) infra.showDevPanel();
         }
       }
     });

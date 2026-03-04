@@ -24,20 +24,19 @@ export function buildDevPanel(root) {
   // Header
   const header = el('div', 'dp-header');
   header.appendChild(txt('span', 'dp-title', 'DEV PANEL'));
-  const close = txt('button', 'dp-close', '×');
-  close.setAttribute('data-action', 'close');
-  header.appendChild(close);
   root.appendChild(header);
 
-  // Body
+  // Body (2 colonnes desktop via CSS grid)
   const body = el('div', 'dp-body');
+  const colLeft = el('div', 'dp-col');
+  const colRight = el('div', 'dp-col');
 
-  // --- Materials ---
-  body.appendChild(txt('div', 'dp-section-label', 'MATÉRIAUX'));
+  // --- Materials (colonne gauche) ---
+  colLeft.appendChild(txt('div', 'dp-section-label', 'MATÉRIAUX'));
   const matHint = txt('div', 'dp-hint', '');
   matHint.setAttribute('data-ref', 'mat-hint');
   refs.matHint = matHint;
-  body.appendChild(matHint);
+  colLeft.appendChild(matHint);
 
   for (const key of SLIDER_MAT_KEYS) {
     const mat = MATERIALS[key];
@@ -63,15 +62,15 @@ export function buildDevPanel(root) {
     row.appendChild(val);
 
     refs.sliders[key] = { slider, val };
-    body.appendChild(row);
+    colLeft.appendChild(row);
   }
 
-  // --- Density ---
-  body.appendChild(txt('div', 'dp-section-label dp-density-label', 'DENSITÉ'));
+  // --- Density (colonne gauche) ---
+  colLeft.appendChild(txt('div', 'dp-section-label dp-density-label', 'DENSITÉ'));
   const densityHint = txt('div', 'dp-hint', '');
   densityHint.setAttribute('data-ref', 'density-hint');
   refs.densityHint = densityHint;
-  body.appendChild(densityHint);
+  colLeft.appendChild(densityHint);
 
   const densityRow = el('div', 'dp-slider-row');
   const densitySlider = el('input', 'dp-slider', {
@@ -84,10 +83,10 @@ export function buildDevPanel(root) {
   densityRow.appendChild(densityVal);
   refs.densitySlider = densitySlider;
   refs.densityVal = densityVal;
-  body.appendChild(densityRow);
+  colLeft.appendChild(densityRow);
 
-  // --- Presets ---
-  body.appendChild(txt('div', 'dp-section-label', 'PRESETS'));
+  // --- Presets (colonne droite) ---
+  colRight.appendChild(txt('div', 'dp-section-label', 'PRESETS'));
   const presetGrid = el('div', 'dp-btn-grid');
   for (let i = 0; i < PRESETS.length; i++) {
     const btn = txt('button', 'dp-btn', PRESETS[i].name);
@@ -96,12 +95,11 @@ export function buildDevPanel(root) {
     presetGrid.appendChild(btn);
     refs.presets.push(btn);
   }
-  body.appendChild(presetGrid);
+  colRight.appendChild(presetGrid);
 
-  // --- Pattern ---
-  body.appendChild(txt('div', 'dp-section-label', 'PATTERN'));
+  // --- Pattern (colonne droite) ---
+  colRight.appendChild(txt('div', 'dp-section-label', 'PATTERN'));
   const patternList = el('div', 'dp-btn-list');
-  // Random option
   const rndBtn = txt('button', 'dp-btn', 'Aléatoire');
   rndBtn.setAttribute('data-action', 'pattern');
   rndBtn.setAttribute('data-key', 'random');
@@ -119,14 +117,14 @@ export function buildDevPanel(root) {
     patternList.appendChild(btn);
     refs.patterns.push({ key, btn });
   }
-  body.appendChild(patternList);
+  colRight.appendChild(patternList);
 
-  // --- Grid ---
-  body.appendChild(txt('div', 'dp-section-label', 'TAILLE GRILLE'));
+  // --- Grid (colonne droite) ---
+  colRight.appendChild(txt('div', 'dp-section-label', 'TAILLE GRILLE'));
   const gridHint = txt('div', 'dp-hint', '');
   gridHint.setAttribute('data-ref', 'grid-hint');
   refs.gridHint = gridHint;
-  body.appendChild(gridHint);
+  colRight.appendChild(gridHint);
 
   const gridList = el('div', 'dp-btn-list');
   for (const key of GRID_KEYS) {
@@ -137,8 +135,10 @@ export function buildDevPanel(root) {
     gridList.appendChild(btn);
     refs.grids.push({ key, btn });
   }
-  body.appendChild(gridList);
+  colRight.appendChild(gridList);
 
+  body.appendChild(colLeft);
+  body.appendChild(colRight);
   root.appendChild(body);
 
   // --- Footer: Launch + Reset ---

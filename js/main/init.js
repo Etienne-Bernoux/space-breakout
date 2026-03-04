@@ -136,6 +136,7 @@ G.hud = new HudRenderer({
   pauseBtnLayout,
   pauseScreenLayout,
   getLevel,
+  isDevMode,
 });
 
 // startGame déclaré avant GameLoop/InputHandler car injecté en dépendance

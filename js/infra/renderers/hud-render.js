@@ -21,7 +21,7 @@ export class HudRenderer {
    * @param {function} deps.pauseBtnLayout
    * @param {function} deps.pauseScreenLayout
    */
-  constructor({ render, session, ui, canvas, config, gameScale, pauseBtnLayout, pauseScreenLayout, getLevel }) {
+  constructor({ render, session, ui, canvas, config, gameScale, pauseBtnLayout, pauseScreenLayout, getLevel, isDevMode }) {
     this.render = render;
     this.session = session;
     this.ui = ui;
@@ -31,6 +31,7 @@ export class HudRenderer {
     this.pauseBtnLayout = pauseBtnLayout;
     this.pauseScreenLayout = pauseScreenLayout;
     this.getLevel = getLevel || (() => null);
+    this.isDevMode = isDevMode || (() => false);
   }
 
   drawHUD(fx) {
@@ -175,32 +176,49 @@ export class HudRenderer {
       cx, s,
     });
 
-    // Bouton CARTE (secondaire doré)
-    this.#drawButton(ctx, mapBtn, 'CARTE', {
-      fillColor: 'rgba(139, 105, 20, 0.1)',
-      strokeColor: '#8b6914',
-      textColor: '#ccaa44',
-      glowColor: '#8b6914',
-      glowBlur: 4,
-      cx, s,
-    });
+    const dev = this.isDevMode();
+    if (dev) {
+      // Mode dev : un seul bouton "DEV PANEL" à la place de CARTE + MENU
+      this.#drawButton(ctx, mapBtn, 'DEV PANEL', {
+        fillColor: 'rgba(139, 105, 20, 0.1)',
+        strokeColor: '#8b6914',
+        textColor: '#ccaa44',
+        glowColor: '#8b6914',
+        glowBlur: 4,
+        cx, s,
+      });
+    } else {
+      // Bouton CARTE (secondaire doré)
+      this.#drawButton(ctx, mapBtn, 'CARTE', {
+        fillColor: 'rgba(139, 105, 20, 0.1)',
+        strokeColor: '#8b6914',
+        textColor: '#ccaa44',
+        glowColor: '#8b6914',
+        glowBlur: 4,
+        cx, s,
+      });
 
-    // Bouton MENU (tertiaire, subtil)
-    this.#drawButton(ctx, menuBtn, 'MENU', {
-      fillColor: 'rgba(255, 255, 255, 0.04)',
-      strokeColor: '#445566',
-      textColor: '#8899aa',
-      glowColor: '#445566',
-      glowBlur: 3,
-      cx, s,
-    });
+      // Bouton MENU (tertiaire, subtil)
+      this.#drawButton(ctx, menuBtn, 'MENU', {
+        fillColor: 'rgba(255, 255, 255, 0.04)',
+        strokeColor: '#445566',
+        textColor: '#8899aa',
+        glowColor: '#445566',
+        glowBlur: 3,
+        cx, s,
+      });
+    }
 
     const isMobile = 'ontouchstart' in window;
     if (!isMobile) {
       ctx.font = `${Math.round(12 * s)}px monospace`;
       const instrA = 0.35 + Math.sin(t * 2) * 0.1;
       ctx.fillStyle = `rgba(68, 85, 102, ${instrA})`;
-      ctx.fillText('ÉCHAP REPRENDRE  ·  C CARTE  ·  R MENU', cx, menuBtn.y + menuBtn.h + 30 * s);
+      const lastBtn = dev ? mapBtn : menuBtn;
+      const instrText = dev
+        ? 'ÉCHAP REPRENDRE  ·  R DEV PANEL'
+        : 'ÉCHAP REPRENDRE  ·  C CARTE  ·  R MENU';
+      ctx.fillText(instrText, cx, lastBtn.y + lastBtn.h + 30 * s);
     }
 
     ctx.restore();

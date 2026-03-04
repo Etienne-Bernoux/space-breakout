@@ -10,14 +10,13 @@ import { updateDevPanel } from './update.js';
  * @param {object} refs - from build.js
  * @param {object} opts - { onLaunch, onClose }
  */
-export function attachDevHandlers(root, refs, { onLaunch, onClose }) {
+export function attachDevHandlers(root, refs, { onLaunch }) {
   // Click delegation
   root.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
 
-    if (action === 'close') { onClose(); return; }
     if (action === 'launch') { saveDevConfig(); onLaunch(); return; }
 
     if (action === 'reset') {
@@ -74,9 +73,9 @@ export function attachDevHandlers(root, refs, { onLaunch, onClose }) {
     updateDevPanel(refs);
   });
 
-  // Keyboard: Escape → close
+  // Keyboard: Enter → launch
   document.addEventListener('keydown', (e) => {
     if (!state.active) return;
-    if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
+    if (e.key === 'Enter') { e.stopPropagation(); saveDevConfig(); onLaunch(); }
   });
 }

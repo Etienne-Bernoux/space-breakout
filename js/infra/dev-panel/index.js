@@ -87,6 +87,5 @@ export function initDevPanel({ onLaunch }) {
       hideDevPanel();
       if (onLaunchCb) onLaunchCb();
     },
-    onClose: hideDevPanel,
   });
 }

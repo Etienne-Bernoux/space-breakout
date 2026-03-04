@@ -1,40 +1,26 @@
 // --- Sync DOM ← state pour le progress lab ---
 
 import { MINERAL_IDS } from '../../../domain/mineral/index.js';
-import { UPGRADE_IDS } from '../../../use-cases/upgrade/upgrade-catalog.js';
-import { getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
+import { UPGRADE_IDS, getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
 import state from './state.js';
 
-/**
- * Rafraîchit tout le DOM du progress lab depuis l'état courant.
- * @param {object} refs - retour de buildProgressLab()
- * @param {object} wallet - MineralWallet
- * @param {object} upgrades - UpgradeManager
- */
-export function updateProgressLab(refs, wallet, upgrades) {
-  // --- Tabs ---
-  for (const [id, btn] of Object.entries(refs.tabBtns)) {
-    btn.classList.toggle('pl-tab-active', id === state.tab);
-  }
-
-  // --- Panels visibility ---
-  for (const key of ['wallet', 'upgrades', 'simulator', 'reset']) {
-    const panel = refs[key].el;
-    panel.style.display = key === state.tab ? '' : 'none';
-  }
-
-  // --- Wallet quantities ---
+/** Rafraîchit le panel gauche (wallet minerais). */
+export function updateLeftPanel(refs, wallet) {
   for (const id of MINERAL_IDS) {
     refs.wallet.rows[id].textContent = wallet.get(id);
   }
+}
 
-  // --- Upgrade levels ---
+/** Rafraîchit le panel droit (upgrade levels). */
+export function updateRightPanel(refs, upgrades) {
   for (const id of UPGRADE_IDS) {
     const u = getUpgrade(id);
     refs.upgrades.rows[id].textContent = `${upgrades.getLevel(id)}/${u.maxLevel}`;
   }
+}
 
-  // --- Simulator ---
+/** Rafraîchit le modal simulateur. */
+export function updateSimulator(refs) {
   const sim = state.sim;
   const sr = refs.simulator;
 

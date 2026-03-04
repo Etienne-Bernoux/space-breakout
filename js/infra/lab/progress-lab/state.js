@@ -1,9 +1,9 @@
-// --- État du progress lab (?progress) ---
+// --- État du progress lab (side panels + simulator modal) ---
 
 const state = {
   active: false,
-  tab: 'wallet',  // 'wallet' | 'upgrades' | 'simulator' | 'reset'
-  // Simulator
+  simulatorOpen: false,
+  // Simulator inputs
   sim: {
     levelIndex: 0,
     result: 'victory',   // 'victory' | 'defeat'

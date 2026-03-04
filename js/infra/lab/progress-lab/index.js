@@ -1,8 +1,8 @@
-// --- Façade progress lab ---
+// --- Façade progress lab (panel droit + simulator modal) ---
 
 import state from './state.js';
-import { buildProgressLab } from './build.js';
-import { updateProgressLab } from './update.js';
+import { buildPanel, buildSimulatorModal } from './build.js';
+import { updateLeftPanel, updateRightPanel, updateSimulator } from './update.js';
 import { attachHandlers } from './handlers.js';
 import { applySimulation } from '../../../use-cases/simulator/run-simulator.js';
 
@@ -13,20 +13,32 @@ export function isProgressLabActive() {
   return state.active;
 }
 
+export function isSimulatorOpen() {
+  return state.simulatorOpen;
+}
+
 /**
  * Initialise le progress lab. Construit le DOM, attache les handlers.
- * @param {object} d - { wallet, upgrades, progress, levels, saveProgress }
+ * @param {object} d - { wallet, upgrades, progress, levels, saveProgress, onBack, onSetWorldMap }
  */
 export function initProgressLab(d) {
   deps = d;
-  const root = document.getElementById('progress-lab');
-  if (!root) return;
+  const panel = document.getElementById('pl-panel');
+  const sim = document.getElementById('pl-simulator');
+  if (!panel || !sim) return;
 
-  refs = buildProgressLab(root, d.levels);
+  const panelRefs = buildPanel(panel);
+  const simRefs = buildSimulatorModal(sim, d.levels);
 
-  const refresh = () => updateProgressLab(refs, d.wallet, d.upgrades);
+  refs = { ...panelRefs, simulator: simRefs };
 
-  attachHandlers(root, {
+  const refresh = () => {
+    updateLeftPanel(refs, d.wallet);
+    updateRightPanel(refs, d.upgrades);
+  };
+  const refreshSim = () => updateSimulator(refs);
+
+  attachHandlers({ panel, simulator: sim }, {
     wallet: d.wallet,
     upgrades: d.upgrades,
     progress: d.progress,
@@ -34,38 +46,55 @@ export function initProgressLab(d) {
     saveProgress: d.saveProgress,
     refs,
     refresh,
+    refreshSim,
     onBack: d.onBack,
-    onSimulate: (sim) => {
-      const level = d.levels[sim.levelIndex];
+    onSimulate: (simState) => {
+      const level = d.levels[simState.levelIndex];
       if (!level) return;
-      applySimulation(level.id, sim, {
+      applySimulation(level.id, simState, {
         progress: d.progress,
         wallet: d.wallet,
         saveProgress: d.saveProgress,
       });
-      // Reset sim minerals pour prochain run
-      for (const k of Object.keys(sim.minerals)) sim.minerals[k] = 0;
-      refs.simulator.feedback.textContent = sim.result === 'victory'
-        ? `✓ ${level.name} — ${sim.stars}★`
+      for (const k of Object.keys(simState.minerals)) simState.minerals[k] = 0;
+      simRefs.feedback.textContent = simState.result === 'victory'
+        ? `✓ ${level.name} — ${simState.stars}★`
         : `✗ ${level.name} — Défaite`;
-      setTimeout(() => { refs.simulator.feedback.textContent = ''; }, 3000);
+      setTimeout(() => { simRefs.feedback.textContent = ''; }, 3000);
+      hideSimulatorModal();
       refresh();
     },
+    onCloseSimulator: () => hideSimulatorModal(),
   });
-
-  // Initial render
-  refresh();
 }
 
 export function showProgressLab() {
   state.active = true;
-  const root = document.getElementById('progress-lab');
-  if (root) root.classList.add('active');
-  if (refs && deps) updateProgressLab(refs, deps.wallet, deps.upgrades);
+  document.getElementById('pl-panel')?.classList.add('active');
+  if (refs && deps) {
+    updateLeftPanel(refs, deps.wallet);
+    updateRightPanel(refs, deps.upgrades);
+  }
+  if (deps?.onSetWorldMap) deps.onSetWorldMap();
 }
 
 export function hideProgressLab() {
   state.active = false;
-  const root = document.getElementById('progress-lab');
-  if (root) root.classList.remove('active');
+  state.simulatorOpen = false;
+  document.getElementById('pl-panel')?.classList.remove('active');
+  document.getElementById('pl-simulator')?.classList.remove('open');
+  // Revenir au menu pour que le canvas n'affiche plus la carte
+  if (deps?.onBackToMenu) deps.onBackToMenu();
+}
+
+export function showSimulatorModal(levelIndex) {
+  state.sim.levelIndex = levelIndex ?? 0;
+  state.simulatorOpen = true;
+  document.getElementById('pl-simulator')?.classList.add('open');
+  if (refs) updateSimulator(refs);
+}
+
+export function hideSimulatorModal() {
+  state.simulatorOpen = false;
+  document.getElementById('pl-simulator')?.classList.remove('open');
 }

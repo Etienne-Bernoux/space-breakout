@@ -149,12 +149,12 @@ js/
         tab-gameplay.js → logique simulation intensité (simApply)
         handlers.js     → event delegation DOM
         index.js        → façade publique (init, show/hide, rAF footer)
-      progress-lab/     → panel test progression DOM
-        state.js        → état UI (onglet, simulateur)
-        build.js        → construction DOM (tabs, panels, boutons)
-        update.js       → sync DOM ← state (wallet, upgrades, progress)
-        handlers.js     → event listeners DOM (click, keyboard Escape)
-        index.js        → façade publique (init, show/hide)
+      progress-lab/     → side panels + simulateur (carte et atelier au centre)
+        state.js        → état UI (simulatorOpen)
+        build.js        → 3 builders (left panel, right panel, simulator modal)
+        update.js       → sync DOM ← state (wallet, upgrades, simulator)
+        handlers.js     → event delegation par panel (left, right, simulator)
+        index.js        → façade publique (init, show/hide panels + simulator modal)
     menu/               → menu principal
       state.js          → état + persistence volumes
       draw-menu.js      → écran menu principal

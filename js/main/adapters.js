@@ -13,7 +13,7 @@ import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenu
 import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/power-up-render.js';
 import { drawMineralCapsule, drawMineralHUD } from '../infra/renderers/mineral-render.js';
 import { isMusicLabActive } from '../infra/lab/music-lab/index.js';
-import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
+import { isProgressLabActive, isSimulatorOpen, showSimulatorModal, hideSimulatorModal, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
 import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
@@ -49,7 +49,8 @@ export const inputInfra = {
   handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu,
   isDevPanelActive, hideDevPanel, isLabMode, showDevPanel,
   isMusicLabActive, isLabHubActive,
-  isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab,
+  isProgressLabActive, isSimulatorOpen, showSimulatorModal, hideSimulatorModal,
+  initProgressLab, showProgressLab, hideProgressLab,
   getNodePositions, getUpgradeButtonRect, getStatsButtons, getUpgradeScreenButtons,
   nextCategory, prevCategory, nextUpgrade, prevUpgrade, getVisibleUpgrades,
   getAllLevels,

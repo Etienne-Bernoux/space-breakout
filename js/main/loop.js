@@ -38,10 +38,6 @@ export class GameLoop {
 
   // --- State handlers (chaque état a sa propre logique) ---
 
-  #loopProgressLab(_ctx) {
-    // Progress lab est en DOM, pas de canvas draw.
-  }
-
   #loopMusicLab(_ctx) {
     // Music lab est maintenant en DOM, pas de canvas draw.
   }
@@ -198,15 +194,13 @@ export class GameLoop {
 
     document.body.classList.toggle('menu', ['menu', 'paused', 'worldMap', 'stats', 'upgrade'].includes(this.session.state));
 
-    // Overlays prioritaires (interceptent tous les états)
-    if (this.infra.isProgressLabActive && this.infra.isProgressLabActive()) {
-      this.#loopProgressLab(ctx);
-    } else if (this.infra.isMusicLabActive()) {
+    // Overlays prioritaires (interceptent tous les états sauf progress lab)
+    if (this.infra.isMusicLabActive()) {
       this.#loopMusicLab(ctx, fx);
     } else if (this.infra.isDevPanelActive()) {
       this.#loopDevPanel(ctx, fx);
     } else {
-      // Dispatch par état de jeu
+      // Dispatch par état de jeu (progress lab laisse le canvas rendre normalement)
       const handler = {
         menu:     () => this.#loopMenu(ctx, fx),
         worldMap: () => this.#loopWorldMap(ctx, fx, dt),

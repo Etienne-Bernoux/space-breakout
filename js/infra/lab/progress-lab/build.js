@@ -1,152 +1,92 @@
-// --- Construction DOM du progress lab ---
+// --- Construction DOM du progress lab (panel droit + simulator modal) ---
 
 import { MINERAL_IDS, getMineral } from '../../../domain/mineral/index.js';
-import { UPGRADE_IDS } from '../../../use-cases/upgrade/upgrade-catalog.js';
-import { getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
+import { UPGRADE_IDS, getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
 
 /**
- * Construit le DOM complet du progress lab.
- * Appelé une seule fois au boot. Retourne les refs pour update.js.
- * @param {HTMLElement} root - #progress-lab div
- * @param {object[]} levels - getAllLevels()
- * @returns {object} refs - { tabs, panels, wallet, upgrades, simulator, reset }
+ * Construit le panel unique (wallet + upgrades + reset).
+ * @param {HTMLElement} root - #pl-panel
+ * @returns {object} refs - { wallet: { rows }, upgrades: { rows }, reset: { feedback } }
  */
-export function buildProgressLab(root, levels) {
+export function buildPanel(root) {
   root.innerHTML = '';
 
-  // --- Header ---
-  const header = el('div', 'pl-header');
+  // Back button
   const backBtn = el('button', 'lab-back-btn');
   backBtn.textContent = '\u2190 LAB';
   backBtn.dataset.action = 'back';
-  header.appendChild(backBtn);
-  header.appendChild(txt('span', 'PROGRESS LAB', 'pl-title'));
-  root.appendChild(header);
+  root.appendChild(backBtn);
 
-  // --- Tabs ---
-  const tabBar = el('div', 'pl-tabs');
-  const tabDefs = [
-    { id: 'wallet', label: 'Minerais' },
-    { id: 'upgrades', label: 'Upgrades' },
-    { id: 'simulator', label: 'Simulateur' },
-    { id: 'reset', label: 'Reset' },
-  ];
-  const tabBtns = {};
-  for (const t of tabDefs) {
-    const btn = el('button', 'pl-tab');
-    btn.textContent = t.label;
-    btn.dataset.tab = t.id;
-    tabBar.appendChild(btn);
-    tabBtns[t.id] = btn;
-  }
-  root.appendChild(tabBar);
-
-  // --- Panel container ---
-  const body = el('div', 'pl-body');
-
-  // Wallet panel
-  const walletPanel = buildWalletPanel();
-  body.appendChild(walletPanel.el);
-
-  // Upgrades panel
-  const upgradesPanel = buildUpgradesPanel();
-  body.appendChild(upgradesPanel.el);
-
-  // Simulator panel
-  const simulatorPanel = buildSimulatorPanel(levels);
-  body.appendChild(simulatorPanel.el);
-
-  // Reset panel
-  const resetPanel = buildResetPanel();
-  body.appendChild(resetPanel.el);
-
-  root.appendChild(body);
-
-  return {
-    tabBtns,
-    wallet: walletPanel,
-    upgrades: upgradesPanel,
-    simulator: simulatorPanel,
-    reset: resetPanel,
-  };
-}
-
-// --- Wallet ---
-function buildWalletPanel() {
-  const panel = el('div', 'pl-panel');
-  panel.dataset.panel = 'wallet';
-  const rows = {};
-
+  // --- Section Minerais ---
+  root.appendChild(sectionTitle('MINERAIS'));
+  const walletBody = el('div', 'pl-body');
+  const walletRows = {};
   for (const id of MINERAL_IDS) {
     const m = getMineral(id);
     const row = el('div', 'pl-row');
-
     const swatch = el('span', 'pl-swatch');
     swatch.style.background = m.color;
     row.appendChild(swatch);
-
     row.appendChild(txt('span', m.name, 'pl-label'));
-
-    const minus = el('button', 'pl-btn-sm');
-    minus.textContent = '−';
-    minus.dataset.action = 'mineral-minus';
-    minus.dataset.mineral = id;
-    row.appendChild(minus);
-
+    row.appendChild(smBtn('\u2212', 'mineral-minus', { mineral: id }));
     const qty = txt('span', '0', 'pl-qty');
     qty.dataset.mineral = id;
     row.appendChild(qty);
-
-    const plus = el('button', 'pl-btn-sm');
-    plus.textContent = '+';
-    plus.dataset.action = 'mineral-plus';
-    plus.dataset.mineral = id;
-    row.appendChild(plus);
-
-    panel.appendChild(row);
-    rows[id] = qty;
+    row.appendChild(smBtn('+', 'mineral-plus', { mineral: id }));
+    walletBody.appendChild(row);
+    walletRows[id] = qty;
   }
-  return { el: panel, rows };
-}
+  root.appendChild(walletBody);
 
-// --- Upgrades ---
-function buildUpgradesPanel() {
-  const panel = el('div', 'pl-panel');
-  panel.dataset.panel = 'upgrades';
-  const rows = {};
-
+  // --- Section Upgrades ---
+  root.appendChild(sectionTitle('UPGRADES'));
+  const upgradeBody = el('div', 'pl-body');
+  const upgradeRows = {};
   for (const id of UPGRADE_IDS) {
     const u = getUpgrade(id);
     const row = el('div', 'pl-row');
-
     row.appendChild(txt('span', u.name, 'pl-label'));
-
-    const minus = el('button', 'pl-btn-sm');
-    minus.textContent = '−';
-    minus.dataset.action = 'upgrade-minus';
-    minus.dataset.upgrade = id;
-    row.appendChild(minus);
-
-    const levelSpan = txt('span', '0/' + u.maxLevel, 'pl-qty');
-    levelSpan.dataset.upgrade = id;
-    row.appendChild(levelSpan);
-
-    const plus = el('button', 'pl-btn-sm');
-    plus.textContent = '+';
-    plus.dataset.action = 'upgrade-plus';
-    plus.dataset.upgrade = id;
-    row.appendChild(plus);
-
-    panel.appendChild(row);
-    rows[id] = levelSpan;
+    row.appendChild(smBtn('\u2212', 'upgrade-minus', { upgrade: id }));
+    const lvl = txt('span', '0/' + u.maxLevel, 'pl-qty');
+    lvl.dataset.upgrade = id;
+    row.appendChild(lvl);
+    row.appendChild(smBtn('+', 'upgrade-plus', { upgrade: id }));
+    upgradeBody.appendChild(row);
+    upgradeRows[id] = lvl;
   }
-  return { el: panel, rows };
+  root.appendChild(upgradeBody);
+
+  // --- Reset ---
+  const resetBody = el('div', 'pl-body');
+  resetBody.appendChild(el('div', 'pl-separator'));
+  const resetBtn = el('button', 'pl-btn pl-btn-danger');
+  resetBtn.textContent = 'Reset tout';
+  resetBtn.dataset.action = 'reset-all';
+  resetBody.appendChild(resetBtn);
+  const feedback = txt('div', '', 'pl-feedback');
+  resetBody.appendChild(feedback);
+  root.appendChild(resetBody);
+
+  return {
+    wallet: { rows: walletRows },
+    upgrades: { rows: upgradeRows },
+    reset: { feedback },
+  };
 }
 
-// --- Simulator ---
-function buildSimulatorPanel(levels) {
-  const panel = el('div', 'pl-panel');
-  panel.dataset.panel = 'simulator';
+/**
+ * Construit le modal simulateur (popup éphémère).
+ * @param {HTMLElement} root - #pl-simulator
+ * @param {object[]} levels - getAllLevels()
+ */
+export function buildSimulatorModal(root, levels) {
+  root.innerHTML = '';
+
+  const header = el('div', 'pl-sim-title');
+  header.textContent = 'SIMULATEUR DE RUN';
+  root.appendChild(header);
+
+  const body = el('div', 'pl-body');
 
   // Level select
   const levelRow = el('div', 'pl-sim-row');
@@ -161,7 +101,7 @@ function buildSimulatorPanel(levels) {
     select.appendChild(opt);
   }
   levelRow.appendChild(select);
-  panel.appendChild(levelRow);
+  body.appendChild(levelRow);
 
   // Result type
   const resultRow = el('div', 'pl-sim-row');
@@ -176,7 +116,7 @@ function buildSimulatorPanel(levels) {
   defeatBtn.dataset.value = 'defeat';
   resultRow.appendChild(victoryBtn);
   resultRow.appendChild(defeatBtn);
-  panel.appendChild(resultRow);
+  body.appendChild(resultRow);
 
   // Stars
   const starsRow = el('div', 'pl-sim-row');
@@ -185,14 +125,14 @@ function buildSimulatorPanel(levels) {
   const starBtns = [];
   for (let s = 1; s <= 3; s++) {
     const btn = el('button', 'pl-btn-star');
-    btn.textContent = '★'.repeat(s);
+    btn.textContent = '\u2605'.repeat(s);
     btn.dataset.action = 'sim-stars';
     btn.dataset.value = s;
     if (s === 3) btn.classList.add('pl-btn-active');
     starsRow.appendChild(btn);
     starBtns.push(btn);
   }
-  panel.appendChild(starsRow);
+  body.appendChild(starsRow);
 
   // Minerals collected
   const mineralInputs = {};
@@ -203,76 +143,48 @@ function buildSimulatorPanel(levels) {
     swatch.style.background = m.color;
     row.appendChild(swatch);
     row.appendChild(txt('span', m.name, 'pl-label'));
-
-    const minus = el('button', 'pl-btn-sm');
-    minus.textContent = '−';
-    minus.dataset.action = 'sim-mineral-minus';
-    minus.dataset.mineral = id;
-    row.appendChild(minus);
-
+    row.appendChild(smBtn('\u2212', 'sim-mineral-minus', { mineral: id }));
     const qty = txt('span', '0', 'pl-qty');
     qty.dataset.simMineral = id;
     row.appendChild(qty);
-
-    const plus = el('button', 'pl-btn-sm');
-    plus.textContent = '+';
-    plus.dataset.action = 'sim-mineral-plus';
-    plus.dataset.mineral = id;
-    row.appendChild(plus);
-
-    panel.appendChild(row);
+    row.appendChild(smBtn('+', 'sim-mineral-plus', { mineral: id }));
+    body.appendChild(row);
     mineralInputs[id] = qty;
   }
 
   // Lives lost
   const livesRow = el('div', 'pl-sim-row');
   livesRow.appendChild(txt('span', 'Vies perdues :', 'pl-label'));
-  const lMinus = el('button', 'pl-btn-sm');
-  lMinus.textContent = '−';
-  lMinus.dataset.action = 'sim-lives-minus';
-  livesRow.appendChild(lMinus);
+  livesRow.appendChild(smBtn('\u2212', 'sim-lives-minus', {}));
   const livesSpan = txt('span', '0', 'pl-qty');
   livesSpan.dataset.id = 'sim-lives';
   livesRow.appendChild(livesSpan);
-  const lPlus = el('button', 'pl-btn-sm');
-  lPlus.textContent = '+';
-  lPlus.dataset.action = 'sim-lives-plus';
-  livesRow.appendChild(lPlus);
-  panel.appendChild(livesRow);
+  livesRow.appendChild(smBtn('+', 'sim-lives-plus', {}));
+  body.appendChild(livesRow);
 
   // Simulate button
   const simBtn = el('button', 'pl-btn pl-btn-primary');
   simBtn.textContent = 'Simuler';
   simBtn.dataset.action = 'sim-run';
-  panel.appendChild(simBtn);
+  body.appendChild(simBtn);
+
+  // Close button
+  const closeBtn = el('button', 'pl-btn');
+  closeBtn.textContent = 'Annuler';
+  closeBtn.dataset.action = 'sim-close';
+  closeBtn.style.marginTop = '6px';
+  closeBtn.style.width = '100%';
+  body.appendChild(closeBtn);
 
   // Feedback
   const feedback = txt('div', '', 'pl-feedback');
-  panel.appendChild(feedback);
+  body.appendChild(feedback);
+  root.appendChild(body);
 
   return {
-    el: panel,
-    select,
-    victoryBtn, defeatBtn, starBtns, starsRow,
+    select, victoryBtn, defeatBtn, starBtns, starsRow,
     mineralInputs, livesSpan, feedback,
   };
-}
-
-// --- Reset ---
-function buildResetPanel() {
-  const panel = el('div', 'pl-panel');
-  panel.dataset.panel = 'reset';
-
-  panel.appendChild(txt('p', 'Remet à zéro : minerais, upgrades et progression.', 'pl-desc'));
-
-  const btn = el('button', 'pl-btn pl-btn-danger');
-  btn.textContent = 'Confirmer Reset';
-  btn.dataset.action = 'reset-all';
-  panel.appendChild(btn);
-
-  const feedback = txt('div', '', 'pl-feedback');
-  panel.appendChild(feedback);
-  return { el: panel, feedback };
 }
 
 // --- Helpers ---
@@ -281,9 +193,18 @@ function el(tag, cls) {
   if (cls) e.className = cls;
   return e;
 }
-
 function txt(tag, text, cls) {
   const e = el(tag, cls);
   e.textContent = text;
   return e;
+}
+function sectionTitle(text) {
+  return txt('div', text, 'pl-panel-title');
+}
+function smBtn(label, action, data) {
+  const b = el('button', 'pl-btn-sm');
+  b.textContent = label;
+  b.dataset.action = action;
+  for (const [k, v] of Object.entries(data)) b.dataset[k] = v;
+  return b;
 }

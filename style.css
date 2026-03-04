@@ -119,76 +119,72 @@ body.menu #game {
   border-color: #fff;
 }
 
-/* --- Progress Lab (?progress) — overlay DOM par-dessus le canvas --- */
-#progress-lab {
+/* --- Progress Lab — panel unique à droite du canvas --- */
+#pl-panel {
+  display: none;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  width: 240px;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  flex-shrink: 0;
+  background: rgba(10, 10, 26, 0.94);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+  font: 13px/1.5 monospace;
+  color: #ccc;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+#pl-panel.active { display: flex; }
+
+/* Simulator modal (popup éphémère) */
+#pl-simulator {
   display: none;
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10;
+  z-index: 11;
   width: 360px;
   max-width: 95vw;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
-  background: rgba(10, 10, 26, 0.94);
-  border: 1px solid rgba(255, 215, 0, 0.4);
+  flex-direction: column;
+  background: rgba(10, 10, 26, 0.97);
+  border: 1px solid rgba(0, 180, 255, 0.6);
   border-radius: 8px;
   font: 13px/1.5 monospace;
   color: #ccc;
   scrollbar-width: thin;
   scrollbar-color: #333 transparent;
 }
-#progress-lab.active { display: flex; flex-direction: column; }
+#pl-simulator.open { display: flex; }
 
-.pl-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.pl-panel-title {
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 13px;
   padding: 10px 14px 6px;
   border-bottom: 1px solid rgba(255, 215, 0, 0.2);
 }
-.pl-title {
-  color: #ffd700;
+.pl-sim-title {
+  color: #00d4ff;
   font-weight: bold;
   font-size: 14px;
-}
-.pl-close {
-  background: none;
-  border: 1px solid rgba(255,255,255,0.3);
-  color: #aaa;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 3px;
-  padding: 2px 7px;
-}
-.pl-close:hover { color: #fff; border-color: #fff; }
-
-/* Tabs */
-.pl-tabs {
-  display: flex;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.pl-tab {
-  flex: 1;
-  background: none;
-  border: none;
-  color: #888;
-  font: 11px/1 monospace;
-  padding: 8px 4px;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
-}
-.pl-tab:hover { color: #ddd; }
-.pl-tab-active {
-  color: #ffd700;
-  border-bottom-color: #ffd700;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid rgba(0, 180, 255, 0.3);
 }
 
 /* Panels */
-.pl-body { padding: 8px 14px 14px; }
-.pl-panel { display: flex; flex-direction: column; gap: 6px; }
+.pl-body { padding: 8px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+.pl-separator {
+  border-top: 1px solid rgba(255, 215, 0, 0.2);
+  margin: 8px 0;
+}
 
 /* Rows */
 .pl-row {

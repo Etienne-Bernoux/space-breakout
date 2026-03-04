@@ -39,6 +39,8 @@ initProgressLab({
   levels: getAllLevels(),
   saveProgress,
   onBack: () => { hideProgressLab(); showLabHub(); },
+  onSetWorldMap: () => { G.session.goToWorldMap(); },
+  onBackToMenu: () => { G.session.backToMenu(); },
 });
 
 setVolumeChangeCallback((music, sfx) => {

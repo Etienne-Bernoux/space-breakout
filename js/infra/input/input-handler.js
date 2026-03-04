@@ -221,6 +221,11 @@ export class InputHandler {
     const levels = this.infra.getAllLevels();
     const lvl = levels[this.mapState.selectedIndex];
     if (lvl && this.progress.isUnlocked(lvl.id)) {
+      // En mode progress lab → ouvrir le simulateur au lieu de lancer la partie
+      if (this.infra.isProgressLabActive && this.infra.isProgressLabActive()) {
+        this.infra.showSimulatorModal(this.mapState.selectedIndex);
+        return;
+      }
       this.startGame(lvl.id);
     }
   }
@@ -241,7 +246,7 @@ export class InputHandler {
 
     document.addEventListener('keydown', (e) => {
       // Les panels DOM gèrent leurs propres events (Escape, Enter, etc.)
-      if (infra.isProgressLabActive && infra.isProgressLabActive()) return;
+      if (infra.isSimulatorOpen && infra.isSimulatorOpen()) return;
       if (infra.isMusicLabActive()) return;
       if (infra.isDevPanelActive()) return;
       if (this.session.state === 'menu') {

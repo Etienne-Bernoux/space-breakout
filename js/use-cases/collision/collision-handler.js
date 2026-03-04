@@ -70,6 +70,10 @@ export class CollisionHandler {
       this.ui.comboDisplay = this.ui.combo;
       this.ui.comboFadeTimer = this.config.combo.fadeDuration;
     }
+    // Sparkles aux paliers de combo (5, 10, 15, 20…)
+    if (this.ui.combo > 0 && this.ui.combo % 5 === 0) {
+      this.effects.spawnComboSparkle(ev.x, ev.y, this.ui.combo);
+    }
     const shakeAmount = this.config.screenshake.intensity[ev.sizeName]
       || this.config.screenshake.intensity.small;
     this.effects.triggerShake(shakeAmount);

@@ -219,6 +219,34 @@ export function spawnBounceFlash(x, y) {
   }
 }
 
+// --- Sparkles combo milestones (burst doré aux paliers 5, 10, 15…) ---
+const COMBO_COLORS = ['#ffdd44', '#ffcc00', '#ffaa22', '#ffffff', '#ffee88'];
+const RAINBOW = ['#ff4444', '#ff8800', '#ffcc00', '#44ff44', '#4488ff', '#aa44ff', '#ff44aa'];
+export function spawnComboSparkle(x, y, combo) {
+  const count = Math.min(6 + Math.floor(combo / 5) * 2, 18);
+  const useRainbow = combo >= 20;
+  const palette = useRainbow ? RAINBOW : COMBO_COLORS;
+  const rnd = () => palette[Math.floor(Math.random() * palette.length)];
+
+  // Flash doré central
+  const flashSize = 12 + combo * 0.5;
+  particles.push({ x, y, dx: 0, dy: 0, size: flashSize, life: 1, decay: 0.08, color: useRainbow ? '#ffffff' : '#ffee88', noGravity: true });
+
+  // Burst de sparkles
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+    const speed = 1.5 + Math.random() * 3;
+    particles.push({
+      x, y,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      size: 1.5 + Math.random() * 2,
+      life: 1, decay: 0.03 + Math.random() * 0.02,
+      color: rnd(), noGravity: true,
+    });
+  }
+}
+
 // --- Trainée du drone (améliorée : taille + couleur selon vitesse) ---
 export function spawnTrail(x, y, dx = 0, dy = 0) {
   const speed = Math.sqrt(dx * dx + dy * dy);

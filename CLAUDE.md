@@ -83,6 +83,8 @@ js/
     upgrade/
       upgrade-catalog.js → catalogue déclaratif (7 upgrades, 4 catégories, coûts par palier)
       upgrade-manager.js → achat/application upgrades (niveaux, effets, persistence)
+    simulator/
+      run-simulator.js  → applique un résultat simulé (victoire/défaite, étoiles, minerais)
   infra/                → DOM, Canvas, Audio, Input
     orchestrators/
       music-director.js → gère TOUS les sons/musique (reçoit events du GID)
@@ -147,11 +149,12 @@ js/
       draw.js           → rendu panel
       handlers.js       → input panel
       index.js          → façade publique
-    mineral-lab/        → panel test progression (?progress)
-      state.js          → état UI (onglet, sélection)
-      draw.js           → rendu panel (wallet, upgrades, reset)
-      handlers.js       → input clavier (±minerais, force-buy, reset)
-      index.js          → façade publique
+    progress-lab/       → panel test progression DOM (?progress)
+      state.js          → état UI (onglet, simulateur)
+      build.js          → construction DOM (tabs, panels, boutons)
+      update.js         → sync DOM ← state (wallet, upgrades, progress)
+      handlers.js       → event listeners DOM (click, keyboard Escape)
+      index.js          → façade publique (init, show/hide)
     screens/
       upgrade-screen/   → écran d'upgrade (accessible depuis worldMap)
         state.js        → sélection catégorie/upgrade

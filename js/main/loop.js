@@ -38,10 +38,9 @@ export class GameLoop {
 
   // --- State handlers (chaque état a sa propre logique) ---
 
-  #loopMineralLab(ctx) {
-    if (this.infra.drawMineralLab) {
-      this.infra.drawMineralLab(ctx, this.canvas.width, this.canvas.height, this.wallet, this.upgrades);
-    }
+  #loopMineralLab(_ctx) {
+    // Progress lab est maintenant en DOM, pas de canvas draw.
+    // La boucle tourne quand même pour que le fond reste animé si besoin.
   }
 
   #loopMusicLab(ctx, fx) {

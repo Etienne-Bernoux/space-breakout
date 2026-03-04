@@ -238,22 +238,9 @@ export class InputHandler {
   #bindKeyboard() {
     const infra = this.infra;
 
-    // Auto-show progress lab si ?progress
-    if (infra.isMineralLabMode && infra.isMineralLabMode()) {
-      infra.showMineralLab();
-    }
-
     document.addEventListener('keydown', (e) => {
-      // Progress lab intercepte tout
-      if (infra.isMineralLabActive && infra.isMineralLabActive()) {
-        e.preventDefault();
-        const result = infra.handleMineralLabKey(e.key, this.wallet, this.upgrades, this.progress, (p) => {
-          // saveProgress inline (progress-storage importé via init, pas ici)
-          try { localStorage.setItem('space-breakout-progress', JSON.stringify(p.toJSON())); } catch {}
-        });
-        if (result === 'exit') infra.hideMineralLab();
-        return;
-      }
+      // Progress lab est DOM-driven, il gère ses propres events (Escape inclus)
+      if (infra.isMineralLabActive && infra.isMineralLabActive()) return;
       if (infra.isMusicLabActive()) return;
       if (infra.isDevPanelActive()) {
         if (e.key === 'Enter') { infra.hideDevPanel(); this.startGame(); }

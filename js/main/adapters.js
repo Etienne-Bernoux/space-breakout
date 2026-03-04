@@ -12,7 +12,7 @@ import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenu
 import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { drawMineralCapsule, drawMineralHUD } from '../infra/mineral-render.js';
 import { isMusicLabActive, drawMusicLab, handleMusicLabHover, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
-import { isMineralLabMode, isMineralLabActive, showMineralLab, hideMineralLab, drawMineralLab, handleMineralLabKey } from '../infra/mineral-lab/index.js';
+import { isMineralLabMode, isMineralLabActive, showMineralLab, hideMineralLab, isProgressLabMode, initProgressLab, showProgressLab, hideProgressLab } from '../infra/progress-lab/index.js';
 import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
@@ -32,7 +32,7 @@ export const loopInfra = {
   drawCapsule, drawPowerUpHUD, drawMineralCapsule, drawMineralHUD,
   isDevPanelActive, drawDevPanel, handleDevHover,
   isMusicLabActive, drawMusicLab, handleMusicLabHover,
-  isMineralLabActive, drawMineralLab,
+  isMineralLabActive,
   updateDevOverlay,
   drawShip, drawDrone, drawField,
   updateDebris,
@@ -47,7 +47,8 @@ export const inputInfra = {
   handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu,
   isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel,
   isMusicLabActive, handleMusicLabTap, handleMusicLabScroll,
-  isMineralLabMode, isMineralLabActive, showMineralLab, hideMineralLab, handleMineralLabKey,
+  isMineralLabMode, isMineralLabActive, showMineralLab, hideMineralLab,
+  isProgressLabMode, initProgressLab, showProgressLab, hideProgressLab,
   getNodePositions, getUpgradeButtonRect, getStatsButtons, getUpgradeScreenButtons,
   nextCategory, prevCategory, nextUpgrade, prevUpgrade, getVisibleUpgrades,
   getAllLevels,

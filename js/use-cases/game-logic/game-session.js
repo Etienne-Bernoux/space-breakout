@@ -9,7 +9,7 @@ export class GameSession {
     this.canvasHeight = config.canvas.height;
     this.maxLives = config.lives;
     this.basePoints = config.scoring?.basePoints || { large: 40, medium: 20, small: 10 };
-    this.state = 'menu'; // menu | worldMap | playing | paused | gameOver | won | stats
+    this.state = 'menu'; // menu | worldMap | upgrade | playing | paused | gameOver | won | stats
     this.lives = 0;
     this.score = 0;
     this.currentLevelId = null;
@@ -29,6 +29,10 @@ export class GameSession {
 
   goToWorldMap() {
     this.state = 'worldMap';
+  }
+
+  goToUpgrade() {
+    this.state = 'upgrade';
   }
 
   goToStats() {

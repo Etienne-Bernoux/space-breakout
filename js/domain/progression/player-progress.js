@@ -30,6 +30,12 @@ export class PlayerProgress {
     }
   }
 
+  /** Reset complet : remet tout à zéro. */
+  reset() {
+    this.stars.clear();
+    this.unlockedUpTo = 'z1-1';
+  }
+
   toJSON() {
     return {
       stars: Array.from(this.stars.entries()),

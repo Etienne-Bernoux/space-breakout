@@ -12,7 +12,7 @@ export class GameLoop {
    * @param {object} deps.infra      - infra adapters (stars, touch, menu, particles, shake, renderers, panels, devOverlay)
    * @param {object} deps.alienCombat - AlienCombatManager instance
    */
-  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, getLevelResult, alienCombat }) {
+  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, getLevelResult, alienCombat, wallet, upgrades }) {
     this.render = render;
     this.entities = entities;
     this.session = session;
@@ -26,6 +26,8 @@ export class GameLoop {
     this.mapState = mapState;
     this.getLevelResult = getLevelResult;
     this.alienCombat = alienCombat;
+    this.wallet = wallet;
+    this.upgrades = upgrades;
     this.lastTime = 0;
     this.loop = this.loop.bind(this);
   }
@@ -35,6 +37,12 @@ export class GameLoop {
   }
 
   // --- State handlers (chaque état a sa propre logique) ---
+
+  #loopMineralLab(ctx) {
+    if (this.infra.drawMineralLab) {
+      this.infra.drawMineralLab(ctx, this.canvas.width, this.canvas.height, this.wallet, this.upgrades);
+    }
+  }
 
   #loopMusicLab(ctx, fx) {
     const mouse = this.infra.getMousePos();
@@ -61,6 +69,10 @@ export class GameLoop {
       ctx, this.canvas.width, this.canvas.height,
       this.infra.getAllLevels(), this.progress, this.mapState.selectedIndex, this.ui.mapAnimPhase,
     );
+  }
+
+  #loopUpgrade(ctx) {
+    this.infra.drawUpgradeScreen(ctx, this.canvas.width, this.canvas.height, this.wallet, this.upgrades);
   }
 
   #loopStats(ctx, fx, dt) {
@@ -158,6 +170,8 @@ export class GameLoop {
     }
     for (const c of this.entities.capsules) c.update(this.canvas.height, dtEff);
     this.entities.capsules = this.entities.capsules.filter(c => c.alive);
+    for (const mc of this.entities.mineralCapsules) mc.update(this.canvas.height, dtEff);
+    this.entities.mineralCapsules = this.entities.mineralCapsules.filter(mc => mc.alive);
 
     // Combat alien (firePulse, tirs, projectiles)
     if (this.alienCombat) {
@@ -187,10 +201,12 @@ export class GameLoop {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.infra.updateStars(fx.starSpeed);
 
-    document.body.classList.toggle('menu', ['menu', 'paused', 'worldMap', 'stats'].includes(this.session.state));
+    document.body.classList.toggle('menu', ['menu', 'paused', 'worldMap', 'stats', 'upgrade'].includes(this.session.state));
 
     // Overlays prioritaires (interceptent tous les états)
-    if (this.infra.isMusicLabActive()) {
+    if (this.infra.isMineralLabActive && this.infra.isMineralLabActive()) {
+      this.#loopMineralLab(ctx);
+    } else if (this.infra.isMusicLabActive()) {
       this.#loopMusicLab(ctx, fx);
     } else if (this.infra.isDevPanelActive()) {
       this.#loopDevPanel(ctx, fx);
@@ -199,6 +215,7 @@ export class GameLoop {
       const handler = {
         menu:     () => this.#loopMenu(ctx, fx),
         worldMap: () => this.#loopWorldMap(ctx, fx, dt),
+        upgrade:  () => this.#loopUpgrade(ctx),
         stats:    () => this.#loopStats(ctx, fx, dt),
         paused:   () => this.#loopPaused(ctx, fx),
         gameOver: () => this.#loopGameOver(ctx, fx, dt),
@@ -223,6 +240,7 @@ export class GameLoop {
     infra.drawField(ctx, field);
     infra.updateParticles(ctx, dt);
     for (const c of capsules) infra.drawCapsule(ctx, c);
+    for (const mc of this.entities.mineralCapsules) infra.drawMineralCapsule(ctx, mc);
     for (const p of this.entities.projectiles) infra.drawProjectile(ctx, p);
     if (ship.isMobile) this.hud.drawDeathLine(ship, fx);
     infra.drawShip(ctx, ship);
@@ -231,6 +249,7 @@ export class GameLoop {
     this.#drawVignette(ctx, fx);
     this.hud.drawHUD(fx);
     infra.drawPowerUpHUD(ctx, this.systems.powerUp.getActive(), this.canvas.width);
+    if (infra.drawMineralHUD) infra.drawMineralHUD(ctx, this.canvas.width);
     this.hud.drawPauseButton();
     if (this.ui.comboFadeTimer > 0) this.hud.drawCombo(dt);
   }

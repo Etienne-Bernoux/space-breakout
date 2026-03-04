@@ -44,7 +44,9 @@ function mockInfra() {
     updateShake: vi.fn(() => ({ x: 0, y: 0 })),
     setAmbientShake: vi.fn(),
     drawCapsule: vi.fn(),
+    drawMineralCapsule: vi.fn(),
     drawPowerUpHUD: vi.fn(),
+    drawMineralHUD: vi.fn(),
     isDevPanelActive: vi.fn(() => false),
     drawDevPanel: vi.fn(),
     handleDevHover: vi.fn(),
@@ -87,7 +89,7 @@ function makeDeps(overrides = {}) {
 
   return {
     render: { ctx },
-    entities: { ship, drones: [drone], field, capsules: [], projectiles: [] },
+    entities: { ship, drones: [drone], field, capsules: [], mineralCapsules: [], projectiles: [] },
     session: { state: 'playing', lives: 3, score: 0 },
     systems: { intensity, powerUp },
     ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0 },

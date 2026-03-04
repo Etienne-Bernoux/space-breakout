@@ -11,7 +11,7 @@ export class InputHandler {
    * @param {function} deps.startGame
    * @param {object} deps.infra      - infra adapters (touch, menu, devPanel, musicLab)
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, goToWorldMap, finishLevel, progress, mapState, infra }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, goToWorldMap, goToUpgrade, finishLevel, progress, mapState, wallet, upgrades, infra }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -21,9 +21,12 @@ export class InputHandler {
     this.pauseScreenLayout = pauseScreenLayout;
     this.startGame = startGame;
     this.goToWorldMap = goToWorldMap;
+    this.goToUpgrade = goToUpgrade;
     this.finishLevel = finishLevel;
     this.progress = progress;
     this.mapState = mapState;
+    this.wallet = wallet;
+    this.upgrades = upgrades;
     this.infra = infra;
 
     infra.setupTouch();
@@ -95,6 +98,9 @@ export class InputHandler {
       if (this.session.state === 'worldMap') {
         this.#handleWorldMapTap(x, y);
       }
+      if (this.session.state === 'upgrade') {
+        this.#handleUpgradeTap(x, y);
+      }
       if (this.session.state === 'stats') {
         this.#handleStatsTap(x, y);
       }
@@ -127,6 +133,13 @@ export class InputHandler {
   }
 
   #handleWorldMapTap(x, y) {
+    // Bouton ATELIER
+    const atelierBtn = this.infra.getUpgradeButtonRect(this.canvas.width, this.canvas.height);
+    if (this.#hitBtn(x, y, atelierBtn)) {
+      this.goToUpgrade();
+      return;
+    }
+
     const levels = this.infra.getAllLevels();
     const nodes = this.infra.getNodePositions(this.canvas.width, this.canvas.height, levels.length);
     const r = 22;
@@ -146,6 +159,56 @@ export class InputHandler {
       this.#nextLevelOrMap();
     } else if (this.#hitBtn(x, y, btns.map)) {
       this.goToWorldMap();
+    }
+  }
+
+  #handleUpgradeTap(x, y) {
+    const infra = this.infra;
+    const upgList = infra.getVisibleUpgrades();
+    const btns = infra.getUpgradeScreenButtons(this.canvas.width, this.canvas.height, upgList.length);
+
+    // Onglets catégorie
+    for (let i = 0; i < btns.tabs.length; i++) {
+      if (this.#hitBtn(x, y, btns.tabs[i])) {
+        infra.nextCategory();
+        return;
+      }
+    }
+
+    // Items → sélectionner
+    for (let i = 0; i < btns.items.length; i++) {
+      if (this.#hitBtn(x, y, btns.items[i])) {
+        // Navigate to this item
+        while (infra.getVisibleUpgrades().length > 0) {
+          infra.nextUpgrade();
+          break;
+        }
+        return;
+      }
+    }
+
+    // Bouton achat
+    if (this.#hitBtn(x, y, btns.buyBtn)) {
+      this.#tryBuySelectedUpgrade();
+      return;
+    }
+
+    // Retour
+    if (this.#hitBtn(x, y, btns.backBtn)) {
+      this.goToWorldMap();
+    }
+  }
+
+  #tryBuySelectedUpgrade() {
+    const upgList = this.infra.getVisibleUpgrades();
+    // upgradeScreenState.selectedUpgrade gives us the index
+    // We access it through the draw module's getUpgradeScreenButtons which uses state internally
+    // For simplicity, iterate to find the first buyable
+    for (const u of upgList) {
+      if (this.upgrades.canBuy(u.id, this.wallet)) {
+        this.upgrades.buy(u.id, this.wallet);
+        return;
+      }
     }
   }
 
@@ -175,7 +238,22 @@ export class InputHandler {
   #bindKeyboard() {
     const infra = this.infra;
 
+    // Auto-show progress lab si ?progress
+    if (infra.isMineralLabMode && infra.isMineralLabMode()) {
+      infra.showMineralLab();
+    }
+
     document.addEventListener('keydown', (e) => {
+      // Progress lab intercepte tout
+      if (infra.isMineralLabActive && infra.isMineralLabActive()) {
+        e.preventDefault();
+        const result = infra.handleMineralLabKey(e.key, this.wallet, this.upgrades, this.progress, (p) => {
+          // saveProgress inline (progress-storage importé via init, pas ici)
+          try { localStorage.setItem('space-breakout-progress', JSON.stringify(p.toJSON())); } catch {}
+        });
+        if (result === 'exit') infra.hideMineralLab();
+        return;
+      }
       if (infra.isMusicLabActive()) return;
       if (infra.isDevPanelActive()) {
         if (e.key === 'Enter') { infra.hideDevPanel(); this.startGame(); }
@@ -196,7 +274,18 @@ export class InputHandler {
           this.mapState.selectedIndex++;
         }
         if (e.key === ' ' || e.key === 'Enter') this.#launchSelectedLevel();
+        if (e.key === 'u' || e.key === 'U') this.goToUpgrade();
         if (e.key === 'Escape') this.session.backToMenu();
+        return;
+      }
+
+      if (this.session.state === 'upgrade') {
+        if (e.key === 'ArrowLeft') infra.prevCategory();
+        if (e.key === 'ArrowRight') infra.nextCategory();
+        if (e.key === 'ArrowUp') infra.prevUpgrade();
+        if (e.key === 'ArrowDown') infra.nextUpgrade();
+        if (e.key === ' ' || e.key === 'Enter') this.#tryBuySelectedUpgrade();
+        if (e.key === 'Escape') this.goToWorldMap();
         return;
       }
 

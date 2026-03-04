@@ -64,6 +64,19 @@ export const CONFIG = {
     slowMoDuration: 30, // frames de slow-motion sur destruction
   },
 
+  mineralDrop: {
+    baseRate: 0.08,
+    sizeMult: { large: 1.6, medium: 1.0, small: 0.5 },
+  },
+
+  mineralCapsule: {
+    speedY: 1.8,
+    radius: 7,
+    bobSpeed: 0.05,
+    bobAmplitude: 0.3,
+    rotationSpeed: 0.04,
+  },
+
   lives: 3,
   starCount: 120,
 };

@@ -9,6 +9,9 @@ import { loadProgress, saveProgress } from '../infra/persistence/progress-storag
 import { GameSession } from '../use-cases/game-logic/game-session.js';
 import { DropSystem } from '../use-cases/drop/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up/power-up-manager.js';
+import { MineralDropSystem } from '../use-cases/mineral/mineral-drop-system.js';
+import { MineralWallet } from '../use-cases/mineral/mineral-wallet.js';
+import { UpgradeManager } from '../use-cases/upgrade/upgrade-manager.js';
 import { GameIntensityDirector } from '../use-cases/intensity/game-intensity-director.js';
 import { MusicDirector } from '../infra/orchestrators/music-director.js';
 import { EffectDirector } from '../infra/orchestrators/effect-director.js';
@@ -24,6 +27,7 @@ import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input-handler.js';
 import { loopInfra, inputInfra, collisionEffects } from './adapters.js';
+import { initMineralHUD } from '../infra/mineral-render.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -38,6 +42,7 @@ export const G = {
     drones: [],
     field: null,
     capsules: [],
+    mineralCapsules: [],
     projectiles: [],
     totalAsteroids: 0,
   },
@@ -53,12 +58,18 @@ export const G = {
       effects: new EffectDirector(),
     }),
     droneManager: null, // wired below
+    mineralDrop: new MineralDropSystem(CONFIG.mineralDrop),
   },
+  wallet: MineralWallet.load(),
+  upgrades: UpgradeManager.load(),
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null },
   progress: new PlayerProgress(loadProgress()),
   mapState: { selectedIndex: 0 },
   levelResult: null,   // { levelId, stars, timeSpent, livesLost } — set après victoire
 };
+
+// --- Wiring mineral HUD ---
+initMineralHUD(G.wallet);
 
 // --- Wiring PowerUpManager ↔ DroneManager ---
 G.systems.powerUp = new PowerUpManager({
@@ -108,7 +119,8 @@ G.collisionHandler = new CollisionHandler({
   session: G.session,
   systems: G.systems,
   ui: G.ui,
-  config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule, combo: CONFIG.combo },
+  config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule, mineralCapsule: CONFIG.mineralCapsule, combo: CONFIG.combo },
+  wallet: G.wallet,
   effects: collisionEffects,
   getGameState: () => G.gs,
   droneManager: G.systems.droneManager,
@@ -138,6 +150,7 @@ function spawnEntities(ent, levelAsteroids) {
       : CONFIG.asteroids;
   ent.field = new AsteroidField(astConfig);
   ent.capsules = [];
+  ent.mineralCapsules = [];
   ent.projectiles = [];
   ent.totalAsteroids = ent.field.remaining;
 }
@@ -154,12 +167,55 @@ export function startGame(levelId) {
   const level = levelId ? getLevel(levelId) : null;
   spawnEntities(G.entities, level?.asteroids);
   resetSystems(G.systems);
+  applyUpgradeEffects();
   G.session.start(levelId);
+}
+
+/** Applique les effets d'upgrade actifs aux entités / systèmes. */
+function applyUpgradeEffects() {
+  const effects = G.upgrades.getActiveEffects();
+  const ship = G.entities.ship;
+  const drone = G.entities.drones[0];
+
+  // Ship upgrades
+  if (effects.ship) {
+    if (effects.ship.speed) ship.speed *= effects.ship.speed;
+    if (effects.ship.width) {
+      const cx = ship.x + ship.width / 2;
+      ship.width = Math.round(ship.width * effects.ship.width);
+      ship.x = Math.min(cx - ship.width / 2, ship.canvasWidth - ship.width);
+    }
+  }
+  // Drone upgrades
+  if (effects.drone && drone) {
+    if (effects.drone.speed) {
+      drone._baseSpeed *= effects.drone.speed;
+      drone.speed = drone._baseSpeed;
+      drone.dy = -drone.speed;
+    }
+    if (effects.drone.damage) drone.damage = effects.drone.damage;
+  }
+  // Power-up upgrades
+  if (effects.powerUp) {
+    if (effects.powerUp.durationMult) G.systems.powerUp.durationMult = effects.powerUp.durationMult;
+    if (effects.powerUp.dropRateMult) {
+      G.systems.drop.baseRate *= effects.powerUp.dropRateMult;
+    }
+  }
+  // Session upgrades (bonus lives)
+  if (effects.session) {
+    if (effects.session.bonusLives) G.session.lives += effects.session.bonusLives;
+  }
 }
 
 /** Transition vers la carte du monde. */
 export function goToWorldMap() {
   G.session.goToWorldMap();
+}
+
+/** Transition vers l'écran d'upgrade. */
+export function goToUpgrade() {
+  G.session.goToUpgrade();
 }
 
 /** Appelé après victoire : calcule les étoiles, sauvegarde, passe à l'écran stats. */
@@ -199,6 +255,8 @@ G.gameLoop = new GameLoop({
   mapState: G.mapState,
   getLevelResult: () => G.levelResult,
   alienCombat: G.alienCombat,
+  wallet: G.wallet,
+  upgrades: G.upgrades,
 });
 
 G.inputHandler = new InputHandler({
@@ -211,9 +269,12 @@ G.inputHandler = new InputHandler({
   pauseScreenLayout,
   startGame,
   goToWorldMap,
+  goToUpgrade,
   finishLevel,
   progress: G.progress,
   mapState: G.mapState,
+  wallet: G.wallet,
+  upgrades: G.upgrades,
   infra: inputInfra,
 });
 

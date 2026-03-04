@@ -90,6 +90,8 @@ export class PowerUpManager {
   constructor({ droneManager } = {}) {
     this.active = new Map(); // id → { startTime, def, saved }
     this.droneManager = droneManager || null;
+    /** Multiplicateur de durée des power-ups (upgrade). */
+    this.durationMult = 1;
   }
 
   /** Activer un power-up. Si déjà actif → reset timer + cumul. */
@@ -122,7 +124,7 @@ export class PowerUpManager {
   update(gameState, now = Date.now()) {
     for (const [puId, entry] of this.active) {
       if (entry.def.duration === Infinity) continue;
-      if (now - entry.startTime >= entry.def.duration) {
+      if (now - entry.startTime >= entry.def.duration * this.durationMult) {
         const strategy = resolveStrategy(entry.def.effect);
         if (strategy) strategy.revert(gameState, entry.def.effect, entry.saved);
         this.active.delete(puId);
@@ -156,7 +158,7 @@ export class PowerUpManager {
       def: e.def,
       remaining: e.def.duration === Infinity
         ? Infinity
-        : Math.max(0, e.def.duration - (now - e.startTime)),
+        : Math.max(0, e.def.duration * this.durationMult - (now - e.startTime)),
     }));
   }
 

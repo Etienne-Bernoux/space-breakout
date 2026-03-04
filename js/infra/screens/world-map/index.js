@@ -97,12 +97,33 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
     drawMiniShip(ctx, sn.x, shipY, s);
   }
 
+  // Bouton ATELIER (en bas à gauche)
+  const atelierBtn = getUpgradeButtonRect(W, H, s);
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(atelierBtn.x, atelierBtn.y, atelierBtn.w, atelierBtn.h);
+  ctx.fillStyle = 'rgba(255, 215, 0, 0.08)';
+  ctx.fillRect(atelierBtn.x, atelierBtn.y, atelierBtn.w, atelierBtn.h);
+  ctx.fillStyle = '#ffd700';
+  ctx.font = `bold ${Math.round(11 * s)}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('⚒ ATELIER', atelierBtn.x + atelierBtn.w / 2, atelierBtn.y + atelierBtn.h / 2);
+
   // Instructions
   const instrA = 0.3 + Math.sin(t * 2) * 0.08;
   ctx.fillStyle = `rgba(255,255,255,${instrA})`;
   ctx.font = `${Math.round(11 * s)}px monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText('← → pour naviguer  •  ESPACE pour jouer', W / 2, H * 0.94);
+  ctx.fillText('← → pour naviguer  •  ESPACE pour jouer  •  U pour atelier', W / 2, H * 0.94);
   ctx.restore();
+}
+
+/** Retourne le rect du bouton upgrade sur la world map. */
+export function getUpgradeButtonRect(W, H, s) {
+  if (!s) s = gameScale(W);
+  const btnW = Math.round(100 * s);
+  const btnH = Math.round(28 * s);
+  return { x: 15 * s, y: H - 55 * s, w: btnW, h: btnH };
 }

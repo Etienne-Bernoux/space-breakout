@@ -319,6 +319,43 @@ export function playAlienShoot() {
   osc2.stop(now + dur);
 }
 
+/** Ramassage minerai : tink métallique court (fréquence selon rareté) */
+export function playMineralPickup(mineralKey) {
+  const freqs = { copper: 800, silver: 1000, gold: 1200, platinum: 1500 };
+  const freq = freqs[mineralKey] || 900;
+  const ctx = getCtx();
+  const now = ctx.currentTime;
+  const dur = 0.12;
+
+  // Tink métallique : triangle aigu + harmonique
+  const osc = ctx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, now);
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.6, now + dur);
+
+  const osc2 = ctx.createOscillator();
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(freq * 2.5, now);
+  osc2.frequency.exponentialRampToValueAtTime(freq * 1.5, now + dur);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.18, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+  const gain2 = ctx.createGain();
+  gain2.gain.setValueAtTime(0.08, now);
+  gain2.gain.exponentialRampToValueAtTime(0.001, now + dur * 0.8);
+
+  osc.connect(gain);
+  osc2.connect(gain2);
+  gain.connect(sfxGain);
+  gain2.connect(sfxGain);
+  osc.start(now);
+  osc2.start(now);
+  osc.stop(now + dur);
+  osc2.stop(now + dur);
+}
+
 // Débloquer l'audio au premier tap/clic (politique navigateur)
 export function unlockAudio() {
   const ctx = getCtx();

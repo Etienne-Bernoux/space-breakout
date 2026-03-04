@@ -1,20 +1,23 @@
 import { Capsule } from '../../domain/capsule/capsule.js';
+import { MineralCapsule } from '../../domain/mineral/index.js';
+import { getMineral } from '../../domain/mineral/index.js';
 import { getPowerUp } from '../../domain/power-ups.js';
 
 
 export class CollisionHandler {
   /**
    * @param {object} deps
-   * @param {object} deps.entities  - { ship, drones, field, capsules, totalAsteroids }
+   * @param {object} deps.entities  - { ship, drones, field, capsules, mineralCapsules, totalAsteroids }
    * @param {object} deps.session   - GameSession
-   * @param {object} deps.systems   - { drop, powerUp, intensity }
+   * @param {object} deps.systems   - { drop, powerUp, intensity, mineralDrop }
    * @param {object} deps.ui        - { combo, comboDisplay, comboFadeTimer, slowMoTimer }
-   * @param {object} deps.config    - { screenshake, capsule }
+   * @param {object} deps.config    - { screenshake, capsule, mineralCapsule }
    * @param {object} deps.effects   - { spawnExplosion, triggerShake }
    * @param {function} deps.getGameState - () => { ship, drones, session, field }
    * @param {object} deps.droneManager - DroneManager
+   * @param {object} deps.wallet    - MineralWallet
    */
-  constructor({ entities, session, systems, ui, config, effects, getGameState, droneManager }) {
+  constructor({ entities, session, systems, ui, config, effects, getGameState, droneManager, wallet }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -23,6 +26,7 @@ export class CollisionHandler {
     this.config = config;
     this.effects = effects;
     this.droneManager = droneManager || null;
+    this.wallet = wallet || null;
   }
 
   /** Appelé à chaque frame de jeu */
@@ -30,6 +34,7 @@ export class CollisionHandler {
     this.#handleDroneCollisions();
     this.#handleProjectileCollisions();
     this.#handleCapsulePickup();
+    this.#handleMineralPickup();
     this.#handlePowerUpExpiry();
     this.#handleLostDrones();
     this.#handleWinCondition();
@@ -100,6 +105,19 @@ export class CollisionHandler {
       this.entities.capsules.push(new Capsule(puId, ev.x, ev.y, this.config.capsule));
     }
 
+    // Mineral drop
+    const mineralDrop = this.systems.mineralDrop?.decideDrop({
+      materialKey: ev.materialKey || 'rock',
+      sizeName: ev.sizeName || 'small',
+    });
+    if (mineralDrop) {
+      // Léger offset pour ne pas superposer avec la capsule power-up
+      const ox = puId ? (Math.random() - 0.5) * 20 : 0;
+      this.entities.mineralCapsules.push(
+        new MineralCapsule(mineralDrop.mineralKey, mineralDrop.quantity, ev.x + ox, ev.y, this.config.mineralCapsule),
+      );
+    }
+
     this.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, this.ui.combo, ev.materialKey);
     if (field.remaining === 0) {
       this.ui.slowMoTimer = this.config.combo.slowMoDuration;
@@ -148,6 +166,25 @@ export class CollisionHandler {
       this.systems.powerUp.activate(ce.powerUpId, gs);
       this.systems.intensity.onPowerUpActivated();
       this.effects.spawnExplosion(ce.x, ce.y, getPowerUp(ce.powerUpId)?.color || '#fff');
+    }
+  }
+
+  #handleMineralPickup() {
+    if (!this.wallet) return;
+    const ship = this.entities.ship;
+    const minerals = this.entities.mineralCapsules;
+    for (const m of minerals) {
+      if (!m.alive) continue;
+      const cx = Math.max(ship.x, Math.min(m.x, ship.x + ship.width));
+      const cy = Math.max(ship.y, Math.min(m.y, ship.y + ship.height));
+      if (Math.hypot(m.x - cx, m.y - cy) < m.radius + 4) {
+        m.alive = false;
+        this.wallet.add(m.mineralKey, m.quantity);
+        this.wallet.save();
+        const mineral = getMineral(m.mineralKey);
+        this.effects.spawnExplosion(m.x, m.y, mineral?.color || '#ffcc00');
+        if (this.effects.playMineralPickup) this.effects.playMineralPickup(m.mineralKey);
+      }
     }
   }
 

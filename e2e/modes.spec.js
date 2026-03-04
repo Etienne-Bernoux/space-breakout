@@ -65,3 +65,48 @@ test.describe('?mus — Music Lab', () => {
     expect(musicLab).toBe(false);
   });
 });
+
+test.describe('?progress — Progress Lab', () => {
+  test('charge sans erreur console avec ?progress', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', err => errors.push(err.message));
+
+    await page.goto(`${BASE}?progress`);
+    await page.waitForTimeout(1000);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('le progress lab est actif avec ?progress', async ({ page }) => {
+    await page.goto(`${BASE}?progress`);
+    await page.waitForTimeout(500);
+
+    const mineralLab = await page.evaluate(() => window.__GAME__?.mineralLab);
+    expect(mineralLab).toBe(true);
+  });
+
+  test('le progress lab est inactif sans param', async ({ page }) => {
+    await page.goto(BASE);
+    await page.waitForTimeout(500);
+
+    const mineralLab = await page.evaluate(() => window.__GAME__?.mineralLab);
+    expect(mineralLab).toBe(false);
+  });
+
+  test('expose wallet et upgrades via __GAME__', async ({ page }) => {
+    await page.goto(`${BASE}?progress`);
+    await page.waitForTimeout(500);
+
+    const hasWallet = await page.evaluate(() => {
+      const w = window.__GAME__?.wallet;
+      return w && typeof w.get === 'function';
+    });
+    expect(hasWallet).toBe(true);
+
+    const hasUpgrades = await page.evaluate(() => {
+      const u = window.__GAME__?.upgrades;
+      return u && typeof u.getLevel === 'function';
+    });
+    expect(hasUpgrades).toBe(true);
+  });
+});

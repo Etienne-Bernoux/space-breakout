@@ -3,12 +3,14 @@ import { loadDevConfig, isDevMode, isDevPanelActive, showDevPanel } from '../inf
 import { setVolume as setMusicVolume } from '../infra/music/index.js';
 import { setSfxVolume, perceptualVolume } from '../infra/audio.js';
 import { isMusicLab, isMusicLabActive, showMusicLab } from '../infra/music-lab/index.js';
+import { isMineralLabMode, isMineralLabActive, showMineralLab } from '../infra/mineral-lab/index.js';
 import { G } from './init.js';
 
 loadSettings();
 loadDevConfig();
 if (isDevMode()) showDevPanel();
 if (isMusicLab()) showMusicLab();
+if (isMineralLabMode()) showMineralLab();
 
 setVolumeChangeCallback((music, sfx) => {
   setMusicVolume(perceptualVolume(music) * 0.3);
@@ -23,6 +25,9 @@ window.__GAME__ = {
   get remaining(){ return G.entities.field ? G.entities.field.remaining : -1; },
   get devPanel() { return isDevPanelActive(); },
   get musicLab() { return isMusicLabActive(); },
+  get mineralLab() { return isMineralLabActive(); },
+  get wallet() { return G.wallet; },
+  get upgrades() { return G.upgrades; },
   /** Force la victoire en tuant tous les astéroïdes (usage e2e / dev). */
   forceWin() {
     if (!G.entities.field) return;

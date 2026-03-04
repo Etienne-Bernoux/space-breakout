@@ -40,6 +40,11 @@ js/
     ship/ship.js        → vaisseau (raquette)
     drone/drone.js      → drone de minage (balle)
     capsule/capsule.js  → capsule de power-up
+    mineral/            → système de minerais
+      minerals.js       → 4 minerais (cuivre, argent, or, platine)
+      mineral-drop-table.js → matrice matériau×minerai (poids de drop)
+      mineral-capsule.js → entité capsule minerai (chute, bob, rotation)
+      index.js          → façade re-export
     materials.js        → 8 matériaux (roche, glace, lave, métal, cristal, obsidienne, tentacule, noyau alien)
     power-ups.js        → 12 power-ups déclaratifs (P1 + P2 drone)
     patterns.js         → patterns ASCII de niveaux
@@ -72,6 +77,12 @@ js/
       alien-combat-manager.js → tir alien, firePulse decay, projectiles (DI)
     drop/
       drop-system.js    → probabilité de drop
+    mineral/
+      mineral-drop-system.js → décision drop minerai (proba cumulative)
+      mineral-wallet.js → portefeuille persistant (add/spend/canAfford, localStorage)
+    upgrade/
+      upgrade-catalog.js → catalogue déclaratif (7 upgrades, 4 catégories, coûts par palier)
+      upgrade-manager.js → achat/application upgrades (niveaux, effets, persistence)
   infra/                → DOM, Canvas, Audio, Input
     orchestrators/
       music-director.js → gère TOUS les sons/musique (reçoit events du GID)
@@ -86,6 +97,7 @@ js/
     screenshake.js      → tremblement caméra
     power-up-render.js  → rendu capsules + HUD power-ups actifs
     power-up-icons.js   → icônes canvas power-ups (12 icônes)
+    mineral-render.js   → rendu capsules minerais (pépite/cristal) + HUD minerais
     renderers/
       hud-render.js     → HUD, combo, pause screen, end screen
       ship-render.js    → rendu vaisseau
@@ -135,6 +147,16 @@ js/
       draw.js           → rendu panel
       handlers.js       → input panel
       index.js          → façade publique
+    mineral-lab/        → panel test progression (?progress)
+      state.js          → état UI (onglet, sélection)
+      draw.js           → rendu panel (wallet, upgrades, reset)
+      handlers.js       → input clavier (±minerais, force-buy, reset)
+      index.js          → façade publique
+    screens/
+      upgrade-screen/   → écran d'upgrade (accessible depuis worldMap)
+        state.js        → sélection catégorie/upgrade
+        draw.js         → rendu complet (tabs, items, coûts, bouton achat)
+        index.js        → façade publique
     dev-overlay/        → overlay in-game (?dev, desktop only)
       index.js          → panel DOM gauche (boutons power-ups, vie +/-, win, ast -1)
       dev-stats.js      → panel DOM droit (timer, intensité, combo)
@@ -185,7 +207,7 @@ Mobile :
 - **Clean Architecture** : Domain (entités pures) → Use Cases (game logic) → Infra (DOM/Canvas/Audio)
 - **DI systématique** : config injectée par constructeur, toutes les dépendances via `{ deps }` (pas d'import CONFIG dans les entités)
 - GameSession est pur état (~72 lignes), CollisionResolver gère la détection, CollisionHandler orchestre
-- États du jeu : menu → worldMap → playing → paused / gameOver / won → stats → worldMap
+- États du jeu : menu → worldMap → upgrade → playing → paused / gameOver / won → stats → worldMap
 - Canvas interne 800x600 (paysage) ou 800xN (portrait, hauteur dynamique)
 - Fond étoilé parallaxe sur un canvas séparé (bg-canvas, plein écran)
 - Touch & keyboard coexistent
@@ -213,8 +235,8 @@ npm run test:all                  # unit + e2e
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 
-Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, et `forceWin()` (tue tous les astéroïdes).
+Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, `mineralLab`, `wallet`, `upgrades`, et `forceWin()` (tue tous les astéroïdes).
 
-Modes spéciaux : `?dev` (dev panel pré-partie + overlay in-game), `?mus` ou `?music` (music lab).
+Modes spéciaux : `?dev` (dev panel pré-partie + overlay in-game), `?mus` ou `?music` (music lab), `?progress` (progress lab — wallet, upgrades, reset).
 
 Roadmap P2/P3 et idées dans `BACKLOG.md`.

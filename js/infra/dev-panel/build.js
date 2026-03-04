@@ -85,8 +85,8 @@ export function buildDevPanel(root) {
   refs.densityVal = densityVal;
   colLeft.appendChild(densityRow);
 
-  // --- Presets (colonne droite) ---
-  colRight.appendChild(txt('div', 'dp-section-label', 'PRESETS'));
+  // --- Presets (colonne gauche) ---
+  colLeft.appendChild(txt('div', 'dp-section-label', 'PRESETS'));
   const presetGrid = el('div', 'dp-btn-grid');
   for (let i = 0; i < PRESETS.length; i++) {
     const btn = txt('button', 'dp-btn', PRESETS[i].name);
@@ -95,7 +95,7 @@ export function buildDevPanel(root) {
     presetGrid.appendChild(btn);
     refs.presets.push(btn);
   }
-  colRight.appendChild(presetGrid);
+  colLeft.appendChild(presetGrid);
 
   // --- Pattern (colonne droite) ---
   colRight.appendChild(txt('div', 'dp-section-label', 'PATTERN'));

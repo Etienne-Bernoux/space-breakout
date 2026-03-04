@@ -178,7 +178,6 @@ export class GameLoop {
     this.collisionHandler.update();
 
     this.#drawScene(fx, dtEff);
-    infra.updateDevOverlay();
   }
 
   // --- Main loop ---
@@ -220,6 +219,7 @@ export class GameLoop {
       if (handler) handler();
     }
 
+    this.infra.updateDevOverlay();
     requestAnimationFrame(this.loop);
   }
 

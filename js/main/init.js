@@ -88,8 +88,9 @@ export function pauseScreenLayout() {
   const gap = Math.round(16 * s);
   return {
     cx, cy, halfW, btnH, gap, s,
-    resumeBtn: { x: cx - halfW, y: cy, w: halfW * 2, h: btnH },
-    menuBtn:   { x: cx - halfW, y: cy + btnH + gap, w: halfW * 2, h: btnH },
+    resumeBtn: { x: cx - halfW, y: cy + 10 * s, w: halfW * 2, h: btnH },
+    mapBtn:    { x: cx - halfW, y: cy + 10 * s + btnH + gap, w: halfW * 2, h: btnH },
+    menuBtn:   { x: cx - halfW, y: cy + 10 * s + (btnH + gap) * 2, w: halfW * 2, h: btnH },
   };
 }
 
@@ -122,6 +123,7 @@ G.hud = new HudRenderer({
   gameScale,
   pauseBtnLayout,
   pauseScreenLayout,
+  getLevel,
 });
 
 // startGame déclaré avant GameLoop/InputHandler car injecté en dépendance

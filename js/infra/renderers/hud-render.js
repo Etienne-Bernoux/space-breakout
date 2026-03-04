@@ -21,7 +21,7 @@ export class HudRenderer {
    * @param {function} deps.pauseBtnLayout
    * @param {function} deps.pauseScreenLayout
    */
-  constructor({ render, session, ui, canvas, config, gameScale, pauseBtnLayout, pauseScreenLayout }) {
+  constructor({ render, session, ui, canvas, config, gameScale, pauseBtnLayout, pauseScreenLayout, getLevel }) {
     this.render = render;
     this.session = session;
     this.ui = ui;
@@ -30,6 +30,7 @@ export class HudRenderer {
     this.gameScale = gameScale;
     this.pauseBtnLayout = pauseBtnLayout;
     this.pauseScreenLayout = pauseScreenLayout;
+    this.getLevel = getLevel || (() => null);
   }
 
   drawHUD(fx) {
@@ -133,7 +134,7 @@ export class HudRenderer {
   drawPauseScreen() {
     const ctx = this.render.ctx;
     const layout = this.pauseScreenLayout();
-    const { cx, cy, s, resumeBtn, menuBtn } = layout;
+    const { cx, cy, s, resumeBtn, mapBtn, menuBtn } = layout;
     const t = Date.now() * 0.001;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -148,8 +149,21 @@ export class HudRenderer {
     ctx.shadowBlur = pausePulse;
     ctx.fillStyle = '#00d4ff';
     ctx.font = `bold ${Math.round(32 * s)}px monospace`;
-    ctx.fillText('PAUSE', cx, cy - 40 * s);
+    ctx.fillText('PAUSE', cx, cy - 70 * s);
     ctx.shadowBlur = 0;
+
+    // Infos partie en cours
+    const infoY = cy - 38 * s;
+    const infoSize = Math.round(13 * s);
+    ctx.font = `${infoSize}px monospace`;
+    const level = this.getLevel(this.session.currentLevelId);
+    const levelName = level?.name || '';
+    if (levelName) {
+      ctx.fillStyle = '#667788';
+      ctx.fillText(levelName, cx, infoY);
+    }
+    ctx.fillStyle = '#8899aa';
+    ctx.fillText(`SCORE: ${this.session.score}   VIES: ${this.session.lives}`, cx, infoY + infoSize + 4 * s);
 
     // Bouton REPRENDRE (primaire, glow cyan)
     this.#drawButton(ctx, resumeBtn, 'REPRENDRE', {
@@ -161,7 +175,17 @@ export class HudRenderer {
       cx, s,
     });
 
-    // Bouton MENU (secondaire, subtil)
+    // Bouton CARTE (secondaire doré)
+    this.#drawButton(ctx, mapBtn, 'CARTE', {
+      fillColor: 'rgba(139, 105, 20, 0.1)',
+      strokeColor: '#8b6914',
+      textColor: '#ccaa44',
+      glowColor: '#8b6914',
+      glowBlur: 4,
+      cx, s,
+    });
+
+    // Bouton MENU (tertiaire, subtil)
     this.#drawButton(ctx, menuBtn, 'MENU', {
       fillColor: 'rgba(255, 255, 255, 0.04)',
       strokeColor: '#445566',
@@ -176,7 +200,7 @@ export class HudRenderer {
       ctx.font = `${Math.round(12 * s)}px monospace`;
       const instrA = 0.35 + Math.sin(t * 2) * 0.1;
       ctx.fillStyle = `rgba(68, 85, 102, ${instrA})`;
-      ctx.fillText('ÉCHAP REPRENDRE  ·  R MENU', cx, menuBtn.y + menuBtn.h + 30 * s);
+      ctx.fillText('ÉCHAP REPRENDRE  ·  C CARTE  ·  R MENU', cx, menuBtn.y + menuBtn.h + 30 * s);
     }
 
     ctx.restore();

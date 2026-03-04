@@ -99,12 +99,15 @@ export class InputHandler {
         this.#handleStatsTap(x, y);
       }
       if (this.session.state === 'paused') {
-        const { resumeBtn, menuBtn } = this.pauseScreenLayout();
-        if (x >= resumeBtn.x && x <= resumeBtn.x + resumeBtn.w && y >= resumeBtn.y && y <= resumeBtn.y + resumeBtn.h) {
+        const { resumeBtn, mapBtn, menuBtn } = this.pauseScreenLayout();
+        if (this.#hitBtn(x, y, resumeBtn)) {
           this.session.resume();
           this.systems.intensity.onResume();
         }
-        if (x >= menuBtn.x && x <= menuBtn.x + menuBtn.w && y >= menuBtn.y && y <= menuBtn.y + menuBtn.h) {
+        if (this.#hitBtn(x, y, mapBtn)) {
+          this.goToWorldMap();
+        }
+        if (this.#hitBtn(x, y, menuBtn)) {
           infra.resetMenu();
           this.session.backToMenu();
           if (infra.isDevMode()) infra.showDevPanel();
@@ -212,6 +215,7 @@ export class InputHandler {
 
       if (this.session.state === 'paused') {
         if (e.key === 'Escape') { this.session.resume(); this.systems.intensity.onResume(); }
+        if (e.key === 'c') { this.goToWorldMap(); }
         if (e.key === 'r') { infra.resetMenu(); this.session.backToMenu(); if (infra.isDevMode()) infra.showDevPanel(); }
         return;
       }

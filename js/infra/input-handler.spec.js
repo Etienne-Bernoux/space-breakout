@@ -54,7 +54,8 @@ function makeDeps(overrides = {}) {
     pauseScreenLayout: () => ({
       cx: 250, cy: 350, halfW: 200, btnH: 44, gap: 16, s: 1,
       resumeBtn: { x: 50, y: 350, w: 400, h: 44 },
-      menuBtn:   { x: 50, y: 410, w: 400, h: 44 },
+      mapBtn:    { x: 50, y: 410, w: 400, h: 44 },
+      menuBtn:   { x: 50, y: 470, w: 400, h: 44 },
     }),
     startGame: vi.fn(),
     goToWorldMap: vi.fn(),

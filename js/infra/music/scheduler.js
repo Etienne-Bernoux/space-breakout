@@ -96,6 +96,12 @@ function startMusic() {
   if (playing) return;
   const c = getCtx();
   if (c.state === 'suspended') c.resume();
+  // Restaurer le masterGain (peut être à 0 après un fadeOut)
+  const mg = getMasterGain();
+  if (mg) {
+    mg.gain.cancelScheduledValues(c.currentTime);
+    mg.gain.setValueAtTime(0.3, c.currentTime);
+  }
   playing = true;
   loopIndex = 0;
   scheduleNextSection();

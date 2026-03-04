@@ -76,6 +76,45 @@ export function playAsteroidHit() {
   playTone(150, 0.15, 'sawtooth', 0.1, 60);
 }
 
+/** Impact alien : grincement organique (2 oscs désaccordés + vibrato) */
+export function playAlienHit() {
+  const ctx = getCtx();
+  const now = ctx.currentTime;
+  const dur = 0.25;
+
+  const osc1 = ctx.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(400, now);
+  osc1.frequency.exponentialRampToValueAtTime(180, now + dur);
+
+  const osc2 = ctx.createOscillator();
+  osc2.type = 'square';
+  osc2.frequency.setValueAtTime(430, now);
+  osc2.frequency.exponentialRampToValueAtTime(150, now + dur);
+
+  // Vibrato via LFO
+  const lfo = ctx.createOscillator();
+  const lfoGain = ctx.createGain();
+  lfo.frequency.value = 30;
+  lfoGain.gain.value = 40;
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc1.frequency);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.15, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+  osc1.connect(gain);
+  osc2.connect(gain);
+  gain.connect(sfxGain);
+  lfo.start(now);
+  osc1.start(now);
+  osc2.start(now);
+  lfo.stop(now + dur);
+  osc1.stop(now + dur);
+  osc2.stop(now + dur);
+}
+
 export function playLoseLife() {
   playTone(400, 0.4, 'sawtooth', 0.2, 80);
 }
@@ -161,6 +200,70 @@ export function playShipExplosion() {
   kick2Gain.connect(sfxGain);
   kick2.start(now + 0.25);
   kick2.stop(now + 0.6);
+}
+
+/** Explosion boss : double boom grave + bruit filtré + harmonique alien */
+export function playBossExplosion() {
+  const ctx = getCtx();
+  const now = ctx.currentTime;
+
+  // Kick grave principal
+  const kick = ctx.createOscillator();
+  const kickG = ctx.createGain();
+  kick.type = 'sine';
+  kick.frequency.setValueAtTime(100, now);
+  kick.frequency.exponentialRampToValueAtTime(25, now + 0.4);
+  kickG.gain.setValueAtTime(0.7, now);
+  kickG.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+  kick.connect(kickG);
+  kickG.connect(sfxGain);
+  kick.start(now);
+  kick.stop(now + 0.6);
+
+  // Second boom décalé
+  const kick2 = ctx.createOscillator();
+  const kick2G = ctx.createGain();
+  kick2.type = 'sine';
+  kick2.frequency.setValueAtTime(80, now + 0.2);
+  kick2.frequency.exponentialRampToValueAtTime(20, now + 0.6);
+  kick2G.gain.setValueAtTime(0.5, now + 0.2);
+  kick2G.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  kick2.connect(kick2G);
+  kick2G.connect(sfxGain);
+  kick2.start(now + 0.2);
+  kick2.stop(now + 0.8);
+
+  // Bruit filtré (souffle)
+  const bufLen = ctx.sampleRate * 1.2;
+  const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+  const nG = ctx.createGain();
+  nG.gain.setValueAtTime(0.35, now);
+  nG.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+  const nF = ctx.createBiquadFilter();
+  nF.type = 'lowpass';
+  nF.frequency.setValueAtTime(600, now);
+  nF.frequency.exponentialRampToValueAtTime(60, now + 1.0);
+  noise.connect(nF);
+  nF.connect(nG);
+  nG.connect(sfxGain);
+  noise.start(now);
+
+  // Grincement alien aigu (harmonique organique)
+  const alien = ctx.createOscillator();
+  const alienG = ctx.createGain();
+  alien.type = 'sawtooth';
+  alien.frequency.setValueAtTime(800, now + 0.05);
+  alien.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+  alienG.gain.setValueAtTime(0.1, now + 0.05);
+  alienG.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  alien.connect(alienG);
+  alienG.connect(sfxGain);
+  alien.start(now + 0.05);
+  alien.stop(now + 0.5);
 }
 
 export function playGameOver() {

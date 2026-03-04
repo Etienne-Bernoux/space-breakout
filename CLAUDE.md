@@ -33,6 +33,7 @@ js/
     responsive.js       → gameScale() centralisé (clamp 0.6–1.0)
   main/                 → composition root (wiring, boucle)
     init.js             → canvas, instances, startGame, état partagé (G), wiring DI
+    adapters.js         → regroupement imports infra pour injection (loopInfra, inputInfra, collisionEffects)
     loop.js             → boucle principale, state dispatch map, slow-motion
     index.js            → point d'entrée, bootstrap
   domain/               → entités pures (config injectée, 0 dépendance)
@@ -76,7 +77,8 @@ js/
       music-director.js → gère TOUS les sons/musique (reçoit events du GID)
       effect-director.js → effets visuels par intensité (lerp entre presets)
     input-handler.js    → handlers tactiles/clavier, pause
-    stars.js            → fond étoilé parallaxe
+    stars.js            → fond étoilé parallaxe (étoiles uniquement)
+    celestial-bodies.js → planètes et nébuleuses en fond (couche intermédiaire)
     resize.js           → canvas responsive
     touch.js            → contrôles tactiles + souris
     particles.js        → explosions + traînée

@@ -3,15 +3,16 @@
 // Les consommateurs (collisions, input) n'appellent jamais directement audio/music.
 //
 // Ports attendus (DI) :
-//   music  : { enable, disable, onBounce, onAsteroidHit, onCombo, onPowerUp,
-//              onLoseLife, onLaunch, onPause, onResume, onWin, onGameOver,
+//   music  : { enable, disable, onBounce, onAsteroidHit, onBossDestroyed, onCombo,
+//              onPowerUp, onLoseLife, onLaunch, onPause, onResume, onWin, onGameOver,
 //              setIntensity, requestSectionChange }
 //   effects: { setIntensity, update, getEffects }
 
 const COMBO_DECAY_INTERVAL = 3000; // ms entre chaque -1 combo
 
 const NOOP_MUSIC = {
-  enable() { /* accepts { boss } */ }, disable() {}, update() {}, onBounce() {}, onAsteroidHit() {}, onCombo() {},
+  enable() { /* accepts { boss } */ }, disable() {}, update() {}, onBounce() {},
+  onAsteroidHit() {}, onBossDestroyed() {}, onCombo() {},
   onPowerUp() {}, onLoseLife() {}, onLaunch() {}, onPause() {}, onResume() {},
   onWin() {}, onGameOver() {}, setIntensity() {}, requestSectionChange() {},
 };
@@ -72,12 +73,16 @@ export class GameIntensityDirector {
     this._recalculate();
   }
 
-  onAsteroidHit() {
-    this.music.onAsteroidHit();
+  onAsteroidHit(materialKey) {
+    this.music.onAsteroidHit(materialKey);
   }
 
-  onAsteroidDestroyed(remaining, total, combo) {
-    this.music.onAsteroidHit();
+  onBossDestroyed() {
+    this.music.onBossDestroyed();
+  }
+
+  onAsteroidDestroyed(remaining, total, combo, materialKey) {
+    this.music.onAsteroidHit(materialKey);
     if (!this.enabled) return;
     this._touch();
     this.combo++;

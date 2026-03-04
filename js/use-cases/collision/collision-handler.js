@@ -52,7 +52,7 @@ export class CollisionHandler {
       const ev2 = this.session.checkAsteroidCollision(drone, field);
       if (ev2) {
         this.effects.spawnExplosion(ev2.x, ev2.y, ev2.color);
-        intensity.onAsteroidHit();
+        intensity.onAsteroidHit(ev2.materialKey);
         if (ev2.type === 'asteroidHit' || ev2.type === 'asteroidFragment') {
           this.#onAsteroidDestroyed(ev2, field, totalAsteroids, drop);
         }
@@ -71,9 +71,18 @@ export class CollisionHandler {
       || this.config.screenshake.intensity.small;
     this.effects.triggerShake(shakeAmount);
 
-    // Boss détruit → tue les tentacules
+    // Tentacule détruite → grosse explosion alien
+    if (ev.materialKey === 'tentacle') {
+      this.effects.spawnAlienExplosion(ev.x, ev.y);
+    }
+
+    // Boss détruit → tue les tentacules + spectacle total
     if (ev.material?.isBoss) {
       field.killTentacles();
+      this.effects.spawnBossExplosion(ev.x, ev.y);
+      this.effects.triggerShake(18);
+      this.ui.slowMoTimer = this.config.combo.fadeDuration; // long slow-mo
+      this.systems.intensity.onBossDestroyed();
     }
 
     const puId = drop.decideDrop({
@@ -84,7 +93,7 @@ export class CollisionHandler {
       this.entities.capsules.push(new Capsule(puId, ev.x, ev.y, this.config.capsule));
     }
 
-    this.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, this.ui.combo);
+    this.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, this.ui.combo, ev.materialKey);
     if (field.remaining === 0) {
       this.ui.slowMoTimer = this.config.combo.slowMoDuration;
     }

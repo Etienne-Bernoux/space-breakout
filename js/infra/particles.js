@@ -107,6 +107,98 @@ export function spawnShipExplosion(x, y) {
   }
 }
 
+// --- Explosion alien (tentacule détruite) ---
+const ALIEN_COLORS = ['#33cc55', '#22aa44', '#44dd66', '#119933', '#55ff77'];
+export function spawnAlienExplosion(x, y) {
+  const rnd = () => ALIEN_COLORS[Math.floor(Math.random() * ALIEN_COLORS.length)];
+  // Flash vert
+  particles.push({ x, y, dx: 0, dy: 0, size: 22, life: 1, decay: 0.06, color: '#55ff77', noGravity: true });
+  // Éclats verts
+  for (let i = 0; i < 18; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 3.5;
+    particles.push({
+      x: x + (Math.random() - 0.5) * 12,
+      y: y + (Math.random() - 0.5) * 12,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      size: 2 + Math.random() * 4,
+      life: 1, decay: 0.012 + Math.random() * 0.015,
+      color: rnd(), noGravity: true,
+    });
+  }
+}
+
+// --- Explosion boss (destruction spectaculaire) ---
+const BOSS_COLORS = ['#33cc55', '#22aa44', '#55ff77', '#ffffff', '#88ffaa', '#44dd66', '#00ff44'];
+export function spawnBossExplosion(x, y) {
+  const rnd = () => BOSS_COLORS[Math.floor(Math.random() * BOSS_COLORS.length)];
+  const ng = true;
+
+  // Double flash (blanc puis vert)
+  particles.push({ x, y, dx: 0, dy: 0, size: 50, life: 1, decay: 0.025, color: '#ffffff', noGravity: ng });
+  particles.push({ x, y, dx: 0, dy: 0, size: 35, life: 1, decay: 0.02, color: '#55ff77', noGravity: ng });
+
+  // Vague 1 : boule d'énergie — grosses particules lentes
+  for (let i = 0; i < 35; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.3 + Math.random() * 1.5;
+    particles.push({
+      x: x + (Math.random() - 0.5) * 40,
+      y: y + (Math.random() - 0.5) * 30,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      size: 5 + Math.random() * 8,
+      life: 1, decay: 0.004 + Math.random() * 0.006,
+      color: rnd(), noGravity: ng,
+    });
+  }
+
+  // Vague 2 : débris moyens
+  for (let i = 0; i < 30; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 4;
+    particles.push({
+      x: x + (Math.random() - 0.5) * 20,
+      y: y + (Math.random() - 0.5) * 15,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      size: 2.5 + Math.random() * 5,
+      life: 1, decay: 0.008 + Math.random() * 0.012,
+      color: rnd(), noGravity: ng,
+    });
+  }
+
+  // Vague 3 : étincelles rapides
+  for (let i = 0; i < 25; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 3.5 + Math.random() * 6;
+    particles.push({
+      x, y,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      size: 1 + Math.random() * 2.5,
+      life: 1, decay: 0.015 + Math.random() * 0.02,
+      color: '#aaffcc', noGravity: ng,
+    });
+  }
+
+  // Vague 4 : braises organiques lentes
+  for (let i = 0; i < 15; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.2 + Math.random() * 0.7;
+    particles.push({
+      x: x + (Math.random() - 0.5) * 50,
+      y: y + (Math.random() - 0.5) * 30,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      size: 1.5 + Math.random() * 3,
+      life: 1, decay: 0.004 + Math.random() * 0.005,
+      color: '#33cc55', noGravity: ng,
+    });
+  }
+}
+
 // --- Trainée du drone ---
 export function spawnTrail(x, y) {
   trail.push({

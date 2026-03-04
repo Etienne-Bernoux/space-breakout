@@ -11,8 +11,8 @@ import {
 } from '../music/index.js';
 
 import {
-  playBounce, playAsteroidHit, playLoseLife,
-  playWin, playGameOver, playShipExplosion, playLaunch, unlockAudio,
+  playBounce, playAsteroidHit, playAlienHit, playLoseLife,
+  playWin, playGameOver, playShipExplosion, playBossExplosion, playLaunch, unlockAudio,
 } from '../audio.js';
 
 // BPM par niveau d'intensité : calm→climax
@@ -88,7 +88,12 @@ export class MusicDirector {
 
   onBounce() { playBounce(); }
 
-  onAsteroidHit() { playAsteroidHit(); }
+  onAsteroidHit(materialKey) {
+    if (materialKey === 'tentacle' || materialKey === 'alienCore') playAlienHit();
+    else playAsteroidHit();
+  }
+
+  onBossDestroyed() { playBossExplosion(); }
 
   onCombo(combo) {
     if (combo > 0 && combo % 5 === 0) playComboMilestone(combo);

@@ -1,8 +1,8 @@
 // --- Rendu des capsules et HUD power-ups ---
 
-import { getPowerUp } from '../domain/power-ups.js';
+import { getPowerUp } from '../../domain/power-ups.js';
 import { drawIcon } from './power-up-icons.js';
-import { gameScale } from '../shared/responsive.js';
+import { gameScale } from '../../shared/responsive.js';
 
 /** Dessiner une capsule qui tombe (bob, pulse, sparkles). */
 export function drawCapsule(ctx, capsule) {

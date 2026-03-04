@@ -2,7 +2,7 @@
 // Draw functions removed (DOM version).
 
 import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../../music/index.js';
-import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion } from '../../audio.js';
+import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion } from '../../sfx/audio.js';
 
 // --- Data multi-pistes ---
 export const TRACKS = [

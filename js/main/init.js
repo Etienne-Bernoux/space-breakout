@@ -15,8 +15,8 @@ import { UpgradeManager } from '../use-cases/upgrade/upgrade-manager.js';
 import { GameIntensityDirector } from '../use-cases/intensity/game-intensity-director.js';
 import { MusicDirector } from '../infra/orchestrators/music-director.js';
 import { EffectDirector } from '../infra/orchestrators/effect-director.js';
-import { setupResize } from '../infra/resize.js';
-import { playAlienShoot } from '../infra/audio.js';
+import { setupResize } from '../infra/input/resize.js';
+import { playAlienShoot } from '../infra/sfx/audio.js';
 import { getDevAsteroidConfig } from '../infra/lab/dev-panel/index.js';
 import { isLabMode } from '../infra/lab/hub/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
@@ -26,9 +26,9 @@ import { AlienProjectile } from '../domain/projectile/index.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
-import { InputHandler } from '../infra/input-handler.js';
+import { InputHandler } from '../infra/input/input-handler.js';
 import { loopInfra, inputInfra, collisionEffects } from './adapters.js';
-import { initMineralHUD } from '../infra/mineral-render.js';
+import { initMineralHUD } from '../infra/renderers/mineral-render.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');

@@ -1,7 +1,7 @@
 // --- Rendu des capsules minerai et HUD minerais ---
 
-import { getMineral, MINERAL_IDS } from '../domain/mineral/index.js';
-import { gameScale } from '../shared/responsive.js';
+import { getMineral, MINERAL_IDS } from '../../domain/mineral/index.js';
+import { gameScale } from '../../shared/responsive.js';
 
 /** Dessiner une capsule minerai qui tombe (pépite ou cristal). */
 export function drawMineralCapsule(ctx, mc) {

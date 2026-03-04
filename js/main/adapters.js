@@ -1,17 +1,17 @@
 // --- Infra adapters : regroupement des imports infra pour injection dans GameLoop / InputHandler ---
 // Extrait de init.js pour alléger la composition root.
 
-import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnTrail, updateParticles } from '../infra/particles.js';
-import { playAlienShoot, playMineralPickup } from '../infra/audio.js';
-import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
+import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnTrail, updateParticles } from '../infra/effects/particles.js';
+import { playAlienShoot, playMineralPickup } from '../infra/sfx/audio.js';
+import { triggerShake, updateShake, setAmbientShake } from '../infra/effects/screenshake.js';
 import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/lab/dev-panel/index.js';
 import { isLabMode, isLabHubActive } from '../infra/lab/hub/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
-import { updateStars } from '../infra/stars.js';
-import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
+import { updateStars } from '../infra/effects/stars.js';
+import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/input/touch.js';
 import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
-import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
-import { drawMineralCapsule, drawMineralHUD } from '../infra/mineral-render.js';
+import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/power-up-render.js';
+import { drawMineralCapsule, drawMineralHUD } from '../infra/renderers/mineral-render.js';
 import { isMusicLabActive } from '../infra/lab/music-lab/index.js';
 import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
 import { drawShip } from '../infra/renderers/ship-render.js';

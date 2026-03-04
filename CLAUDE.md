@@ -89,22 +89,26 @@ js/
     orchestrators/
       music-director.js → gère TOUS les sons/musique (reçoit events du GID)
       effect-director.js → effets visuels par intensité (lerp entre presets)
-    input-handler.js    → handlers tactiles/clavier, pause
-    stars.js            → fond étoilé parallaxe (étoiles uniquement)
-    celestial-bodies.js → planètes et nébuleuses en fond (couche intermédiaire)
-    resize.js           → canvas responsive
-    touch.js            → contrôles tactiles + souris
-    particles.js        → explosions + traînée
-    audio.js            → sons procéduraux (SFX)
-    screenshake.js      → tremblement caméra
-    power-up-render.js  → rendu capsules + HUD power-ups actifs
-    power-up-icons.js   → icônes canvas power-ups (12 icônes)
-    mineral-render.js   → rendu capsules minerais (pépite/cristal) + HUD minerais
+    input/              → interaction utilisateur + viewport
+      input-handler.js  → handlers tactiles/clavier, pause
+      touch.js          → contrôles tactiles + souris
+      resize.js         → canvas responsive
+    effects/            → effets visuels et fond
+      particles.js      → explosions + traînée
+      screenshake.js    → tremblement caméra
+      stars.js          → fond étoilé parallaxe (étoiles uniquement)
+      celestial-bodies.js → planètes et nébuleuses en fond
+    sfx/                → sons procéduraux
+      audio.js          → SFX procéduraux (Web Audio)
+      sfxr-synth.js     → synthèse SFXR
     renderers/
       hud-render.js     → HUD, combo, pause screen, end screen
       ship-render.js    → rendu vaisseau
       drone-render.js   → rendu drone
       field-render.js   → rendu champ d'astéroïdes
+      power-up-render.js → rendu capsules + HUD power-ups actifs
+      power-up-icons.js → icônes canvas power-ups (12 icônes)
+      mineral-render.js → rendu capsules minerais (pépite/cristal) + HUD minerais
       asteroid-render.js → rendu par matériau (6 styles minéraux)
       asteroid-render-helpers.js → helpers partagés (couleurs, cratères, veines, rim)
       alien-creature-render/ → rendu créature alien (dossier-module)
@@ -177,6 +181,9 @@ playwright.config.js    → config Playwright (serve sur :3333)
 
 ### Limite de taille : 300 lignes max par fichier
 Si un fichier dépasse ~300 lignes, le transformer en **dossier** avec un `index.js` façade.
+
+### Limite de fichiers : 5 fichiers max à plat par dossier (hors tests)
+Si un dossier contient plus de 5 fichiers `.js` (hors `.spec.js`), regrouper les fichiers en sous-dossiers thématiques.
 
 ### Pattern dossier-module
 Quand un fichier est splitté en dossier :

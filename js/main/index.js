@@ -1,7 +1,7 @@
 import { loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from '../infra/menu/index.js';
 import { loadDevConfig, isDevPanelActive, showDevPanel, hideDevPanel, initDevPanel } from '../infra/lab/dev-panel/index.js';
 import { setVolume as setMusicVolume } from '../infra/music/index.js';
-import { setSfxVolume, perceptualVolume } from '../infra/audio.js';
+import { setSfxVolume, perceptualVolume } from '../infra/sfx/audio.js';
 import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../infra/lab/music-lab/index.js';
 import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
 import { isLabMode, initLabHub, showLabHub, hideLabHub, isLabHubActive } from '../infra/lab/hub/index.js';

@@ -2,13 +2,25 @@
 // Sync DOM ← state, music API. Layout 2 colonnes, pas de tabs.
 
 import { isPlaying, getCurrentSection, getLayerVolumes, getTrack } from '../music/index.js';
-import { getActivityProgress, getSim, isMuffled } from './state.js';
+import { getCurrentTab, getActivityProgress, getSim, isMuffled } from './state.js';
 import { getInstruments } from './tab-sons.js';
 
 const INTENSITY_LABELS = ['CALM', 'CRUISE', 'ACTION', 'INTENSE', 'CLIMAX'];
 const INTENSITY_COLORS = ['#44aa66', '#88cc44', '#ccaa33', '#ff6644', '#ff2244'];
 
 export function updateMusicLab(refs) {
+  const tab = getCurrentTab();
+
+  // Tabs
+  for (let i = 0; i < refs.tabs.length; i++) {
+    refs.tabs[i].classList.toggle('ml-tab-active', i === tab);
+  }
+
+  // Panels
+  for (let i = 0; i < refs.panels.length; i++) {
+    refs.panels[i].style.display = i === tab ? '' : 'none';
+  }
+
   // Track buttons
   const currentTrack = getTrack();
   for (const t of refs.trackBtns) {

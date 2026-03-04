@@ -4,6 +4,7 @@
 const state = {
   active: false,
   muffled: false,
+  currentTab: 0,
   activity: { label: null, startTime: 0, duration: 0 },
   loopStartTime: 0,
   sim: {
@@ -23,6 +24,9 @@ export function setActive(value) { state.active = value; }
 
 export function isMuffled() { return state.muffled; }
 export function setMuffled(value) { state.muffled = value; }
+
+export function getCurrentTab() { return state.currentTab; }
+export function setCurrentTab(value) { state.currentTab = value; }
 
 export function getActivity() { return state.activity; }
 export function setActivity(label, duration) {

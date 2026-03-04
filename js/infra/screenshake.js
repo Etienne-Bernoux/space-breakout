@@ -1,13 +1,17 @@
 // --- Screenshake (infra) ---
-// Tremblement du canvas sur destruction d'astéroïde.
-// trigger(intensity) lance un shake, update() retourne l'offset courant.
+// Tremblement du canvas — punch initial + ease-out + fréquence variable.
 
+let maxIntensity = 0;  // intensité initiale (pour ease-out)
 let intensity = 0;
-let decay = 0.85;
+let elapsed = 0;        // frames écoulées depuis le trigger
 let ambientAmount = 0;
 
 export function triggerShake(amount) {
-  intensity = Math.max(intensity, amount);
+  if (amount > intensity) {
+    maxIntensity = amount;
+    intensity = amount;
+    elapsed = 0;
+  }
 }
 
 /** Micro-shake constant piloté par l'intensité gameplay. */
@@ -17,12 +21,22 @@ export function setAmbientShake(amount) {
 
 export function updateShake(dt = 1) {
   let total = ambientAmount;
+
   if (intensity >= 0.5) {
-    total += intensity;
-    intensity *= Math.pow(decay, dt);
+    elapsed += dt;
+    // Ease-out quadratique : punch fort au début, décroissance rapide
+    const t = Math.min(elapsed / (maxIntensity * 2.5), 1); // durée proportionnelle à l'intensité
+    const easeOut = 1 - t * t; // quadratic ease-out
+    intensity = maxIntensity * easeOut;
+
+    // Fréquence variable : rapide au début (haute fréq), lent vers la fin
+    const freq = 0.8 + (1 - t) * 0.5; // 1.3 → 0.8
+    total += intensity * freq;
   } else {
     intensity = 0;
+    maxIntensity = 0;
   }
+
   if (total < 0.01) return { x: 0, y: 0 };
   const x = (Math.random() * 2 - 1) * total;
   const y = (Math.random() * 2 - 1) * total;

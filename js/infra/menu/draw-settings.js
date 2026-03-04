@@ -28,18 +28,38 @@ export function drawSlider(ctx, s) {
   ctx.font = `${Math.round(16 * scale)}px monospace`;
   ctx.fillText(s.label, cx, y - 20 * scale);
 
-  // Track
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.fillRect(sx, y - 3, sliderW, 6);
-  ctx.fillStyle = '#00d4ff';
-  ctx.fillRect(sx, y - 3, sliderW * val, 6);
+  // Track fond arrondi
+  const trackH = 6;
+  const trackR = trackH / 2;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  _roundRect(ctx, sx, y - trackR, sliderW, trackH, trackR);
+  ctx.fill();
 
-  // Thumb
+  // Track rempli avec gradient
+  if (val > 0.01) {
+    const fillW = sliderW * val;
+    const tGrad = ctx.createLinearGradient(sx, 0, sx + fillW, 0);
+    tGrad.addColorStop(0, '#0088cc');
+    tGrad.addColorStop(1, '#00d4ff');
+    ctx.fillStyle = tGrad;
+    _roundRect(ctx, sx, y - trackR, fillW, trackH, trackR);
+    ctx.fill();
+    // Glow sur le fill
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Thumb avec glow
   const tx = sx + sliderW * val;
+  ctx.shadowColor = '#00d4ff';
+  ctx.shadowBlur = 8;
   ctx.beginPath();
   ctx.arc(tx, y, thumbR, 0, Math.PI * 2);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
+  ctx.shadowBlur = 0;
   ctx.strokeStyle = '#00d4ff';
   ctx.lineWidth = 2;
   ctx.stroke();
@@ -48,6 +68,20 @@ export function drawSlider(ctx, s) {
   ctx.fillStyle = '#667788';
   ctx.font = `${Math.round(12 * scale)}px monospace`;
   ctx.fillText(`${Math.round(val * 100)}%`, cx, y + 30 * scale);
+}
+
+function _roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 export function settingsBackBtnLayout() {
@@ -65,20 +99,29 @@ export function drawSettingsScreen(ctx) {
   ctx.save();
   ctx.textAlign = 'center';
 
+  const t = Date.now() * 0.001;
+
+  // Titre avec glow pulsant
+  ctx.shadowColor = '#00d4ff';
+  ctx.shadowBlur = 12 + Math.sin(t * 2) * 4;
   ctx.fillStyle = '#00d4ff';
   ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
   ctx.fillText('RÉGLAGES', cx, h * 0.22);
+  ctx.shadowBlur = 0;
 
   for (const s of sliders) drawSlider(ctx, s);
 
-  // Bouton RETOUR
-  ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
+  // Bouton RETOUR avec glow subtil
+  ctx.fillStyle = 'rgba(0, 212, 255, 0.08)';
   ctx.fillRect(btnX, btnY, btnW, btnH);
-  ctx.strokeStyle = '#334455';
+  ctx.shadowColor = '#00d4ff';
+  ctx.shadowBlur = 4;
+  ctx.strokeStyle = '#445566';
   ctx.lineWidth = 1;
   ctx.strokeRect(btnX, btnY, btnW, btnH);
+  ctx.shadowBlur = 0;
   ctx.font = `${Math.round(14 * scale)}px monospace`;
-  ctx.fillStyle = '#667788';
+  ctx.fillStyle = '#8899aa';
   ctx.fillText('RETOUR', cx, btnY + btnH * 0.65);
 
   ctx.restore();

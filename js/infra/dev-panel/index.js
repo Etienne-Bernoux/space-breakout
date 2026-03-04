@@ -1,10 +1,14 @@
-// --- Dev Panel Index : Public API re-exports ---
+// --- Dev Panel Index : Public API (DOM version) ---
 
 import { CONFIG } from '../../config.js';
 import { PATTERNS, GRID_PRESETS } from '../../domain/patterns.js';
 import state, { SLIDER_MAT_KEYS, loadDevConfig, saveDevConfig } from './state.js';
-import { drawDevPanel } from './draw.js';
-import { handleDevTap, handleDevDrag, handleDevRelease, handleDevHover } from './handlers.js';
+import { buildDevPanel } from './build.js';
+import { updateDevPanel } from './update.js';
+import { attachDevHandlers } from './handlers.js';
+
+let refs = null;
+let onLaunchCb = null;
 
 // --- Public API: Mode and visibility ---
 export function isDevMode() {
@@ -17,10 +21,15 @@ export function isDevPanelActive() {
 
 export function showDevPanel() {
   state.active = true;
+  const root = document.getElementById('dev-panel-lab');
+  if (root) root.classList.add('active');
+  if (refs) updateDevPanel(refs);
 }
 
 export function hideDevPanel() {
   state.active = false;
+  const root = document.getElementById('dev-panel-lab');
+  if (root) root.classList.remove('active');
 }
 
 // --- Public API: Config ---
@@ -54,15 +63,30 @@ export function getDevAsteroidConfig() {
     ...CONFIG.asteroids,
     rows,
     cols,
-    _autoSize: true, // signale au constructeur de recalculer cellW/cellH
+    _autoSize: true,
     density: state.devConfig.density,
     materials: Object.keys(filtered).length > 0 ? filtered : undefined,
     pattern: hasPattern ? pat : undefined,
   };
 }
 
-// --- Public API: Drawing ---
-export { drawDevPanel };
+/**
+ * Initialise le dev panel DOM. Construit le DOM, attache les handlers.
+ * @param {object} opts - { onLaunch: function }
+ */
+export function initDevPanel({ onLaunch }) {
+  onLaunchCb = onLaunch;
+  const root = document.getElementById('dev-panel-lab');
+  if (!root) return;
 
-// --- Public API: Input handlers ---
-export { handleDevTap, handleDevDrag, handleDevRelease, handleDevHover };
+  refs = buildDevPanel(root);
+  updateDevPanel(refs);
+
+  attachDevHandlers(root, refs, {
+    onLaunch: () => {
+      hideDevPanel();
+      if (onLaunchCb) onLaunchCb();
+    },
+    onClose: hideDevPanel,
+  });
+}

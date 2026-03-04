@@ -1,10 +1,9 @@
-// State management for Music Lab
+// State management for Music Lab (DOM version)
+// Removed: hovered, scrollY (DOM handles these natively)
 
 const state = {
   active: false,
   muffled: false,
-  hovered: null,
-  scrollY: 0,
   currentTab: 0,
   activity: { label: null, startTime: 0, duration: 0 },
   loopStartTime: 0,
@@ -20,50 +19,16 @@ const state = {
 };
 
 // Getters and setters for public API
-export function isActive() {
-  return state.active;
-}
+export function isActive() { return state.active; }
+export function setActive(value) { state.active = value; }
 
-export function setActive(value) {
-  state.active = value;
-}
+export function isMuffled() { return state.muffled; }
+export function setMuffled(value) { state.muffled = value; }
 
-export function isMuffled() {
-  return state.muffled;
-}
+export function getCurrentTab() { return state.currentTab; }
+export function setCurrentTab(value) { state.currentTab = value; }
 
-export function setMuffled(value) {
-  state.muffled = value;
-}
-
-export function getHovered() {
-  return state.hovered;
-}
-
-export function setHovered(value) {
-  state.hovered = value;
-}
-
-export function getScrollY() {
-  return state.scrollY;
-}
-
-export function setScrollY(value) {
-  state.scrollY = value;
-}
-
-export function getCurrentTab() {
-  return state.currentTab;
-}
-
-export function setCurrentTab(value) {
-  state.currentTab = value;
-}
-
-export function getActivity() {
-  return state.activity;
-}
-
+export function getActivity() { return state.activity; }
 export function setActivity(label, duration) {
   if (label === null) {
     state.activity = { label: null, startTime: 0, duration: 0 };
@@ -72,17 +37,10 @@ export function setActivity(label, duration) {
   }
 }
 
-export function getLoopStartTime() {
-  return state.loopStartTime;
-}
+export function getLoopStartTime() { return state.loopStartTime; }
+export function setLoopStartTime(value) { state.loopStartTime = value; }
 
-export function setLoopStartTime(value) {
-  state.loopStartTime = value;
-}
-
-export function getSim() {
-  return state.sim;
-}
+export function getSim() { return state.sim; }
 
 export function getActivityProgress() {
   if (!state.activity.label) return null;

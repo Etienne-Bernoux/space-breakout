@@ -125,18 +125,14 @@ js/
       stingers.js       → motifs courts (win, game over, power-up, combo)
       demos.js          → démos instruments (music lab)
       index.js          → façade publique
-    music-lab/          → panel test musical (?mus)
+    music-lab/          → panel test musical DOM (?mus)
       state.js          → état UI centralisé
-      draw-helpers.js   → utilitaires dessin
-      draw-header.js    → en-tête + onglets
-      draw-footer.js    → transport + activité
-      loop-tracker.js   → suivi boucle musicale
-      tab-sons.js       → onglet Sons
-      tab-gameplay.js   → onglet Gameplay (simulation)
-      tab-mix.js        → onglet Mix (layers)
-      hit-test.js       → zones cliquables
-      handlers.js       → événements utilisateur
-      index.js          → façade publique
+      build.js          → construction DOM (tabs, panels, footer)
+      update.js         → sync DOM ← state (volumes, sim, transport)
+      tab-sons.js       → données pistes/sections/instruments/stingers
+      tab-gameplay.js   → logique simulation intensité (simApply)
+      handlers.js       → event delegation DOM
+      index.js          → façade publique (init, show/hide, rAF footer)
     menu/               → menu principal
       state.js          → état + persistence volumes
       draw-menu.js      → écran menu principal
@@ -144,11 +140,12 @@ js/
       draw-credits.js   → écran crédits
       handlers.js       → input menu
       index.js          → façade publique
-    dev-panel/          → panel dev pré-partie (?dev)
+    dev-panel/          → panel dev pré-partie DOM (?dev)
       state.js          → config + presets + persistence
-      draw.js           → rendu panel
-      handlers.js       → input panel
-      index.js          → façade publique
+      build.js          → construction DOM (sliders, presets, pattern, grille)
+      update.js         → sync DOM ← devConfig
+      handlers.js       → event delegation DOM
+      index.js          → façade publique (init, show/hide)
     progress-lab/       → panel test progression DOM (?progress)
       state.js          → état UI (onglet, simulateur)
       build.js          → construction DOM (tabs, panels, boutons)

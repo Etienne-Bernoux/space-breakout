@@ -1,9 +1,8 @@
-// Sons tab content and data
+// Sons tab - Data definitions (shared by build.js and handlers.js)
+// Draw functions removed (DOM version).
 
 import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../music/index.js';
 import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion } from '../audio.js';
-import { drawBtn, drawLabel } from './draw-helpers.js';
-import { getHovered } from './state.js';
 
 // --- Data multi-pistes ---
 export const TRACKS = [
@@ -65,7 +64,7 @@ const STINGER_GROUPS = [
   ]},
 ];
 
-/** Flat list (pour handlers/hit-test). */
+/** Flat list (pour handlers). */
 export function getStingers() {
   return STINGER_GROUPS.flatMap(g => g.items);
 }
@@ -76,83 +75,4 @@ export function getStingerGroups() {
 
 export function getSections() {
   return SECTIONS;
-}
-
-export function drawTabSons(ctx, col1, startY, W, activeSec) {
-  const hovered = getHovered();
-  const btnW = 120;
-  const btnH = 32;
-  const gap = 8;
-  let y = startY;
-
-  // Piste — boutons de sélection
-  drawLabel(ctx, 'PISTE', col1, y);
-  y += 14;
-  const trackBtnW = 130;
-  for (let i = 0; i < TRACKS.length; i++) {
-    const bx = col1 + i * (trackBtnW + gap);
-    const isCurrent = TRACKS[i].id === getTrack();
-    drawBtn(ctx, bx, y, trackBtnW, btnH, TRACKS[i].label, '#00d4ff', hovered === `track-${TRACKS[i].id}`, isCurrent);
-  }
-  y += btnH + gap;
-
-  // Sections
-  y += 24;
-  drawLabel(ctx, 'SECTIONS', col1, y);
-  y += 14;
-  const secPerRow = 4;
-  for (let i = 0; i < SECTIONS.length; i++) {
-    const s = SECTIONS[i];
-    const row = Math.floor(i / secPerRow);
-    const col = i % secPerRow;
-    const bx = col1 + col * (btnW + gap);
-    const by = y + row * (btnH + gap);
-    drawBtn(ctx, bx, by, btnW, btnH, s.label, s.color, hovered === `section-${s.id}`, activeSec === s.id);
-  }
-  const secRows = Math.ceil(SECTIONS.length / secPerRow);
-  y += secRows * (btnH + gap) + 8;
-
-  // Instruments (dynamique par piste)
-  const instruments = getInstruments();
-  drawLabel(ctx, 'INSTRUMENTS', col1, y);
-  y += 14;
-  const instPerRow = 4;
-  for (let i = 0; i < instruments.length; i++) {
-    const inst = instruments[i];
-    const row = Math.floor(i / instPerRow);
-    const col = i % instPerRow;
-    const bx = col1 + col * (btnW + gap);
-    const by = y + row * (btnH + gap);
-    drawBtn(ctx, bx, by, btnW, btnH, inst.label, inst.color, hovered === `inst-${inst.id}`, false);
-  }
-  const instRows = Math.ceil(instruments.length / instPerRow);
-  y += instRows * (btnH + gap) + 8;
-
-  return y;
-}
-
-export function drawTabStingers(ctx, col1, startY) {
-  const hovered = getHovered();
-  const btnW = 120;
-  const btnH = 32;
-  const gap = 8;
-  const perRow = 3;
-  let y = startY;
-
-  for (const group of STINGER_GROUPS) {
-    drawLabel(ctx, group.label, col1, y);
-    y += 14;
-    for (let i = 0; i < group.items.length; i++) {
-      const s = group.items[i];
-      const row = Math.floor(i / perRow);
-      const col = i % perRow;
-      const bx = col1 + col * (btnW + gap);
-      const by = y + row * (btnH + gap);
-      drawBtn(ctx, bx, by, btnW, btnH, s.label, s.color, hovered === `stinger-${s.id}`, false);
-    }
-    const rows = Math.ceil(group.items.length / perRow);
-    y += rows * (btnH + gap) + 16;
-  }
-
-  return y;
 }

@@ -43,16 +43,12 @@ export class GameLoop {
     // La boucle tourne quand même pour que le fond reste animé si besoin.
   }
 
-  #loopMusicLab(ctx, fx) {
-    const mouse = this.infra.getMousePos();
-    this.infra.handleMusicLabHover(mouse.x, mouse.y);
-    this.infra.drawMusicLab(ctx);
+  #loopMusicLab(_ctx) {
+    // Music lab est maintenant en DOM, pas de canvas draw.
   }
 
-  #loopDevPanel(ctx, fx) {
-    const mouse = this.infra.getMousePos();
-    this.infra.handleDevHover(mouse.x, mouse.y);
-    this.infra.drawDevPanel(ctx);
+  #loopDevPanel(_ctx) {
+    // Dev panel est maintenant en DOM, pas de canvas draw.
   }
 
   #loopMenu(ctx, fx) {

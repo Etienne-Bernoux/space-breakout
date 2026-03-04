@@ -30,10 +30,6 @@ const state = {
     gridKey: 'small', // taille grille pour mode aléatoire
   },
   active: false,
-  draggingSlider: null,
-  hoveredPreset: -1,
-  hoveredPattern: -1,
-  hoveredGrid: -1,
 };
 
 // --- Persistence ---

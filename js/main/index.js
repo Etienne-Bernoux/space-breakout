@@ -1,16 +1,22 @@
 import { loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from '../infra/menu/index.js';
-import { loadDevConfig, isDevMode, isDevPanelActive, showDevPanel } from '../infra/dev-panel/index.js';
+import { loadDevConfig, isDevMode, isDevPanelActive, showDevPanel, initDevPanel } from '../infra/dev-panel/index.js';
 import { setVolume as setMusicVolume } from '../infra/music/index.js';
 import { setSfxVolume, perceptualVolume } from '../infra/audio.js';
-import { isMusicLab, isMusicLabActive, showMusicLab } from '../infra/music-lab/index.js';
+import { isMusicLab, isMusicLabActive, showMusicLab, initMusicLab } from '../infra/music-lab/index.js';
 import { isProgressLabMode, isProgressLabActive, initProgressLab, showProgressLab } from '../infra/progress-lab/index.js';
 import { getAllLevels } from '../domain/progression/level-catalog.js';
 import { saveProgress } from '../infra/persistence/progress-storage.js';
-import { G } from './init.js';
+import { G, startGame } from './init.js';
 
 loadSettings();
 loadDevConfig();
+
+// Init dev panel DOM (toujours, pour que le div existe)
+initDevPanel({ onLaunch: () => startGame() });
 if (isDevMode()) showDevPanel();
+
+// Init music lab DOM (toujours, pour que le div existe)
+initMusicLab();
 if (isMusicLab()) showMusicLab();
 
 // Init progress lab DOM (toujours, pour que le div existe)

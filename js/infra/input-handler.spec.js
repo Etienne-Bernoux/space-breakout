@@ -87,14 +87,13 @@ describe('InputHandler', () => {
     expect(d.infra.setReleaseHandler).toHaveBeenCalled();
   });
 
-  it('bind 3 event listeners clavier (keydown, keyup, wheel)', () => {
+  it('bind 2 event listeners clavier (keydown, keyup)', () => {
     const d = makeDeps();
     new InputHandler(d);
     const calls = document.addEventListener.mock.calls;
     const events = calls.map(c => c[0]);
     expect(events).toContain('keydown');
     expect(events).toContain('keyup');
-    expect(events).toContain('wheel');
   });
 
   describe('tap handler', () => {
@@ -157,22 +156,22 @@ describe('InputHandler', () => {
       expect(d.goToWorldMap).toHaveBeenCalled();
     });
 
-    it('délègue au devPanel quand actif', () => {
+    it('ne délègue plus au devPanel (DOM gère ses events)', () => {
       const d = makeDeps();
       d.infra.isDevPanelActive.mockReturnValue(true);
-      d.infra.handleDevTap.mockReturnValue('launch');
       new InputHandler(d);
       d.infra._handlers.menuTap(250, 400);
-      expect(d.infra.hideDevPanel).toHaveBeenCalled();
-      expect(d.startGame).toHaveBeenCalled();
+      // menuTap return early quand le panel DOM est actif
+      expect(d.infra.handleMenuTap).not.toHaveBeenCalled();
     });
 
-    it('délègue au musicLab quand actif', () => {
+    it('ne délègue plus au musicLab (DOM gère ses events)', () => {
       const d = makeDeps();
       d.infra.isMusicLabActive.mockReturnValue(true);
       new InputHandler(d);
       d.infra._handlers.menuTap(250, 400);
-      expect(d.infra.handleMusicLabTap).toHaveBeenCalled();
+      // menuTap return early quand le lab DOM est actif
+      expect(d.infra.handleMenuTap).not.toHaveBeenCalled();
     });
   });
 });

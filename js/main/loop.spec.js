@@ -133,20 +133,24 @@ describe('GameLoop', () => {
     expect(d.collisionHandler.update).not.toHaveBeenCalled();
   });
 
-  it('affiche le devPanel quand actif', () => {
+  it('devPanel actif → ne dessine pas le menu ni le jeu', () => {
     const d = makeDeps();
+    d.session.state = 'menu';
     d.infra.isDevPanelActive.mockReturnValue(true);
     const loop = new GameLoop(d);
     loop.loop();
-    expect(d.infra.drawDevPanel).toHaveBeenCalled();
+    // Dev panel est DOM, pas de canvas draw, mais le menu ne tourne pas non plus
+    expect(d.infra.updateMenu).not.toHaveBeenCalled();
   });
 
-  it('affiche le musicLab quand actif', () => {
+  it('musicLab actif → ne dessine pas le menu ni le jeu', () => {
     const d = makeDeps();
+    d.session.state = 'menu';
     d.infra.isMusicLabActive.mockReturnValue(true);
     const loop = new GameLoop(d);
     loop.loop();
-    expect(d.infra.drawMusicLab).toHaveBeenCalled();
+    // Music lab est DOM, pas de canvas draw, mais le menu ne tourne pas non plus
+    expect(d.infra.updateMenu).not.toHaveBeenCalled();
   });
 
   it('affiche pause screen quand state=paused', () => {

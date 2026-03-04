@@ -79,18 +79,9 @@ export class InputHandler {
     });
 
     infra.setMenuTapHandler((x, y) => {
-      if (infra.isMusicLabActive()) {
-        infra.handleMusicLabTap(x, y);
-        return;
-      }
-      if (infra.isDevPanelActive()) {
-        const result = infra.handleDevTap(x, y);
-        if (result === 'launch') {
-          infra.hideDevPanel();
-          this.startGame();
-        }
-        return;
-      }
+      // Music lab et dev panel gèrent leurs propres events DOM
+      if (infra.isMusicLabActive()) return;
+      if (infra.isDevPanelActive()) return;
       if (this.session.state === 'menu') {
         const action = infra.handleMenuTap(x, y);
         if (action === 'play') this.goToWorldMap();
@@ -122,12 +113,12 @@ export class InputHandler {
     });
 
     infra.setDragHandler((x, y) => {
-      if (infra.isDevPanelActive()) { infra.handleDevDrag(x, y); return; }
+      if (infra.isDevPanelActive()) return; // DOM handles it
       if (this.session.state === 'menu') infra.handleMenuDrag(x, y);
     });
 
     infra.setReleaseHandler(() => {
-      if (infra.isDevPanelActive()) { infra.handleDevRelease(); return; }
+      if (infra.isDevPanelActive()) return; // DOM handles it
       infra.handleMenuRelease();
     });
   }
@@ -239,13 +230,10 @@ export class InputHandler {
     const infra = this.infra;
 
     document.addEventListener('keydown', (e) => {
-      // Progress lab est DOM-driven, il gère ses propres events (Escape inclus)
+      // Les panels DOM gèrent leurs propres events (Escape, Enter, etc.)
       if (infra.isMineralLabActive && infra.isMineralLabActive()) return;
       if (infra.isMusicLabActive()) return;
-      if (infra.isDevPanelActive()) {
-        if (e.key === 'Enter') { infra.hideDevPanel(); this.startGame(); }
-        return;
-      }
+      if (infra.isDevPanelActive()) return;
       if (this.session.state === 'menu') {
         const action = infra.handleMenuInput(e.key);
         if (action === 'play') this.goToWorldMap();
@@ -314,11 +302,6 @@ export class InputHandler {
       }
     });
 
-    document.addEventListener('wheel', (e) => {
-      if (infra.isMusicLabActive()) {
-        e.preventDefault();
-        infra.handleMusicLabScroll(e.deltaY);
-      }
-    }, { passive: false });
+    // Music lab scroll est géré nativement par le DOM (overflow-y: auto)
   }
 }

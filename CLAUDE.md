@@ -125,19 +125,32 @@ js/
       stingers.js       → motifs courts (win, game over, power-up, combo)
       demos.js          → démos instruments (music lab)
       index.js          → façade publique
-    lab-hub/            → hub de sélection des labs (?lab)
-      state.js          → état (active, currentLab)
-      build.js          → construction DOM (3 cartes)
-      handlers.js       → event delegation DOM
-      index.js          → façade publique (init, show/hide)
-    music-lab/          → panel test musical DOM
-      state.js          → état UI centralisé
-      build.js          → construction DOM (tabs, panels, footer)
-      update.js         → sync DOM ← state (volumes, sim, transport)
-      tab-sons.js       → données pistes/sections/instruments/stingers
-      tab-gameplay.js   → logique simulation intensité (simApply)
-      handlers.js       → event delegation DOM
-      index.js          → façade publique (init, show/hide, rAF footer)
+    lab/                → labs de test (?lab)
+      hub/              → hub de sélection des labs
+        state.js        → état (active, currentLab)
+        build.js        → construction DOM (3 cartes)
+        handlers.js     → event delegation DOM
+        index.js        → façade publique (init, show/hide)
+      dev-panel/        → panel dev pré-partie DOM
+        state.js        → config + presets + persistence
+        build.js        → construction DOM (sliders, presets, pattern, grille)
+        update.js       → sync DOM ← devConfig
+        handlers.js     → event delegation DOM
+        index.js        → façade publique (init, show/hide)
+      music-lab/        → panel test musical DOM
+        state.js        → état UI centralisé
+        build.js        → construction DOM (tabs, panels, footer)
+        update.js       → sync DOM ← state (volumes, sim, transport)
+        tab-sons.js     → données pistes/sections/instruments/stingers
+        tab-gameplay.js → logique simulation intensité (simApply)
+        handlers.js     → event delegation DOM
+        index.js        → façade publique (init, show/hide, rAF footer)
+      progress-lab/     → panel test progression DOM
+        state.js        → état UI (onglet, simulateur)
+        build.js        → construction DOM (tabs, panels, boutons)
+        update.js       → sync DOM ← state (wallet, upgrades, progress)
+        handlers.js     → event listeners DOM (click, keyboard Escape)
+        index.js        → façade publique (init, show/hide)
     menu/               → menu principal
       state.js          → état + persistence volumes
       draw-menu.js      → écran menu principal
@@ -145,18 +158,6 @@ js/
       draw-credits.js   → écran crédits
       handlers.js       → input menu
       index.js          → façade publique
-    dev-panel/          → panel dev pré-partie DOM
-      state.js          → config + presets + persistence
-      build.js          → construction DOM (sliders, presets, pattern, grille)
-      update.js         → sync DOM ← devConfig
-      handlers.js       → event delegation DOM
-      index.js          → façade publique (init, show/hide)
-    progress-lab/       → panel test progression DOM
-      state.js          → état UI (onglet, simulateur)
-      build.js          → construction DOM (tabs, panels, boutons)
-      update.js         → sync DOM ← state (wallet, upgrades, progress)
-      handlers.js       → event listeners DOM (click, keyboard Escape)
-      index.js          → façade publique (init, show/hide)
     screens/
       upgrade-screen/   → écran d'upgrade (accessible depuis worldMap)
         state.js        → sélection catégorie/upgrade
@@ -240,7 +241,7 @@ npm run test:all                  # unit + e2e
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 
-Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, `mineralLab`, `labHub`, `wallet`, `upgrades`, et `forceWin()` (tue tous les astéroïdes).
+Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, `progressLab`, `labHub`, `wallet`, `upgrades`, et `forceWin()` (tue tous les astéroïdes).
 
 Mode spécial : `?lab` — ouvre le Lab Hub (choix entre Dev Panel, Music Lab, Progress Lab). En jeu, active le dev overlay (desktop only).
 

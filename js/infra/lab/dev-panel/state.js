@@ -1,8 +1,8 @@
 // --- Dev Panel State : Configuration, persistence, and mutable state ---
 
-import { CONFIG } from '../../config.js';
-import { MATERIALS } from '../../domain/materials.js';
-import { PATTERNS, GRID_PRESETS } from '../../domain/patterns.js';
+import { CONFIG } from '../../../config.js';
+import { MATERIALS } from '../../../domain/materials.js';
+import { PATTERNS, GRID_PRESETS } from '../../../domain/patterns.js';
 
 export const STORAGE_KEY = 'space-breakout-dev';
 export const MAT_KEYS = Object.keys(MATERIALS);

@@ -40,7 +40,6 @@ export function initMusicLab({ onBack } = {}) {
   const refresh = () => updateMusicLab(refs);
 
   attachMusicHandlers(root, refs, {
-    onClose: hideMusicLab,
     onBack,
     refresh,
   });

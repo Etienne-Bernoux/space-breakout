@@ -1,7 +1,7 @@
 // --- Dev Panel DOM Handlers ---
 // Event delegation sur le root #dev-panel-lab.
 
-import { CONFIG } from '../../config.js';
+import { CONFIG } from '../../../config.js';
 import state, { SLIDER_MAT_KEYS, PRESETS, saveDevConfig } from './state.js';
 import { updateDevPanel } from './update.js';
 

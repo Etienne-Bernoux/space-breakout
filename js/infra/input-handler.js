@@ -241,7 +241,7 @@ export class InputHandler {
 
     document.addEventListener('keydown', (e) => {
       // Les panels DOM gèrent leurs propres events (Escape, Enter, etc.)
-      if (infra.isMineralLabActive && infra.isMineralLabActive()) return;
+      if (infra.isProgressLabActive && infra.isProgressLabActive()) return;
       if (infra.isMusicLabActive()) return;
       if (infra.isDevPanelActive()) return;
       if (this.session.state === 'menu') {

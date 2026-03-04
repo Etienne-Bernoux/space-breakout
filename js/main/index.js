@@ -1,10 +1,10 @@
 import { loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from '../infra/menu/index.js';
-import { loadDevConfig, isDevPanelActive, showDevPanel, hideDevPanel, initDevPanel } from '../infra/dev-panel/index.js';
+import { loadDevConfig, isDevPanelActive, showDevPanel, hideDevPanel, initDevPanel } from '../infra/lab/dev-panel/index.js';
 import { setVolume as setMusicVolume } from '../infra/music/index.js';
 import { setSfxVolume, perceptualVolume } from '../infra/audio.js';
-import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../infra/music-lab/index.js';
-import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/progress-lab/index.js';
-import { isLabMode, initLabHub, showLabHub, hideLabHub, isLabHubActive } from '../infra/lab-hub/index.js';
+import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../infra/lab/music-lab/index.js';
+import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
+import { isLabMode, initLabHub, showLabHub, hideLabHub, isLabHubActive } from '../infra/lab/hub/index.js';
 import { getAllLevels } from '../domain/progression/level-catalog.js';
 import { saveProgress } from '../infra/persistence/progress-storage.js';
 import { G, startGame } from './init.js';
@@ -54,7 +54,7 @@ window.__GAME__ = {
   get remaining(){ return G.entities.field ? G.entities.field.remaining : -1; },
   get devPanel() { return isDevPanelActive(); },
   get musicLab() { return isMusicLabActive(); },
-  get mineralLab() { return isProgressLabActive(); },
+  get progressLab() { return isProgressLabActive(); },
   get labHub() { return isLabHubActive(); },
   get wallet() { return G.wallet; },
   get upgrades() { return G.upgrades; },

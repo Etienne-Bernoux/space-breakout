@@ -1,8 +1,8 @@
 // --- Dev Panel DOM Build ---
 // Construit le DOM complet du dev panel, retourne les refs pour update.
 
-import { MATERIALS } from '../../domain/materials.js';
-import { PATTERNS, PATTERN_KEYS, GRID_PRESETS } from '../../domain/patterns.js';
+import { MATERIALS } from '../../../domain/materials.js';
+import { PATTERNS, PATTERN_KEYS, GRID_PRESETS } from '../../../domain/patterns.js';
 import { SLIDER_MAT_KEYS, GRID_KEYS, PRESETS } from './state.js';
 
 function el(tag, cls, attrs = {}) {

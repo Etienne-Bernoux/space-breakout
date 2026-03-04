@@ -4,16 +4,16 @@
 import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnTrail, updateParticles } from '../infra/particles.js';
 import { playAlienShoot, playMineralPickup } from '../infra/audio.js';
 import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
-import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
-import { isLabMode, isLabHubActive } from '../infra/lab-hub/index.js';
+import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/lab/dev-panel/index.js';
+import { isLabMode, isLabHubActive } from '../infra/lab/hub/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { updateStars } from '../infra/stars.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
 import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
 import { drawMineralCapsule, drawMineralHUD } from '../infra/mineral-render.js';
-import { isMusicLabActive } from '../infra/music-lab/index.js';
-import { isMineralLabActive, showMineralLab, hideMineralLab, isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/progress-lab/index.js';
+import { isMusicLabActive } from '../infra/lab/music-lab/index.js';
+import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
 import { drawShip } from '../infra/renderers/ship-render.js';
 import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
@@ -33,7 +33,7 @@ export const loopInfra = {
   drawCapsule, drawPowerUpHUD, drawMineralCapsule, drawMineralHUD,
   isDevPanelActive,
   isMusicLabActive,
-  isMineralLabActive,
+  isProgressLabActive,
   isLabHubActive,
   updateDevOverlay,
   drawShip, drawDrone, drawField,
@@ -49,7 +49,6 @@ export const inputInfra = {
   handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu,
   isDevPanelActive, hideDevPanel, isLabMode, showDevPanel,
   isMusicLabActive, isLabHubActive,
-  isMineralLabActive, showMineralLab, hideMineralLab,
   isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab,
   getNodePositions, getUpgradeButtonRect, getStatsButtons, getUpgradeScreenButtons,
   nextCategory, prevCategory, nextUpgrade, prevUpgrade, getVisibleUpgrades,

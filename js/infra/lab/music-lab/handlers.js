@@ -7,7 +7,7 @@ import {
   playSectionByName, playInstrumentDemo,
   setLayerVolume, getLayerVolumes, resetAudio,
   setTrack, getTrack, enableAdaptiveMode,
-} from '../music/index.js';
+} from '../../music/index.js';
 import {
   isActive, setCurrentTab, setActivity, setMuffled, isMuffled,
   getSim, setLoopStartTime, getCurrentTab,
@@ -31,7 +31,7 @@ const LOOP_ORDER = [
  * @param {object} refs - from build.js
  * @param {object} opts - { onClose, refresh }
  */
-export function attachMusicHandlers(root, refs, { onClose, onBack, refresh }) {
+export function attachMusicHandlers(root, refs, { onBack, refresh }) {
   root.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;

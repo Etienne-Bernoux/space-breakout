@@ -61,8 +61,8 @@ test.describe('?lab — Lab Hub', () => {
     await page.click('[data-lab="progress"]');
     await page.waitForTimeout(200);
 
-    const mineralLab = await page.evaluate(() => window.__GAME__?.mineralLab);
-    expect(mineralLab).toBe(true);
+    const progressLab = await page.evaluate(() => window.__GAME__?.progressLab);
+    expect(progressLab).toBe(true);
   });
 
   test('bouton retour revient au hub', async ({ page }) => {

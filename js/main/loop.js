@@ -38,9 +38,8 @@ export class GameLoop {
 
   // --- State handlers (chaque état a sa propre logique) ---
 
-  #loopMineralLab(_ctx) {
-    // Progress lab est maintenant en DOM, pas de canvas draw.
-    // La boucle tourne quand même pour que le fond reste animé si besoin.
+  #loopProgressLab(_ctx) {
+    // Progress lab est en DOM, pas de canvas draw.
   }
 
   #loopMusicLab(_ctx) {
@@ -200,8 +199,8 @@ export class GameLoop {
     document.body.classList.toggle('menu', ['menu', 'paused', 'worldMap', 'stats', 'upgrade'].includes(this.session.state));
 
     // Overlays prioritaires (interceptent tous les états)
-    if (this.infra.isMineralLabActive && this.infra.isMineralLabActive()) {
-      this.#loopMineralLab(ctx);
+    if (this.infra.isProgressLabActive && this.infra.isProgressLabActive()) {
+      this.#loopProgressLab(ctx);
     } else if (this.infra.isMusicLabActive()) {
       this.#loopMusicLab(ctx, fx);
     } else if (this.infra.isDevPanelActive()) {

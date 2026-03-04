@@ -1,7 +1,7 @@
 // --- Music Lab DOM Update ---
 // Sync DOM ← state, music API. Layout 2 colonnes, pas de tabs.
 
-import { isPlaying, getCurrentSection, getLayerVolumes, getTrack } from '../music/index.js';
+import { isPlaying, getCurrentSection, getLayerVolumes, getTrack } from '../../music/index.js';
 import { getCurrentTab, getActivityProgress, getSim, isMuffled } from './state.js';
 import { getInstruments } from './tab-sons.js';
 

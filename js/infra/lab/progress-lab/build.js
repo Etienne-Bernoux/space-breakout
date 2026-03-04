@@ -1,8 +1,8 @@
 // --- Construction DOM du progress lab ---
 
-import { MINERAL_IDS, getMineral } from '../../domain/mineral/index.js';
-import { UPGRADE_IDS } from '../../use-cases/upgrade/upgrade-catalog.js';
-import { getUpgrade } from '../../use-cases/upgrade/upgrade-catalog.js';
+import { MINERAL_IDS, getMineral } from '../../../domain/mineral/index.js';
+import { UPGRADE_IDS } from '../../../use-cases/upgrade/upgrade-catalog.js';
+import { getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
 
 /**
  * Construit le DOM complet du progress lab.

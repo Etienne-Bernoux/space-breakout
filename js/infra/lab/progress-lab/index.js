@@ -4,7 +4,7 @@ import state from './state.js';
 import { buildProgressLab } from './build.js';
 import { updateProgressLab } from './update.js';
 import { attachHandlers } from './handlers.js';
-import { applySimulation } from '../../use-cases/simulator/run-simulator.js';
+import { applySimulation } from '../../../use-cases/simulator/run-simulator.js';
 
 let refs = null;
 let deps = null;
@@ -35,7 +35,6 @@ export function initProgressLab(d) {
     refs,
     refresh,
     onBack: d.onBack,
-    onClose: hideProgressLab,
     onSimulate: (sim) => {
       const level = d.levels[sim.levelIndex];
       if (!level) return;
@@ -70,8 +69,3 @@ export function hideProgressLab() {
   const root = document.getElementById('progress-lab');
   if (root) root.classList.remove('active');
 }
-
-// Aliases for backward compat (adapters use these names)
-export { isProgressLabActive as isMineralLabActive };
-export { showProgressLab as showMineralLab };
-export { hideProgressLab as hideMineralLab };

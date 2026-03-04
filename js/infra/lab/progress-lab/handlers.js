@@ -1,7 +1,7 @@
 // --- Event handlers du progress lab (DOM) ---
 
-import { MINERAL_IDS } from '../../domain/mineral/index.js';
-import { UPGRADE_IDS } from '../../use-cases/upgrade/upgrade-catalog.js';
+import { MINERAL_IDS } from '../../../domain/mineral/index.js';
+import { UPGRADE_IDS } from '../../../use-cases/upgrade/upgrade-catalog.js';
 import state from './state.js';
 
 const STEP = 10;  // +/- par clic pour wallet
@@ -21,12 +21,6 @@ export function attachHandlers(root, deps) {
     // --- Back to hub ---
     if (action === 'back') {
       if (deps.onBack) deps.onBack();
-      return;
-    }
-
-    // --- Close ---
-    if (action === 'close') {
-      deps.onClose();
       return;
     }
 
@@ -136,12 +130,12 @@ export function attachHandlers(root, deps) {
     }
   });
 
-  // Escape key (global, only when lab active)
+  // Escape → retour au hub
   document.addEventListener('keydown', (e) => {
     if (!state.active) return;
     if (e.key === 'Escape') {
       e.preventDefault();
-      deps.onClose();
+      if (deps.onBack) deps.onBack();
     }
   });
 }

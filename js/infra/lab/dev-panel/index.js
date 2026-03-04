@@ -1,7 +1,7 @@
 // --- Dev Panel Index : Public API (DOM version) ---
 
-import { CONFIG } from '../../config.js';
-import { PATTERNS, GRID_PRESETS } from '../../domain/patterns.js';
+import { CONFIG } from '../../../config.js';
+import { PATTERNS, GRID_PRESETS } from '../../../domain/patterns.js';
 import state, { SLIDER_MAT_KEYS, loadDevConfig, saveDevConfig } from './state.js';
 import { buildDevPanel } from './build.js';
 import { updateDevPanel } from './update.js';

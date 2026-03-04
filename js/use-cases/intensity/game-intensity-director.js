@@ -11,7 +11,7 @@
 const COMBO_DECAY_INTERVAL = 3000; // ms entre chaque -1 combo
 
 const NOOP_MUSIC = {
-  enable() { /* accepts { boss } */ }, disable() {}, onBounce() {}, onAsteroidHit() {}, onCombo() {},
+  enable() { /* accepts { boss } */ }, disable() {}, update() {}, onBounce() {}, onAsteroidHit() {}, onCombo() {},
   onPowerUp() {}, onLoseLife() {}, onLaunch() {}, onPause() {}, onResume() {},
   onWin() {}, onGameOver() {}, setIntensity() {}, requestSectionChange() {},
 };
@@ -127,6 +127,7 @@ export class GameIntensityDirector {
   // === Frame update ===
 
   update(now = Date.now()) {
+    this.music.update();
     this.effects.update();
     if (!this.enabled || this.combo <= 0) return;
     // Combo decay : -1 toutes les COMBO_DECAY_INTERVAL ms sans événement

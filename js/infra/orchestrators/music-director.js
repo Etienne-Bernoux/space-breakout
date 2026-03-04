@@ -74,6 +74,16 @@ export class MusicDirector {
     requestNextSection(pick[Math.floor(Math.random() * pick.length)]);
   }
 
+  /** Appelé chaque frame par le GID. Relance la musique si elle s'est arrêtée. */
+  update() {
+    if (!this.enabled) return;
+    if (!isPlaying()) {
+      startMusic();
+      this._applyLayers();
+      this.requestSectionChange();
+    }
+  }
+
   // === Événements ponctuels ===
 
   onBounce() { playBounce(); }

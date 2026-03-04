@@ -6,6 +6,7 @@ class FakeMusic {
   constructor() { this.calls = []; this.intensity = 0; this.enabled = false; }
   enable() { this.enabled = true; this.calls.push('enable'); }
   disable() { this.enabled = false; this.calls.push('disable'); }
+  update() { this.calls.push('update'); }
   setIntensity(l) { this.intensity = l; this.calls.push(['setIntensity', l]); }
   requestSectionChange() { this.calls.push('requestSectionChange'); }
   onBounce() { this.calls.push('onBounce'); }

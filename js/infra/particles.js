@@ -199,6 +199,26 @@ export function spawnBossExplosion(x, y) {
   }
 }
 
+// --- Flash de rebond vaisseau ---
+export function spawnBounceFlash(x, y) {
+  // Arc lumineux cyan au point de contact
+  particles.push({ x, y, dx: 0, dy: 0, size: 10, life: 1, decay: 0.12, color: '#88eeff', noGravity: true });
+  // 5 micro-étincelles directionnelles (vers le haut)
+  for (let i = 0; i < 5; i++) {
+    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2; // ±35° vers le haut
+    const speed = 1.5 + Math.random() * 2.5;
+    particles.push({
+      x: x + (Math.random() - 0.5) * 8,
+      y,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      size: 1 + Math.random() * 1.5,
+      life: 1, decay: 0.06 + Math.random() * 0.04,
+      color: i < 3 ? '#aaeeff' : '#ffffff', noGravity: true,
+    });
+  }
+}
+
 // --- Trainée du drone (améliorée : taille + couleur selon vitesse) ---
 export function spawnTrail(x, y, dx = 0, dy = 0) {
   const speed = Math.sqrt(dx * dx + dy * dy);

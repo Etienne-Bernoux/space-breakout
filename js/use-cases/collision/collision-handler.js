@@ -47,6 +47,9 @@ export class CollisionHandler {
         this.ui.combo = 0;
         this.session.combo = 0;
         intensity.onBounce();
+        if (ev1.type === 'bounce') {
+          this.effects.spawnBounceFlash(drone.x, ship.y);
+        }
       }
 
       const ev2 = this.session.checkAsteroidCollision(drone, field);

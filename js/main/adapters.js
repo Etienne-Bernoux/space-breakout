@@ -1,7 +1,7 @@
 // --- Infra adapters : regroupement des imports infra pour injection dans GameLoop / InputHandler ---
 // Extrait de init.js pour alléger la composition root.
 
-import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnTrail, updateParticles } from '../infra/particles.js';
+import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnTrail, updateParticles } from '../infra/particles.js';
 import { playAlienShoot } from '../infra/audio.js';
 import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
 import { isDevMode, isDevPanelActive, drawDevPanel, handleDevHover, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
@@ -47,5 +47,5 @@ export const inputInfra = {
 };
 
 export const collisionEffects = {
-  spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, triggerShake, spawnDebris,
+  spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, triggerShake, spawnDebris,
 };

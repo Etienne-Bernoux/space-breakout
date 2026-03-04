@@ -26,21 +26,31 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
   ctx.save();
   const s = gameScale(W);
   const nodes = getNodePositions(W, H, levels.length);
+  const t = Date.now() * 0.001;
 
-  // --- Titre ---
+  // --- Titre avec glow ---
+  ctx.shadowColor = '#8b6914';
+  ctx.shadowBlur = 10 + Math.sin(t * 1.5) * 4;
   ctx.fillStyle = '#8b6914';
   ctx.font = `bold ${Math.round(22 * s)}px monospace`;
   ctx.textAlign = 'center';
   ctx.fillText('NUAGE D\'ASTÉROÏDES', W / 2, H * 0.08);
+  ctx.shadowBlur = 0;
 
-  // --- Chemin entre les nœuds ---
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  // --- Chemin entre les nœuds (shimmer animé) ---
+  const shimmerOff = t * 40;
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
   ctx.lineWidth = 2;
   ctx.setLineDash([6, 6]);
+  ctx.lineDashOffset = -shimmerOff;
   ctx.beginPath();
   for (let i = 0; i < nodes.length; i++) {
     i === 0 ? ctx.moveTo(nodes[i].x, nodes[i].y) : ctx.lineTo(nodes[i].x, nodes[i].y);
   }
+  ctx.stroke();
+  // Deuxième passe décalée (shimmer)
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineDashOffset = -shimmerOff + 3;
   ctx.stroke();
   ctx.setLineDash([]);
 
@@ -53,40 +63,64 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
     const stars = progress.getStars(lvl.id);
     const selected = i === selectedIndex;
 
-    // Cercle du nœud
+    // Glow derrière le nœud sélectionné
+    if (selected && unlocked) {
+      const glowR = nodeR * 2.2;
+      const pulse = 0.2 + Math.sin(t * 3) * 0.08;
+      const nGlow = ctx.createRadialGradient(n.x, n.y, nodeR * 0.5, n.x, n.y, glowR);
+      nGlow.addColorStop(0, `rgba(0, 212, 255, ${pulse})`);
+      nGlow.addColorStop(1, 'rgba(0, 212, 255, 0)');
+      ctx.fillStyle = nGlow;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Cercle du nœud avec gradient
     ctx.beginPath();
     ctx.arc(n.x, n.y, nodeR, 0, Math.PI * 2);
     if (!unlocked) {
-      ctx.fillStyle = 'rgba(80,80,80,0.5)';
+      ctx.fillStyle = 'rgba(60,60,70,0.5)';
       ctx.strokeStyle = '#444';
     } else if (selected) {
-      ctx.fillStyle = 'rgba(0,212,255,0.3)';
+      const selGrad = ctx.createRadialGradient(n.x - nodeR * 0.3, n.y - nodeR * 0.3, 0, n.x, n.y, nodeR);
+      selGrad.addColorStop(0, 'rgba(80, 240, 255, 0.4)');
+      selGrad.addColorStop(1, 'rgba(0, 150, 200, 0.2)');
+      ctx.fillStyle = selGrad;
       ctx.strokeStyle = '#00d4ff';
     } else {
-      ctx.fillStyle = 'rgba(139,105,20,0.3)';
+      const nGrad = ctx.createRadialGradient(n.x - nodeR * 0.3, n.y - nodeR * 0.3, 0, n.x, n.y, nodeR);
+      nGrad.addColorStop(0, 'rgba(180, 150, 60, 0.35)');
+      nGrad.addColorStop(1, 'rgba(100, 80, 20, 0.2)');
+      ctx.fillStyle = nGrad;
       ctx.strokeStyle = '#8b6914';
     }
     ctx.fill();
+    if (selected) { ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 8; }
     ctx.lineWidth = selected ? 3 : 2;
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // Numéro du niveau
-    ctx.fillStyle = unlocked ? '#fff' : '#666';
+    ctx.fillStyle = unlocked ? '#fff' : '#555';
     ctx.font = `bold ${Math.round(14 * s)}px monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(i + 1), n.x, n.y);
 
-    // Étoiles en dessous
-    if (stars > 0) {
-      _drawStars(ctx, n.x, n.y + nodeR + 8 * s, stars, s);
+    // Étoiles en dessous (gagnées avec glow doré)
+    if (unlocked) {
+      _drawStars(ctx, n.x, n.y + nodeR + 8 * s, stars, s, t);
     }
 
     // Nom du niveau au-dessus (si sélectionné)
     if (selected && unlocked) {
+      ctx.shadowColor = '#00d4ff';
+      ctx.shadowBlur = 6;
       ctx.fillStyle = '#fff';
       ctx.font = `${Math.round(11 * s)}px monospace`;
       ctx.fillText(lvl.name, n.x, n.y - nodeR - 10 * s);
+      ctx.shadowBlur = 0;
     }
   }
 
@@ -97,8 +131,9 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
     _drawMiniShip(ctx, sn.x, shipY, s);
   }
 
-  // --- Instructions ---
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  // --- Instructions (pulsation douce) ---
+  const instrA = 0.3 + Math.sin(t * 2) * 0.08;
+  ctx.fillStyle = `rgba(255,255,255,${instrA})`;
   ctx.font = `${Math.round(11 * s)}px monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
@@ -106,26 +141,61 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
   ctx.restore();
 }
 
-function _drawStars(ctx, cx, cy, count, s) {
+function _drawStars(ctx, cx, cy, count, s, t) {
   const gap = 12 * s;
   const startX = cx - (2 * gap) / 2;
   for (let i = 0; i < 3; i++) {
-    ctx.fillStyle = i < count ? '#ffd700' : 'rgba(255,255,255,0.15)';
+    const earned = i < count;
+    if (earned) {
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = 4 + Math.sin(t * 3 + i * 1.2) * 2;
+    }
+    ctx.fillStyle = earned ? '#ffd700' : 'rgba(255,255,255,0.12)';
     ctx.font = `${Math.round(10 * s)}px monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('★', startX + i * gap, cy);
+    ctx.shadowBlur = 0;
   }
 }
 
 function _drawMiniShip(ctx, x, y, s) {
   const w = 16 * s;
   const h = 6 * s;
-  ctx.fillStyle = '#00d4ff';
+
+  // Halo sous le vaisseau
+  const halo = ctx.createRadialGradient(x, y + 2, 0, x, y + 2, w * 0.6);
+  halo.addColorStop(0, 'rgba(0, 212, 255, 0.15)');
+  halo.addColorStop(1, 'rgba(0, 212, 255, 0)');
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(x, y + 2, w * 0.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Corps gradient
+  const shipGrad = ctx.createLinearGradient(x, y - h, x, y);
+  shipGrad.addColorStop(0, '#55eeff');
+  shipGrad.addColorStop(0.5, '#00d4ff');
+  shipGrad.addColorStop(1, '#0088aa');
+  ctx.fillStyle = shipGrad;
   ctx.beginPath();
   ctx.moveTo(x, y - h);
   ctx.lineTo(x + w / 2, y);
   ctx.lineTo(x - w / 2, y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Micro-flamme
+  const flameH = 3 * s + Math.random() * 2 * s;
+  const fGrad = ctx.createLinearGradient(x, y, x, y + flameH);
+  fGrad.addColorStop(0, 'rgba(255, 200, 80, 0.7)');
+  fGrad.addColorStop(0.5, 'rgba(255, 100, 0, 0.4)');
+  fGrad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+  ctx.fillStyle = fGrad;
+  ctx.beginPath();
+  ctx.moveTo(x - 2 * s, y);
+  ctx.lineTo(x + 2 * s, y);
+  ctx.lineTo(x, y + flameH);
   ctx.closePath();
   ctx.fill();
 }

@@ -1,7 +1,7 @@
 // Sons tab content and data
 
 import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../music/index.js';
-import { playShipExplosion, playAlienHit, playBossExplosion } from '../audio.js';
+import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion } from '../audio.js';
 import { drawBtn, drawLabel } from './draw-helpers.js';
 import { getHovered } from './state.js';
 
@@ -52,12 +52,16 @@ const STINGER_GROUPS = [
     { id: 'gameover',  label: 'GAMEOVER',  color: '#ff4444', fn: playGameOverStinger },
     { id: 'powerup',   label: 'POWER-UP',  color: '#ffcc00', fn: playPowerUpAccent },
   ]},
-  { label: 'SFX VAISSEAU', items: [
-    { id: 'explosion', label: 'EXPLOSION', color: '#ff8800', fn: playShipExplosion },
+  { label: 'SFX GAMEPLAY', items: [
+    { id: 'bounce',    label: 'BOUNCE',    color: '#4488ff', fn: playBounce },
+    { id: 'asthit',    label: 'AST. HIT',  color: '#aa6633', fn: playAsteroidHit },
+    { id: 'launch',    label: 'LAUNCH',    color: '#88ccff', fn: playLaunch },
+    { id: 'loselife',  label: 'LOSE LIFE', color: '#ff6666', fn: playLoseLife },
+    { id: 'explosion', label: 'SHIP EXPL', color: '#ff8800', fn: playShipExplosion },
   ]},
   { label: 'SFX ALIEN', items: [
     { id: 'alienhit',  label: 'ALIEN HIT', color: '#33cc55', fn: playAlienHit },
-    { id: 'bossexpl',  label: 'BOSS EXPL', color: '#44dd66', fn: playBossExplosion },
+    { id: 'alienexpl', label: 'ALIEN EXPL', color: '#44dd66', fn: playBossExplosion },
   ]},
 ];
 

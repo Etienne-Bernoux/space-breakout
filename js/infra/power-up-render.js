@@ -4,24 +4,44 @@ import { getPowerUp } from '../domain/power-ups.js';
 import { drawIcon } from './power-up-icons.js';
 import { gameScale } from '../shared/responsive.js';
 
-/** Dessiner une capsule qui tombe. */
+/** Dessiner une capsule qui tombe (bob, pulse, sparkles). */
 export function drawCapsule(ctx, capsule) {
   if (!capsule.alive) return;
   const def = getPowerUp(capsule.powerUpId);
   if (!def) return;
 
-  const { x, y, rotation, radius } = capsule;
+  const { x, rotation, radius } = capsule;
   const isMalus = def.type === 'malus';
+  const t = Date.now() * 0.001;
+
+  // Bob vertical sinusoïdal (flottement ±3px)
+  const bob = Math.sin(t * 3 + x * 0.1) * 3;
+  const y = capsule.y + bob;
 
   ctx.save();
   ctx.translate(x, y);
 
-  // Lueur
-  const glow = ctx.createRadialGradient(0, 0, radius * 0.3, 0, 0, radius * 2);
-  glow.addColorStop(0, def.color + '40');
+  // Lueur pulsante
+  const glowPulse = 1 + Math.sin(t * 4) * 0.3;
+  const glow = ctx.createRadialGradient(0, 0, radius * 0.3, 0, 0, radius * 2 * glowPulse);
+  glow.addColorStop(0, def.color + '50');
   glow.addColorStop(1, 'transparent');
   ctx.fillStyle = glow;
-  ctx.fillRect(-radius * 2, -radius * 2, radius * 4, radius * 4);
+  ctx.fillRect(-radius * 2.5, -radius * 2.5, radius * 5, radius * 5);
+
+  // Sparkles intermittents (2 mini-étincelles)
+  for (let i = 0; i < 2; i++) {
+    const sparkPhase = t * 5 + i * 3.14 + x;
+    const sparkAlpha = Math.max(0, Math.sin(sparkPhase) * 0.8);
+    if (sparkAlpha > 0.1) {
+      const sx = Math.cos(sparkPhase * 1.3) * radius * 1.5;
+      const sy = Math.sin(sparkPhase * 0.9) * radius * 1.5;
+      ctx.fillStyle = `rgba(255, 255, 255, ${sparkAlpha})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1 + sparkAlpha, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
   // Capsule (hexagone arrondi)
   ctx.rotate(rotation);
@@ -34,8 +54,11 @@ export function drawCapsule(ctx, capsule) {
   ctx.closePath();
   ctx.fillStyle = isMalus ? '#331122' : '#112233';
   ctx.fill();
+
+  // Outline pulsant (épaisseur oscille)
+  const lineW = 1.5 + Math.sin(t * 5) * 0.8;
   ctx.strokeStyle = def.color;
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = lineW;
   ctx.stroke();
 
   // Icône

@@ -1,6 +1,6 @@
 # Space Breakout
 
-Un casse-briques spatial inspiré du jeu Adibou. Pilote un vaisseau de nettoyage et envoie ton drone de minage détruire les astéroïdes qui bloquent la zone !
+Un casse-briques spatial. Pilote un vaisseau de minage et envoie ton drone détruire les astéroïdes infestés pour sécuriser chaque zone !
 
 **[Jouer maintenant](https://etienne-bernoux.github.io/space-breakout/)**
 
@@ -47,4 +47,4 @@ Modes spéciaux : `?dev` (dev panel + overlay in-game), `?mus` (music lab).
 ## Crédits
 
 Développé par [Etienne Bernoux](https://github.com/etienne-bernoux).
-Inspiré du casse-briques d'Adibou. Construit avec Canvas API.
+Construit avec Canvas API.

@@ -3,11 +3,11 @@
 > **Règle doc** : après tout changement structurel (nouveau fichier, nouveau pattern, nouvelle commande), mettre à jour ce fichier, `README.md` et `BACKLOG.md` si pertinent.
 > **Règle bug** : tout bug repéré (par Etienne ou Claude) et non corrigé dans la foulée → ajouté dans `BUG.md`. Dépilé quand opportun.
 
-Casse-briques spatial inspiré d'Adibou, publié sur GitHub Pages.
+Casse-briques spatial publié sur GitHub Pages.
 
 ## Concept
 
-Un vaisseau de nettoyage spatial envoie un drone de minage détruire des astéroïdes.
+Un vaisseau de minage envoie un drone détruire les astéroïdes infestés pour sécuriser chaque zone.
 Le thème spatial influence le gameplay (prévu : récolte de matière, power-ups, upgrades vaisseau).
 
 ## Stack

@@ -30,7 +30,7 @@ export function drawCreditsScreen(ctx) {
 
   ctx.fillStyle = '#667788';
   ctx.font = `${Math.round(14 * scale)}px monospace`;
-  ctx.fillText('Inspiré du casse-briques d\'Adibou', cx, h * 0.44);
+  ctx.fillText('Mission : sécuriser les zones infestées', cx, h * 0.44);
   ctx.fillText('Construit avec Canvas API', cx, h * 0.49);
 
   // Bouton retour avec glow subtil

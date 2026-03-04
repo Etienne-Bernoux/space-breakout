@@ -46,17 +46,28 @@ export function getInstruments() {
   return getTrack() === 'dark' ? INSTRUMENTS_DARK : INSTRUMENTS_MAIN;
 }
 
-const STINGERS = [
-  { id: 'win',       label: 'WIN',       color: '#44ff88', fn: playWinStinger },
-  { id: 'gameover',  label: 'GAMEOVER',  color: '#ff4444', fn: playGameOverStinger },
-  { id: 'powerup',   label: 'POWER-UP',  color: '#ffcc00', fn: playPowerUpAccent },
-  { id: 'explosion', label: 'EXPLOSION', color: '#ff8800', fn: playShipExplosion },
-  { id: 'alienhit',  label: 'ALIEN HIT', color: '#33cc55', fn: playAlienHit },
-  { id: 'bossexpl',  label: 'BOSS EXPL', color: '#44dd66', fn: playBossExplosion },
+const STINGER_GROUPS = [
+  { label: 'STINGERS MUSICAUX', items: [
+    { id: 'win',       label: 'WIN',       color: '#44ff88', fn: playWinStinger },
+    { id: 'gameover',  label: 'GAMEOVER',  color: '#ff4444', fn: playGameOverStinger },
+    { id: 'powerup',   label: 'POWER-UP',  color: '#ffcc00', fn: playPowerUpAccent },
+  ]},
+  { label: 'SFX VAISSEAU', items: [
+    { id: 'explosion', label: 'EXPLOSION', color: '#ff8800', fn: playShipExplosion },
+  ]},
+  { label: 'SFX ALIEN', items: [
+    { id: 'alienhit',  label: 'ALIEN HIT', color: '#33cc55', fn: playAlienHit },
+    { id: 'bossexpl',  label: 'BOSS EXPL', color: '#44dd66', fn: playBossExplosion },
+  ]},
 ];
 
+/** Flat list (pour handlers/hit-test). */
 export function getStingers() {
-  return STINGERS;
+  return STINGER_GROUPS.flatMap(g => g.items);
+}
+
+export function getStingerGroups() {
+  return STINGER_GROUPS;
 }
 
 export function getSections() {
@@ -121,21 +132,23 @@ export function drawTabStingers(ctx, col1, startY) {
   const btnW = 120;
   const btnH = 32;
   const gap = 8;
+  const perRow = 3;
   let y = startY;
 
-  drawLabel(ctx, 'STINGERS / SFX', col1, y);
-  y += 14;
-  const perRow = 3;
-  for (let i = 0; i < STINGERS.length; i++) {
-    const s = STINGERS[i];
-    const row = Math.floor(i / perRow);
-    const col = i % perRow;
-    const bx = col1 + col * (btnW + gap);
-    const by = y + row * (btnH + gap);
-    drawBtn(ctx, bx, by, btnW, btnH, s.label, s.color, hovered === `stinger-${s.id}`, false);
+  for (const group of STINGER_GROUPS) {
+    drawLabel(ctx, group.label, col1, y);
+    y += 14;
+    for (let i = 0; i < group.items.length; i++) {
+      const s = group.items[i];
+      const row = Math.floor(i / perRow);
+      const col = i % perRow;
+      const bx = col1 + col * (btnW + gap);
+      const by = y + row * (btnH + gap);
+      drawBtn(ctx, bx, by, btnW, btnH, s.label, s.color, hovered === `stinger-${s.id}`, false);
+    }
+    const rows = Math.ceil(group.items.length / perRow);
+    y += rows * (btnH + gap) + 16;
   }
-  const rows = Math.ceil(STINGERS.length / perRow);
-  y += rows * (btnH + gap) + 16;
 
   return y;
 }

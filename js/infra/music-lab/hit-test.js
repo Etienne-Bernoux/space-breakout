@@ -5,7 +5,7 @@ import { LAYER_NAMES } from '../music/index.js';
 import { getScrollY, getCurrentTab } from './state.js';
 import { HEADER_H } from './draw-header.js';
 import { FOOTER_H } from './draw-footer.js';
-import { TRACKS, getInstruments, getSections, getStingers } from './tab-sons.js';
+import { TRACKS, getInstruments, getSections, getStingers, getStingerGroups } from './tab-sons.js';
 
 export function getButtonLayout() {
   const col1 = 20;
@@ -37,14 +37,17 @@ export function getButtonLayout() {
   const currentTab = getCurrentTab();
 
   if (currentTab === 0) {
-    // Stingers tab
-    const STINGERS = getStingers();
-    y += 14;
+    // Stingers tab — grouped
     const perRow = 3;
-    for (let i = 0; i < STINGERS.length; i++) {
-      const row = Math.floor(i / perRow);
-      const col = i % perRow;
-      buttons.push({ id: `stinger-${STINGERS[i].id}`, x: col1 + col * (btnW + gap), y: y + row * (btnH + gap), w: btnW, h: btnH });
+    for (const group of getStingerGroups()) {
+      y += 14; // label
+      for (let i = 0; i < group.items.length; i++) {
+        const row = Math.floor(i / perRow);
+        const col = i % perRow;
+        buttons.push({ id: `stinger-${group.items[i].id}`, x: col1 + col * (btnW + gap), y: y + row * (btnH + gap), w: btnW, h: btnH });
+      }
+      const rows = Math.ceil(group.items.length / perRow);
+      y += rows * (btnH + gap) + 16;
     }
 
   } else if (currentTab === 1) {

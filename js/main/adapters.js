@@ -16,7 +16,7 @@ import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
 import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
 import { drawProjectile } from '../infra/renderers/projectile-render.js';
-import { drawWorldMap, getNodePositions } from '../infra/screens/world-map.js';
+import { drawWorldMap, getNodePositions } from '../infra/screens/world-map/index.js';
 import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';
 import { AlienProjectile } from '../domain/projectile/index.js';
 import { getAllLevels } from '../domain/progression/level-catalog.js';

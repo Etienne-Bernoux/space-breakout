@@ -1,8 +1,6 @@
 import { Capsule } from '../../domain/capsule/capsule.js';
 import { getPowerUp } from '../../domain/power-ups.js';
 
-const COMBO_FADE_DURATION = 90;
-const SLOW_MO_DURATION = 30;
 
 export class CollisionHandler {
   /**
@@ -67,7 +65,7 @@ export class CollisionHandler {
     this.session.combo = this.ui.combo;
     if (this.ui.combo >= 2) {
       this.ui.comboDisplay = this.ui.combo;
-      this.ui.comboFadeTimer = COMBO_FADE_DURATION;
+      this.ui.comboFadeTimer = this.config.combo.fadeDuration;
     }
     const shakeAmount = this.config.screenshake.intensity[ev.sizeName]
       || this.config.screenshake.intensity.small;
@@ -88,7 +86,7 @@ export class CollisionHandler {
 
     this.systems.intensity.onAsteroidDestroyed(field.remaining, totalAsteroids, this.ui.combo);
     if (field.remaining === 0) {
-      this.ui.slowMoTimer = SLOW_MO_DURATION;
+      this.ui.slowMoTimer = this.config.combo.slowMoDuration;
     }
   }
 

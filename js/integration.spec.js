@@ -80,7 +80,7 @@ function createGame() {
     session,
     systems,
     ui,
-    config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
+    config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule, combo: CONFIG.combo },
     effects,
     getGameState: () => ({ ship: entities.ship, drones: entities.drones, session, field: entities.field }),
     droneManager,

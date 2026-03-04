@@ -57,6 +57,7 @@ function makeDeps(overrides = {}) {
   const config = {
     screenshake: { intensity: { small: 2, medium: 4, large: 6 } },
     capsule: { speed: 2 },
+    combo: { fadeDuration: 90, slowMoDuration: 30 },
     ...overrides.config,
   };
   const effects = {

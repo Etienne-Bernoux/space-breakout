@@ -1,4 +1,3 @@
-const COMBO_FADE_DURATION = 90;
 const COMBO_ALPHA_FRAMES = 30;       // frames pendant lesquelles le combo est pleinement opaque
 const COMBO_PULSE_AMP = 0.3;         // amplitude du pulse sinusoïdal
 const COMBO_MIN = 2;                 // combo minimum affiché
@@ -22,11 +21,12 @@ export class HudRenderer {
    * @param {function} deps.pauseBtnLayout
    * @param {function} deps.pauseScreenLayout
    */
-  constructor({ render, session, ui, canvas, gameScale, pauseBtnLayout, pauseScreenLayout }) {
+  constructor({ render, session, ui, canvas, config, gameScale, pauseBtnLayout, pauseScreenLayout }) {
     this.render = render;
     this.session = session;
     this.ui = ui;
     this.canvas = canvas;
+    this.config = config;
     this.gameScale = gameScale;
     this.pauseBtnLayout = pauseBtnLayout;
     this.pauseScreenLayout = pauseScreenLayout;
@@ -61,7 +61,7 @@ export class HudRenderer {
     this.ui.comboFadeTimer -= dt;
     const ctx = this.render.ctx;
     const alpha = Math.min(1, this.ui.comboFadeTimer / COMBO_ALPHA_FRAMES);
-    const progress = 1 - this.ui.comboFadeTimer / COMBO_FADE_DURATION;
+    const progress = 1 - this.ui.comboFadeTimer / this.config.combo.fadeDuration;
     const s = this.gameScale();
     const baseSize = Math.round(36 * s);
     const pulse = 1 + Math.sin(progress * Math.PI) * COMBO_PULSE_AMP;

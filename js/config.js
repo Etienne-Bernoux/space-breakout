@@ -59,6 +59,11 @@ export const CONFIG = {
     decay: 0.85,
   },
 
+  combo: {
+    fadeDuration: 90,   // frames d'affichage du combo (utilisé par collision-handler + hud-render)
+    slowMoDuration: 30, // frames de slow-motion sur destruction
+  },
+
   lives: 3,
   starCount: 120,
 };

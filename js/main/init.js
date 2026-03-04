@@ -131,6 +131,7 @@ G.hud = new HudRenderer({
   session: G.session,
   ui: G.ui,
   canvas: CONFIG.canvas,
+  config: CONFIG,
   gameScale,
   pauseBtnLayout,
   pauseScreenLayout,

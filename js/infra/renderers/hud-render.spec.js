@@ -32,6 +32,7 @@ function makeDeps(overrides = {}) {
     session: { lives: 3, score: 1200 },
     ui: { comboFadeTimer: 0, comboDisplay: 0 },
     canvas: { width: 500, height: 700 },
+    config: { combo: { fadeDuration: 90, slowMoDuration: 30 } },
     gameScale: () => 1,
     pauseBtnLayout: () => ({ x: 440, y: 8, size: 40 }),
     pauseScreenLayout: () => ({

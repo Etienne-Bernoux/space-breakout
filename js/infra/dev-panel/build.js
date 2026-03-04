@@ -100,11 +100,6 @@ export function buildDevPanel(root) {
   // --- Pattern (colonne droite) ---
   colRight.appendChild(txt('div', 'dp-section-label', 'PATTERN'));
   const patternList = el('div', 'dp-btn-list');
-  const rndBtn = txt('button', 'dp-btn', 'Aléatoire');
-  rndBtn.setAttribute('data-action', 'pattern');
-  rndBtn.setAttribute('data-key', 'random');
-  patternList.appendChild(rndBtn);
-  refs.patterns.push({ key: 'random', btn: rndBtn });
   for (const key of PATTERN_KEYS) {
     const pat = PATTERNS[key];
     const btn = txt('button', 'dp-btn', pat.name);

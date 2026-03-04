@@ -5,18 +5,23 @@ import { gameScale } from '../../../shared/responsive.js';
 import { drawNebula, drawPaths, drawDebris, drawStars, drawMiniShip } from './draw-effects.js';
 import { drawAsteroidNode } from './draw-nodes.js';
 
-/** Calcule les positions des nœuds en zigzag. */
+/** Calcule les positions des nœuds en courbe serpentine. */
 export function getNodePositions(W, H, count) {
   const nodes = [];
-  const marginX = W * 0.12;
-  const marginTop = H * 0.18;
-  const marginBot = H * 0.78;
+  const marginX = W * 0.1;
+  const centerY = H * 0.48;
+  const ampY = H * 0.2;        // amplitude verticale du serpent
+  const startX = marginX;
+  const endX = W - marginX;
+
   for (let i = 0; i < count; i++) {
-    const t = count > 1 ? i / (count - 1) : 0.5;
-    const x = marginX + t * (W - 2 * marginX);
-    const y = i % 2 === 0
-      ? marginTop + (marginBot - marginTop) * 0.3
-      : marginTop + (marginBot - marginTop) * 0.7;
+    // Progression non-linéaire : boss un peu plus éloigné
+    const raw = count > 1 ? i / (count - 1) : 0.5;
+    const t = raw < 1 ? raw * 0.92 : 1; // comprime les 5 premiers, étire le dernier
+    const x = startX + t * (endX - startX);
+    // Sinusoïde avec une période ~1.2 tours pour éviter la symétrie exacte
+    const phase = raw * Math.PI * 1.2;
+    const y = centerY + Math.sin(phase) * ampY;
     nodes.push({ x, y });
   }
   return nodes;

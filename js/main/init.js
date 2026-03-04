@@ -13,30 +13,17 @@ import { GameIntensityDirector } from '../use-cases/intensity/game-intensity-dir
 import { MusicDirector } from '../infra/orchestrators/music-director.js';
 import { EffectDirector } from '../infra/orchestrators/effect-director.js';
 import { setupResize } from '../infra/resize.js';
-import { spawnExplosion, spawnShipExplosion, spawnTrail, updateParticles } from '../infra/particles.js';
 import { playAlienShoot } from '../infra/audio.js';
-import { triggerShake, updateShake, setAmbientShake } from '../infra/screenshake.js';
-import { isDevMode, getDevAsteroidConfig, isDevPanelActive, drawDevPanel, handleDevHover, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, showDevPanel } from '../infra/dev-panel/index.js';
+import { isDevMode, getDevAsteroidConfig } from '../infra/dev-panel/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
-import { updateStars } from '../infra/stars.js';
-import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/touch.js';
-import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
-import { drawCapsule, drawPowerUpHUD } from '../infra/power-up-render.js';
-import { isMusicLabActive, drawMusicLab, handleMusicLabHover, handleMusicLabTap, handleMusicLabScroll } from '../infra/music-lab/index.js';
-import { drawShip } from '../infra/renderers/ship-render.js';
-import { drawDrone } from '../infra/renderers/drone-render.js';
-import { drawField } from '../infra/renderers/field-render.js';
-import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
-import { drawProjectile } from '../infra/renderers/projectile-render.js';
-import { drawWorldMap, getNodePositions } from '../infra/screens/world-map.js';
-import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';
-import { AlienProjectile } from '../domain/projectile/index.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { AlienCombatManager } from '../use-cases/alien-combat/alien-combat-manager.js';
+import { AlienProjectile } from '../domain/projectile/index.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input-handler.js';
+import { loopInfra, inputInfra, collisionEffects } from './adapters.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -120,8 +107,8 @@ G.collisionHandler = new CollisionHandler({
   session: G.session,
   systems: G.systems,
   ui: G.ui,
-  config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule },
-  effects: { spawnExplosion, spawnShipExplosion, triggerShake, spawnDebris },
+  config: { screenshake: CONFIG.screenshake, capsule: CONFIG.capsule, combo: CONFIG.combo },
+  effects: collisionEffects,
   getGameState: () => G.gs,
   droneManager: G.systems.droneManager,
 });
@@ -191,32 +178,6 @@ export function finishLevel() {
 /** Helpers exposés pour les écrans. */
 export { getLevel, getNextLevel, getAllLevels };
 
-// --- Infra adapters (regroupement des dépendances infra pour injection) ---
-const loopInfra = {
-  updateStars, getMousePos, getTouchX,
-  updateMenu, updateMenuHover,
-  spawnTrail, updateParticles,
-  updateShake, setAmbientShake,
-  drawCapsule, drawPowerUpHUD,
-  isDevPanelActive, drawDevPanel, handleDevHover,
-  isMusicLabActive, drawMusicLab, handleMusicLabHover,
-  updateDevOverlay,
-  drawShip, drawDrone, drawField,
-  updateDebris,
-  drawWorldMap, drawStatsScreen, getAllLevels,
-  finishLevel,
-  AlienProjectile,
-  drawProjectile,
-  playAlienShoot,
-};
-
-const inputInfra = {
-  setupTouch, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler,
-  handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu,
-  isDevPanelActive, handleDevTap, handleDevDrag, handleDevRelease, hideDevPanel, isDevMode, showDevPanel,
-  isMusicLabActive, handleMusicLabTap, handleMusicLabScroll,
-};
-
 G.alienCombat = new AlienCombatManager({
   createProjectile: (px, py, target, opts) => new AlienProjectile(px, py, target, opts),
   onShoot: playAlienShoot,
@@ -231,7 +192,7 @@ G.gameLoop = new GameLoop({
   canvas: CONFIG.canvas,
   hud: G.hud,
   collisionHandler: G.collisionHandler,
-  infra: loopInfra,
+  infra: { ...loopInfra, finishLevel, updateDevOverlay },
   progress: G.progress,
   mapState: G.mapState,
   getLevelResult: () => G.levelResult,
@@ -251,7 +212,7 @@ G.inputHandler = new InputHandler({
   finishLevel,
   progress: G.progress,
   mapState: G.mapState,
-  infra: { ...inputInfra, getNodePositions, getStatsButtons, getAllLevels },
+  infra: inputInfra,
 });
 
 // --- Resize handler ---

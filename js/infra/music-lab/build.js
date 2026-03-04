@@ -34,9 +34,7 @@ export function buildMusicLab(root) {
   // --- Header ---
   const header = el('div', 'ml-header');
   header.appendChild(txt('span', 'ml-title', 'MUSIC LAB'));
-  const close = txt('button', 'ml-close', '×');
-  close.setAttribute('data-action', 'close');
-  header.appendChild(close);
+  // Pas de bouton close — on reste dans le music lab tant qu'on ne ferme pas le tab
   root.appendChild(header);
 
   // --- Tabs ---

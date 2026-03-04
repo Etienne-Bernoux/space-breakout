@@ -38,7 +38,7 @@ export function attachMusicHandlers(root, refs, { onClose, refresh }) {
     const action = btn.dataset.action;
     const sim = getSim();
 
-    if (action === 'close') { onClose(); return; }
+    // Pas de bouton close — le music lab reste ouvert
 
     // Tabs
     if (action === 'tab') {
@@ -172,9 +172,4 @@ export function attachMusicHandlers(root, refs, { onClose, refresh }) {
     }
   });
 
-  // Keyboard: Escape → close
-  document.addEventListener('keydown', (e) => {
-    if (!isActive()) return;
-    if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
-  });
 }

@@ -342,6 +342,7 @@ describe('AsteroidField', () => {
     const patConfig = {
       rows: 4, cols: 6, cellW: 0, cellH: 0, padding: 4,
       offsetTop: 10, offsetLeft: 10, _autoSize: true,
+      canvasW: 800, areaH: 400,
       density: 0.5, materials: { rock: 1.0 },
     };
 

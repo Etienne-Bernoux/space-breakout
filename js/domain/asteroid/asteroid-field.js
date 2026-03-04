@@ -14,13 +14,11 @@ export class AsteroidField {
     const c = { ...config };
 
     // Calcul dynamique de cellW/cellH si la grille change
-    const canvasW = 800;
-    const areaH = 400;
     if (!c.cellW || c._autoSize) {
-      c.cellW = Math.floor((canvasW - 2 * c.offsetLeft - (c.cols - 1) * c.padding) / c.cols);
+      c.cellW = Math.floor((c.canvasW - 2 * c.offsetLeft - (c.cols - 1) * c.padding) / c.cols);
     }
     if (!c.cellH || c._autoSize) {
-      c.cellH = Math.floor((areaH - c.offsetTop - (c.rows - 1) * c.padding) / c.rows);
+      c.cellH = Math.floor((c.areaH - c.offsetTop - (c.rows - 1) * c.padding) / c.rows);
     }
 
     this.config = c;

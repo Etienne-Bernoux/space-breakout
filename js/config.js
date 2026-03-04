@@ -32,6 +32,8 @@ export const CONFIG = {
     offsetTop: 45,
     offsetLeft: 25,
     density: 0.6,
+    canvasW: 800,    // largeur canvas pour calcul auto cellW
+    areaH: 400,      // hauteur zone astéroïdes pour calcul auto cellH
     colors: ['#8b4513', '#a0522d', '#6b3a2a', '#7a4530'],
   },
 

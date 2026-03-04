@@ -9,8 +9,8 @@ import {
   setTrack, getTrack, enableAdaptiveMode,
 } from '../music/index.js';
 import {
-  isActive, setCurrentTab, setActivity, setMuffled, isMuffled,
-  getSim, setLoopStartTime, getCurrentTab,
+  isActive, setActivity, setMuffled, isMuffled,
+  getSim, setLoopStartTime,
 } from './state.js';
 import { getStingers } from './tab-sons.js';
 import { simApply } from './tab-gameplay.js';
@@ -37,18 +37,6 @@ export function attachMusicHandlers(root, refs, { onClose, refresh }) {
     if (!btn) return;
     const action = btn.dataset.action;
     const sim = getSim();
-
-    // Pas de bouton close — le music lab reste ouvert
-
-    // Tabs
-    if (action === 'tab') {
-      const idx = parseInt(btn.dataset.index);
-      if (idx !== getCurrentTab()) {
-        setCurrentTab(idx);
-        refresh();
-      }
-      return;
-    }
 
     // Transport
     if (action === 'transport') {

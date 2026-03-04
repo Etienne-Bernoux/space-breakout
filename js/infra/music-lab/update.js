@@ -1,27 +1,15 @@
 // --- Music Lab DOM Update ---
-// Sync DOM ← state, music API.
+// Sync DOM ← state, music API. Layout 2 colonnes, pas de tabs.
 
 import { isPlaying, getCurrentSection, getLayerVolumes, getTrack } from '../music/index.js';
-import { getCurrentTab, getActivityProgress, getSim, isMuffled } from './state.js';
+import { getActivityProgress, getSim, isMuffled } from './state.js';
 import { getInstruments } from './tab-sons.js';
 
 const INTENSITY_LABELS = ['CALM', 'CRUISE', 'ACTION', 'INTENSE', 'CLIMAX'];
 const INTENSITY_COLORS = ['#44aa66', '#88cc44', '#ccaa33', '#ff6644', '#ff2244'];
 
 export function updateMusicLab(refs) {
-  const tab = getCurrentTab();
-
-  // Tabs
-  for (let i = 0; i < refs.tabs.length; i++) {
-    refs.tabs[i].classList.toggle('ml-tab-active', i === tab);
-  }
-
-  // Panels
-  for (let i = 0; i < refs.panels.length; i++) {
-    refs.panels[i].style.display = i === tab ? '' : 'none';
-  }
-
-  // Track buttons (Sons tab)
+  // Track buttons
   const currentTrack = getTrack();
   for (const t of refs.trackBtns) {
     t.btn.classList.toggle('ml-btn-active', t.id === currentTrack);
@@ -39,17 +27,16 @@ export function updateMusicLab(refs) {
   // Gameplay sim
   updateSimPanel(refs);
 
-  // Layer readonly (gameplay tab)
+  // Layer readonly
   updateLayerReadonly(refs);
 
-  // Mix tab
+  // Mix
   updateMixPanel(refs);
 }
 
 function rebuildInstruments(refs) {
   const instruments = getInstruments();
   const container = refs.instContainer;
-  // Only rebuild if count changed
   if (refs.instBtns.length === instruments.length && refs._lastTrack === getTrack()) return;
   refs._lastTrack = getTrack();
   container.innerHTML = '';
@@ -71,23 +58,19 @@ function updateSimPanel(refs) {
   const sim = getSim();
   const s = refs.sim;
 
-  // Intensity
   s.intValue.textContent = sim.intensity;
   s.intValue.style.color = INTENSITY_COLORS[sim.intensity];
   s.intLabel.textContent = INTENSITY_LABELS[sim.intensity];
   s.intLabel.style.color = INTENSITY_COLORS[sim.intensity];
 
-  // Intensity buttons active state
   for (let i = 0; i < refs.intensityBtns.length; i++) {
     refs.intensityBtns[i].classList.toggle('ml-btn-active', i === sim.intensity);
   }
 
-  // Progress bar
   const ratio = sim.total > 0 ? sim.remaining / sim.total : 0;
   s.progressFill.style.width = `${(ratio * 100).toFixed(0)}%`;
   s.progressText.textContent = `Remaining: ${sim.remaining}/${sim.total} (${(ratio * 100).toFixed(0)}%)`;
 
-  // Stats
   s.combo.textContent = `Combo: ${sim.combo}`;
   s.combo.style.color = sim.combo >= 3 ? '#ffcc00' : '#556677';
   s.lives.textContent = `Lives: ${sim.lives}`;
@@ -116,7 +99,6 @@ function updateMixPanel(refs) {
     lt.volText.textContent = `vol: ${(vol * 100).toFixed(0)}%`;
   }
 
-  // Muffle button
   if (refs.muffleBtn) {
     refs.muffleBtn.textContent = isMuffled() ? 'UNMUFFLE' : 'MUFFLE';
   }

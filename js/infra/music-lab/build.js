@@ -1,5 +1,5 @@
 // --- Music Lab DOM Build ---
-// Construit le DOM complet du music lab, retourne les refs pour update.
+// Layout 2 colonnes : sons (gauche), gameplay+mix (droite).
 
 import { TRACKS, getSections, getStingerGroups, INSTRUMENTS_MAIN, INSTRUMENTS_DARK } from './tab-sons.js';
 import { LAYER_NAMES } from '../music/index.js';
@@ -27,36 +27,27 @@ const INTENSITY_COLORS = ['#44aa66', '#88cc44', '#ccaa33', '#ff6644', '#ff2244']
 
 export function buildMusicLab(root) {
   root.innerHTML = '';
-  const refs = { tabs: [], panels: [], trackBtns: [], sectionBtns: [], instContainer: null, instBtns: [],
+  const refs = { trackBtns: [], sectionBtns: [], instContainer: null, instBtns: [],
     stingerBtns: [], intensityBtns: [], layerReadonly: [], layerToggles: [],
     sim: {}, footer: {} };
 
   // --- Header ---
   const header = el('div', 'ml-header');
   header.appendChild(txt('span', 'ml-title', 'MUSIC LAB'));
-  // Pas de bouton close — on reste dans le music lab tant qu'on ne ferme pas le tab
   root.appendChild(header);
 
-  // --- Tabs ---
-  const tabNames = ['Stingers', 'Sons', 'Gameplay', 'Mix'];
-  const tabBar = el('div', 'ml-tabs');
-  for (let i = 0; i < tabNames.length; i++) {
-    const tab = txt('button', 'ml-tab', tabNames[i]);
-    tab.setAttribute('data-action', 'tab');
-    tab.setAttribute('data-index', i);
-    tabBar.appendChild(tab);
-    refs.tabs.push(tab);
-  }
-  root.appendChild(tabBar);
-
-  // --- Body (scrollable) ---
+  // --- Body : 2 colonnes ---
   const body = el('div', 'ml-body');
+  const colLeft = el('div', 'ml-col');
+  const colRight = el('div', 'ml-col');
 
-  // Panel 0: Stingers
-  const p0 = el('div', 'ml-panel');
+  // ========== COLONNE GAUCHE : Stingers + Sons ==========
+
+  // Stingers
+  colLeft.appendChild(txt('div', 'ml-section-label', 'STINGERS'));
   const groups = getStingerGroups();
   for (const group of groups) {
-    p0.appendChild(txt('div', 'ml-section-label', group.label));
+    colLeft.appendChild(txt('div', 'ml-section-sublabel', group.label));
     const grid = el('div', 'ml-btn-grid');
     for (const s of group.items) {
       const btn = actionBtn('ml-btn', s.label, 'stinger', { 'data-id': s.id });
@@ -65,26 +56,21 @@ export function buildMusicLab(root) {
       grid.appendChild(btn);
       refs.stingerBtns.push(btn);
     }
-    p0.appendChild(grid);
+    colLeft.appendChild(grid);
   }
-  refs.panels.push(p0);
-  body.appendChild(p0);
-
-  // Panel 1: Sons
-  const p1 = el('div', 'ml-panel');
 
   // Tracks
-  p1.appendChild(txt('div', 'ml-section-label', 'PISTE'));
+  colLeft.appendChild(txt('div', 'ml-section-label', 'PISTE'));
   const trackRow = el('div', 'ml-btn-row');
   for (const t of TRACKS) {
     const btn = actionBtn('ml-btn', t.label, 'track', { 'data-id': t.id });
     trackRow.appendChild(btn);
     refs.trackBtns.push({ id: t.id, btn });
   }
-  p1.appendChild(trackRow);
+  colLeft.appendChild(trackRow);
 
   // Sections
-  p1.appendChild(txt('div', 'ml-section-label', 'SECTIONS'));
+  colLeft.appendChild(txt('div', 'ml-section-label', 'SECTIONS'));
   const secGrid = el('div', 'ml-btn-grid');
   const sections = getSections();
   for (const s of sections) {
@@ -94,22 +80,18 @@ export function buildMusicLab(root) {
     secGrid.appendChild(btn);
     refs.sectionBtns.push({ id: s.id, btn });
   }
-  p1.appendChild(secGrid);
+  colLeft.appendChild(secGrid);
 
-  // Instruments (rebuilt when track changes)
-  p1.appendChild(txt('div', 'ml-section-label', 'INSTRUMENTS'));
+  // Instruments
+  colLeft.appendChild(txt('div', 'ml-section-label', 'INSTRUMENTS'));
   const instContainer = el('div', 'ml-btn-grid');
   refs.instContainer = instContainer;
-  p1.appendChild(instContainer);
+  colLeft.appendChild(instContainer);
 
-  refs.panels.push(p1);
-  body.appendChild(p1);
+  // ========== COLONNE DROITE : Gameplay + Mix ==========
 
-  // Panel 2: Gameplay
-  const p2 = el('div', 'ml-panel');
-
-  // Intensity display
-  p2.appendChild(txt('div', 'ml-section-label', 'INTENSITÉ'));
+  // Intensity
+  colRight.appendChild(txt('div', 'ml-section-label', 'INTENSITÉ'));
   const intRow = el('div', 'ml-intensity-row');
   const intValue = txt('span', 'ml-intensity-value', '0');
   const intLabel = txt('span', 'ml-intensity-label', 'CALM');
@@ -118,7 +100,6 @@ export function buildMusicLab(root) {
   refs.sim.intValue = intValue;
   refs.sim.intLabel = intLabel;
 
-  // Override buttons 0-4
   const intBtns = el('div', 'ml-btn-row ml-intensity-btns');
   for (let i = 0; i <= 4; i++) {
     const btn = actionBtn('ml-btn-sm', `${i}`, 'intensity', { 'data-level': i });
@@ -128,16 +109,16 @@ export function buildMusicLab(root) {
     refs.intensityBtns.push(btn);
   }
   intRow.appendChild(intBtns);
-  p2.appendChild(intRow);
+  colRight.appendChild(intRow);
 
   // Sim state
-  p2.appendChild(txt('div', 'ml-section-label', 'ÉTAT SIMULÉ'));
+  colRight.appendChild(txt('div', 'ml-section-label', 'ÉTAT SIMULÉ'));
   const progressBar = el('div', 'ml-progress-bar');
   const progressFill = el('div', 'ml-progress-fill');
   const progressText = txt('span', 'ml-progress-text', 'Remaining: 20/20 (100%)');
   progressBar.appendChild(progressFill);
   progressBar.appendChild(progressText);
-  p2.appendChild(progressBar);
+  colRight.appendChild(progressBar);
   refs.sim.progressFill = progressFill;
   refs.sim.progressText = progressText;
 
@@ -148,13 +129,13 @@ export function buildMusicLab(root) {
   simStats.appendChild(comboStat);
   simStats.appendChild(livesStat);
   simStats.appendChild(puStat);
-  p2.appendChild(simStats);
+  colRight.appendChild(simStats);
   refs.sim.combo = comboStat;
   refs.sim.lives = livesStat;
   refs.sim.pu = puStat;
 
-  // Actions
-  p2.appendChild(txt('div', 'ml-section-label', 'ACTIONS'));
+  // Gameplay actions
+  colRight.appendChild(txt('div', 'ml-section-label', 'ACTIONS'));
   const actGrid = el('div', 'ml-btn-grid');
   const actions = [
     { id: 'gp-destroy', label: 'DESTROY', color: '#ff6644' },
@@ -171,10 +152,10 @@ export function buildMusicLab(root) {
     actGrid.appendChild(btn);
     if (a.id === 'gp-powerup') refs.sim.puBtn = btn;
   }
-  p2.appendChild(actGrid);
+  colRight.appendChild(actGrid);
 
   // Layers readonly
-  p2.appendChild(txt('div', 'ml-section-label', 'LAYERS (temps réel)'));
+  colRight.appendChild(txt('div', 'ml-section-label', 'LAYERS (temps réel)'));
   const layerRow = el('div', 'ml-layer-row');
   for (const name of LAYER_NAMES) {
     const cell = el('div', 'ml-layer-cell');
@@ -186,14 +167,10 @@ export function buildMusicLab(root) {
     layerRow.appendChild(cell);
     refs.layerReadonly.push({ name, cell, fill, label });
   }
-  p2.appendChild(layerRow);
+  colRight.appendChild(layerRow);
 
-  refs.panels.push(p2);
-  body.appendChild(p2);
-
-  // Panel 3: Mix
-  const p3 = el('div', 'ml-panel');
-  p3.appendChild(txt('div', 'ml-section-label', 'LAYERS (cliquer pour toggle)'));
+  // Mix : layer toggles
+  colRight.appendChild(txt('div', 'ml-section-label', 'MIX (cliquer pour toggle)'));
   for (const name of LAYER_NAMES) {
     const row = el('div', 'ml-mix-row');
     const btn = actionBtn('ml-btn ml-mix-btn', `${name.toUpperCase()} ON`, 'layer', { 'data-name': name });
@@ -201,18 +178,18 @@ export function buildMusicLab(root) {
     const volText = txt('span', 'ml-mix-vol', 'vol: 100%');
     row.appendChild(btn);
     row.appendChild(volText);
-    p3.appendChild(row);
+    colRight.appendChild(row);
     refs.layerToggles.push({ name, btn, volText });
   }
 
-  p3.appendChild(txt('div', 'ml-section-label', 'EFFETS'));
+  // Muffle
+  colRight.appendChild(txt('div', 'ml-section-label', 'EFFETS'));
   const muffleBtn = actionBtn('ml-btn', 'MUFFLE', 'muffle');
   refs.muffleBtn = muffleBtn;
-  p3.appendChild(muffleBtn);
+  colRight.appendChild(muffleBtn);
 
-  refs.panels.push(p3);
-  body.appendChild(p3);
-
+  body.appendChild(colLeft);
+  body.appendChild(colRight);
   root.appendChild(body);
 
   // --- Footer ---

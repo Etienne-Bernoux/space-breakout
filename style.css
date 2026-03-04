@@ -449,7 +449,7 @@ body.menu #game {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
-  width: 520px;
+  width: 780px;
   max-width: 95vw;
   max-height: 90vh;
   overflow: hidden;
@@ -464,54 +464,31 @@ body.menu #game {
 
 .ml-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 14px 6px;
   border-bottom: 1px solid rgba(0, 212, 255, 0.2);
 }
 .ml-title { color: #ffcc00; font-weight: bold; font-size: 14px; }
-.ml-close {
-  background: none;
-  border: 1px solid rgba(255,255,255,0.3);
-  color: #aaa;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 3px;
-  padding: 2px 7px;
-}
-.ml-close:hover { color: #fff; border-color: #fff; }
 
-/* Tabs */
-.ml-tabs {
-  display: flex;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.ml-tab {
-  flex: 1;
-  background: none;
-  border: none;
-  color: #667788;
-  font: bold 12px/1 monospace;
-  padding: 8px 4px;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
-}
-.ml-tab:hover { color: #aaccdd; }
-.ml-tab-active { color: #00d4ff; border-bottom-color: #00d4ff; }
-
-/* Body (scrollable) */
+/* Body : 2 colonnes */
 .ml-body {
   flex: 1;
   overflow-y: auto;
   padding: 8px 14px;
   scrollbar-width: thin;
   scrollbar-color: #333 transparent;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
+}
+.ml-col { display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 700px) {
+  #music-lab { width: auto; }
+  .ml-body { grid-template-columns: 1fr; }
 }
 
-/* Panels */
-.ml-panel { display: flex; flex-direction: column; gap: 6px; }
 .ml-section-label { color: #aabbcc; font-weight: bold; font-size: 12px; margin-top: 8px; }
+.ml-section-sublabel { color: #778899; font-size: 11px; margin-top: 4px; }
 
 /* Button rows/grids */
 .ml-btn-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }

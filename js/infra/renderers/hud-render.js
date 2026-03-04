@@ -134,6 +134,7 @@ export class HudRenderer {
     const ctx = this.render.ctx;
     const layout = this.pauseScreenLayout();
     const { cx, cy, s, resumeBtn, menuBtn } = layout;
+    const t = Date.now() * 0.001;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -141,47 +142,94 @@ export class HudRenderer {
     ctx.save();
     ctx.textAlign = 'center';
 
+    // Titre PAUSE avec glow pulsant
+    const pausePulse = 14 + Math.sin(t * 2.5) * 6;
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = pausePulse;
     ctx.fillStyle = '#00d4ff';
     ctx.font = `bold ${Math.round(32 * s)}px monospace`;
     ctx.fillText('PAUSE', cx, cy - 40 * s);
+    ctx.shadowBlur = 0;
 
-    ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
-    ctx.fillRect(resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h);
-    ctx.strokeStyle = '#00d4ff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `${Math.round(20 * s)}px monospace`;
-    ctx.fillText('REPRENDRE', cx, resumeBtn.y + resumeBtn.h * 0.65);
+    // Bouton REPRENDRE (primaire, glow cyan)
+    this.#drawButton(ctx, resumeBtn, 'REPRENDRE', {
+      fillColor: 'rgba(0, 212, 255, 0.12)',
+      strokeColor: '#00d4ff',
+      textColor: '#ffffff',
+      glowColor: '#00d4ff',
+      glowBlur: 6,
+      cx, s,
+    });
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.fillRect(menuBtn.x, menuBtn.y, menuBtn.w, menuBtn.h);
-    ctx.strokeStyle = '#334455';
-    ctx.strokeRect(menuBtn.x, menuBtn.y, menuBtn.w, menuBtn.h);
-    ctx.fillStyle = '#667788';
-    ctx.fillText('MENU', cx, menuBtn.y + menuBtn.h * 0.65);
+    // Bouton MENU (secondaire, subtil)
+    this.#drawButton(ctx, menuBtn, 'MENU', {
+      fillColor: 'rgba(255, 255, 255, 0.04)',
+      strokeColor: '#445566',
+      textColor: '#8899aa',
+      glowColor: '#445566',
+      glowBlur: 3,
+      cx, s,
+    });
 
     const isMobile = 'ontouchstart' in window;
     if (!isMobile) {
       ctx.font = `${Math.round(12 * s)}px monospace`;
-      ctx.fillStyle = '#445566';
+      const instrA = 0.35 + Math.sin(t * 2) * 0.1;
+      ctx.fillStyle = `rgba(68, 85, 102, ${instrA})`;
       ctx.fillText('ÉCHAP REPRENDRE  ·  R MENU', cx, menuBtn.y + menuBtn.h + 30 * s);
     }
 
     ctx.restore();
   }
 
+  /** Bouton avec gradient fond + glow bordure. */
+  #drawButton(ctx, btn, label, { fillColor, strokeColor, textColor, glowColor, glowBlur, cx, s }) {
+    // Fond avec gradient vertical subtil
+    const bgGrad = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.h);
+    bgGrad.addColorStop(0, fillColor);
+    bgGrad.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
+    // Bordure avec glow
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = glowBlur;
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(btn.x, btn.y, btn.w, btn.h);
+    ctx.shadowBlur = 0;
+    // Texte
+    ctx.fillStyle = textColor;
+    ctx.font = `${Math.round(20 * s)}px monospace`;
+    ctx.fillText(label, cx, btn.y + btn.h * 0.65);
+  }
+
   drawEndScreen(text) {
     const ctx = this.render.ctx;
     const s = this.gameScale();
+    const t = Date.now() * 0.001;
+
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.round(32 * s)}px monospace`;
+
+    ctx.save();
     ctx.textAlign = 'center';
+
+    // Titre avec glow
+    const isGameOver = text.includes('OVER');
+    const glowColor = isGameOver ? '#ff4444' : '#00d4ff';
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 14 + Math.sin(t * 2) * 6;
+    ctx.fillStyle = isGameOver ? '#ff6666' : '#ffffff';
+    ctx.font = `bold ${Math.round(32 * s)}px monospace`;
     ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+    ctx.shadowBlur = 0;
+
+    // Instruction pulsante
+    const instrA = 0.4 + Math.sin(t * 2.5) * 0.15;
     ctx.font = `${Math.round(16 * s)}px monospace`;
+    ctx.fillStyle = `rgba(255, 255, 255, ${instrA})`;
     ctx.fillText('Appuie pour retourner au menu', this.canvas.width / 2, this.canvas.height / 2 + 40 * s);
-    ctx.textAlign = 'start';
+
+    ctx.restore();
   }
 }

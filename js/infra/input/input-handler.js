@@ -11,7 +11,7 @@ export class InputHandler {
    * @param {function} deps.startGame
    * @param {object} deps.infra      - infra adapters (touch, menu, devPanel, musicLab)
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, goToWorldMap, goToUpgrade, finishLevel, progress, mapState, wallet, upgrades, infra }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, goToWorldMap, goToUpgrade, goToSystemMap, finishLevel, progress, mapState, systemMapState, wallet, upgrades, infra }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -22,9 +22,11 @@ export class InputHandler {
     this.startGame = startGame;
     this.goToWorldMap = goToWorldMap;
     this.goToUpgrade = goToUpgrade;
+    this.goToSystemMap = goToSystemMap;
     this.finishLevel = finishLevel;
     this.progress = progress;
     this.mapState = mapState;
+    this.systemMapState = systemMapState;
     this.wallet = wallet;
     this.upgrades = upgrades;
     this.infra = infra;
@@ -32,6 +34,13 @@ export class InputHandler {
     infra.setupTouch();
     this.#bindTouchHandlers();
     this.#bindKeyboard();
+  }
+
+  /** Retourne le zoneId courant basé sur systemMapState. */
+  #currentZoneId() {
+    const zones = this.infra.getAllZones();
+    const zone = zones[this.systemMapState.selectedZone];
+    return zone ? zone.id : 'zone1';
   }
 
   #launchAllDrones() {
@@ -92,7 +101,10 @@ export class InputHandler {
       if (infra.isDevPanelActive()) return;
       if (this.session.state === 'menu') {
         const action = infra.handleMenuTap(x, y);
-        if (action === 'play') this.goToWorldMap();
+        if (action === 'play') this.goToSystemMap();
+      }
+      if (this.session.state === 'systemMap') {
+        this.#handleSystemMapTap(x, y);
       }
       if (this.session.state === 'worldMap') {
         this.#handleWorldMapTap(x, y);
@@ -141,7 +153,7 @@ export class InputHandler {
       return;
     }
 
-    const levels = this.infra.getAllLevels();
+    const levels = this.infra.getAllLevels(this.#currentZoneId());
     const nodes = this.infra.getNodePositions(this.canvas.width, this.canvas.height, levels.length);
     const r = 22;
     for (let i = 0; i < nodes.length; i++) {
@@ -151,6 +163,29 @@ export class InputHandler {
         this.#launchSelectedLevel();
         return;
       }
+    }
+  }
+
+  #handleSystemMapTap(x, y) {
+    const zones = this.infra.getAllZones();
+    const nodes = this.infra.getSystemNodePositions(this.canvas.width, this.canvas.height, zones);
+    const r = 28;
+    for (let i = 0; i < nodes.length; i++) {
+      const dx = x - nodes[i].x, dy = y - nodes[i].y;
+      if (dx * dx + dy * dy < r * r && this.progress.isZoneUnlocked(zones[i].id)) {
+        this.systemMapState.selectedZone = i;
+        this.#enterSelectedZone();
+        return;
+      }
+    }
+  }
+
+  #enterSelectedZone() {
+    const zones = this.infra.getAllZones();
+    const zone = zones[this.systemMapState.selectedZone];
+    if (zone && this.progress.isZoneUnlocked(zone.id)) {
+      this.mapState.selectedIndex = 0;
+      this.goToWorldMap();
     }
   }
 
@@ -176,22 +211,18 @@ export class InputHandler {
       }
     }
 
-    // Items → sélectionner
-    for (let i = 0; i < btns.items.length; i++) {
-      if (this.#hitBtn(x, y, btns.items[i])) {
-        // Navigate to this item
-        while (infra.getVisibleUpgrades().length > 0) {
-          infra.nextUpgrade();
-          break;
-        }
-        return;
-      }
-    }
-
-    // Bouton achat
+    // Bouton achat (testé avant les items car inclus dans la zone item)
     if (this.#hitBtn(x, y, btns.buyBtn)) {
       this.#tryBuySelectedUpgrade();
       return;
+    }
+
+    // Items → sélectionner l'item cliqué
+    for (let i = 0; i < btns.items.length; i++) {
+      if (this.#hitBtn(x, y, btns.items[i])) {
+        infra.selectUpgrade(i);
+        return;
+      }
     }
 
     // Retour
@@ -202,13 +233,12 @@ export class InputHandler {
 
   #tryBuySelectedUpgrade() {
     const upgList = this.infra.getVisibleUpgrades();
-    // upgradeScreenState.selectedUpgrade gives us the index
-    // We access it through the draw module's getUpgradeScreenButtons which uses state internally
-    // For simplicity, iterate to find the first buyable
-    for (const u of upgList) {
-      if (this.upgrades.canBuy(u.id, this.wallet)) {
-        this.upgrades.buy(u.id, this.wallet);
-        return;
+    const idx = this.infra.getSelectedUpgradeIndex();
+    const u = upgList[idx];
+    if (!u) return;
+    if (this.upgrades.canBuy(u.id, this.wallet)) {
+      if (this.upgrades.buy(u.id, this.wallet)) {
+        this.systems.intensity.onUpgradePurchased();
       }
     }
   }
@@ -218,11 +248,11 @@ export class InputHandler {
   }
 
   #launchSelectedLevel() {
-    const levels = this.infra.getAllLevels();
+    const levels = this.infra.getAllLevels(this.#currentZoneId());
     const lvl = levels[this.mapState.selectedIndex];
     if (lvl && this.progress.isUnlocked(lvl.id)) {
       // En mode progress lab → ouvrir le simulateur au lieu de lancer la partie
-      if (this.infra.isProgressLabActive && this.infra.isProgressLabActive()) {
+      if (this.infra.isProgressLabActive()) {
         this.infra.showSimulatorModal(this.mapState.selectedIndex);
         return;
       }
@@ -231,7 +261,7 @@ export class InputHandler {
   }
 
   #nextLevelOrMap() {
-    const levels = this.infra.getAllLevels();
+    const levels = this.infra.getAllLevels(this.#currentZoneId());
     const nextIdx = this.mapState.selectedIndex + 1;
     if (nextIdx < levels.length && this.progress.isUnlocked(levels[nextIdx].id)) {
       this.mapState.selectedIndex = nextIdx;
@@ -251,12 +281,27 @@ export class InputHandler {
       if (infra.isDevPanelActive()) return;
       if (this.session.state === 'menu') {
         const action = infra.handleMenuInput(e.key);
-        if (action === 'play') this.goToWorldMap();
+        if (action === 'play') this.goToSystemMap();
+        return;
+      }
+
+      if (this.session.state === 'systemMap') {
+        const zones = infra.getAllZones();
+        if (e.key === 'ArrowLeft' && this.systemMapState.selectedZone > 0) {
+          this.systemMapState.selectedZone--;
+        }
+        if (e.key === 'ArrowRight' && this.systemMapState.selectedZone < zones.length - 1) {
+          this.systemMapState.selectedZone++;
+        }
+        if (e.key === ' ' || e.key === 'Enter') this.#enterSelectedZone();
+        if (e.key === 'Escape' && !infra.isProgressLabActive()) {
+          this.session.backToMenu();
+        }
         return;
       }
 
       if (this.session.state === 'worldMap') {
-        const levels = infra.getAllLevels();
+        const levels = infra.getAllLevels(this.#currentZoneId());
         if (e.key === 'ArrowLeft' && this.mapState.selectedIndex > 0) {
           this.mapState.selectedIndex--;
         }
@@ -265,7 +310,7 @@ export class InputHandler {
         }
         if (e.key === ' ' || e.key === 'Enter') this.#launchSelectedLevel();
         if (e.key === 'u' || e.key === 'U') this.goToUpgrade();
-        if (e.key === 'Escape') this.session.backToMenu();
+        if (e.key === 'Escape') this.goToSystemMap();
         return;
       }
 

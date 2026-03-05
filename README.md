@@ -1,6 +1,6 @@
 # Space Breakout
 
-Un casse-briques spatial. Pilote un vaisseau de minage et envoie ton drone détruire les astéroïdes infestés pour sécuriser chaque zone !
+Un casse-briques spatial. Pilote un vaisseau de minage et envoie ton drone détruire les astéroïdes infestés pour sécuriser chaque zone du système planétaire !
 
 **[Jouer maintenant](https://etienne-bernoux.github.io/space-breakout/)**
 
@@ -14,12 +14,14 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 
 ## Fonctionnalités
 
+- Carte du système planétaire : 6 zones (ceinture d'astéroïdes, lune glacée, station abandonnée, planète de lave, nébuleuse toxique, noyau alien)
+- Progression multi-zones avec déverrouillage linéaire, niveaux par zone, étoiles
 - Vaisseau détaillé avec réacteurs animés et lumières clignotantes
-- 6 matériaux d'astéroïdes (roche, glace, lave, métal, cristal, obsidienne) avec fragmentation
+- 8 matériaux d'astéroïdes (roche, glace, lave, métal, cristal, obsidienne, tentacule alien, noyau alien)
 - Astéroïdes générés procéduralement (3 tailles, patterns ASCII ou layout aléatoire)
-- Musique et sons procéduraux (Web Audio, zéro fichier audio)
+- Musique et sons procéduraux (Web Audio, zéro fichier audio, 3 pistes : Space Synth, Dark Orchestral, Cantina)
 - Effets de particules (explosions, traînée du drone)
-- Fond étoilé parallaxe à 3 couches
+- Fond étoilé parallaxe à 3 couches avec corps célestes
 - Responsive : s'adapte à toutes les tailles d'écran (portrait et paysage)
 - Menu, réglages audio (volume musique/sons), pause, crédits
 - Souris, clavier et tactile supportés
@@ -27,8 +29,9 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 - Effets visuels dynamiques (vignette, micro-shake, glow) liés à l'intensité
 - 12 power-ups : élargi, rétréci, collant, perçant, vie+, score ×2, affaiblir, multi-drone, large, mini, rapide, warp
 - Multi-drone : drone supplémentaire, game over quand tous perdus
+- Système de minerais (cuivre, argent, or, platine) + atelier d'upgrades (7 upgrades, 4 catégories)
 - Clean Architecture DDD : entités pures, use-cases isolés, infra séparée, DI systématique
-- 295 tests (280 unit + 15 e2e) — zéro dépendance runtime, 100% vanilla JS + Canvas
+- 434 tests (417 unit + 17 e2e) — zéro dépendance runtime, 100% vanilla JS + Canvas
 
 ## Développement
 
@@ -37,12 +40,12 @@ git clone https://github.com/etienne-bernoux/space-breakout.git
 cd space-breakout
 npm install                        # installe les devDependencies
 npx serve .                        # serveur local → http://localhost:3000
-npm test                           # tests unitaires — 280 tests (Vitest + Chai)
-npm run test:e2e                   # tests e2e — 15 tests (Playwright + Chromium)
+npm test                           # tests unitaires — 417 tests (Vitest + Chai)
+npm run test:e2e                   # tests e2e — 17 tests (Playwright + Chromium)
 npm run test:all                   # unit + e2e
 ```
 
-Modes spéciaux : `?dev` (dev panel + overlay in-game), `?mus` (music lab).
+Mode spécial : `?lab` — ouvre le Lab Hub (Dev Panel, Music Lab, Progress Lab). En jeu, active le dev overlay (desktop only).
 
 ## Crédits
 

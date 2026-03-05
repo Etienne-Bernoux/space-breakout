@@ -2,20 +2,21 @@
 
 > **Règle doc** : après tout changement structurel (nouveau fichier, nouveau pattern, nouvelle commande), mettre à jour ce fichier, `README.md` et `BACKLOG.md` si pertinent.
 > **Règle bug** : tout bug repéré (par Etienne ou Claude) et non corrigé dans la foulée → ajouté dans `BUG.md`. Dépilé quand opportun.
+> **Règle musique** : avant toute modification musicale, lire `MUSIC.md` (guide complet de création musicale : instruments, sections, tracks, wiring).
 
 Casse-briques spatial publié sur GitHub Pages.
 
 ## Concept
 
 Un vaisseau de minage envoie un drone détruire les astéroïdes infestés pour sécuriser chaque zone.
-Le thème spatial influence le gameplay (prévu : récolte de matière, power-ups, upgrades vaisseau).
+Le thème spatial influence le gameplay : récolte de minerais, power-ups, upgrades vaisseau, progression multi-zones.
 
 ## Stack
 
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
-- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~370 tests)
-- Tests e2e : Playwright (dossier `e2e/`, 16 tests)
+- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~417 tests)
+- Tests e2e : Playwright (dossier `e2e/`, 17 tests)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
 
@@ -34,7 +35,7 @@ js/
   main/                 → composition root (wiring, boucle)
     init.js             → canvas, instances, startGame, état partagé (G), wiring DI
     adapters.js         → regroupement imports infra pour injection (loopInfra, inputInfra, collisionEffects)
-    loop.js             → boucle principale, state dispatch map, slow-motion
+    loop.js             → boucle principale, state dispatch (switch), slow-motion
     index.js            → point d'entrée, bootstrap
   domain/               → entités pures (config injectée, 0 dépendance)
     ship/ship.js        → vaisseau (raquette)
@@ -45,6 +46,11 @@ js/
       mineral-drop-table.js → matrice matériau×minerai (poids de drop)
       mineral-capsule.js → entité capsule minerai (chute, bob, rotation)
       index.js          → façade re-export
+    progression/        → système de progression multi-zones
+      zone-catalog.js   → 6 zones (ceinture, lune, station, planète, nébuleuse, noyau alien)
+      level-catalog.js  → catalogue niveaux par zone (getLevelsForZone, ALL_LEVELS_FLAT)
+      player-progress.js → déverrouillage niveaux + zones, étoiles, persistence
+      star-rating.js    → calcul étoiles (temps, vies perdues)
     materials.js        → 8 matériaux (roche, glace, lave, métal, cristal, obsidienne, tentacule, noyau alien)
     power-ups.js        → 12 power-ups déclaratifs (P1 + P2 drone)
     patterns.js         → patterns ASCII de niveaux
@@ -90,7 +96,7 @@ js/
       music-director.js → gère TOUS les sons/musique (reçoit events du GID)
       effect-director.js → effets visuels par intensité (lerp entre presets)
     input/              → interaction utilisateur + viewport
-      input-handler.js  → handlers tactiles/clavier, pause
+      input-handler.js  → handlers tactiles/clavier, pause (DI groupée : nav, progression, infra)
       touch.js          → contrôles tactiles + souris
       resize.js         → canvas responsive
     effects/            → effets visuels et fond
@@ -103,7 +109,8 @@ js/
       sfxr-synth.js     → synthèse SFXR
     renderers/
       hud-render.js     → HUD, combo, pause screen, end screen
-      ship-render.js    → rendu vaisseau
+      ship-render.js    → rendu vaisseau (sci-fi)
+      ship-render-classic.js → rendu vaisseau alternatif (classique)
       drone-render.js   → rendu drone
       field-render.js   → rendu champ d'astéroïdes
       power-up-render.js → rendu capsules + HUD power-ups actifs
@@ -111,6 +118,8 @@ js/
       mineral-render.js → rendu capsules minerais (pépite/cristal) + HUD minerais
       asteroid-render.js → rendu par matériau (6 styles minéraux)
       asteroid-render-helpers.js → helpers partagés (couleurs, cratères, veines, rim)
+      projectile-render.js → rendu projectiles alien
+      debris-render.js    → rendu débris (animation mort vaisseau)
       alien-creature-render/ → rendu créature alien (dossier-module)
         index.js          → façade (drawAlienCreatures, flood-fill, grouping)
         tentacle-draw.js  → tentacule effilé (ondulation, œil, firePulse)
@@ -121,8 +130,10 @@ js/
       audio-core.js     → contexte audio, master gain/filter, layers
       instruments-main.js → instruments piste Space Synth
       instruments-dark.js → instruments piste Dark Orchestral (+ chœur SATB)
+      instruments-cantina.js → instruments piste Cantina (funk/jazz)
       sections-main.js  → 7 configs sections Mi mineur
       sections-dark.js  → 7 configs sections Ré mineur (LOTR style)
+      sections-cantina.js → configs sections Cantina
       section-engine.js → registre instruments + dispatch data-driven
       scheduler.js      → boucle sections, mode adaptatif, contrôle lecture
       fills.js          → fills de transition (snare roll, arp rise)
@@ -149,11 +160,11 @@ js/
         tab-gameplay.js → logique simulation intensité (simApply)
         handlers.js     → event delegation DOM
         index.js        → façade publique (init, show/hide, rAF footer)
-      progress-lab/     → side panels + simulateur (carte et atelier au centre)
+      progress-lab/     → side panels + simulateur (swap systemMap/worldMap via CSS)
         state.js        → état UI (simulatorOpen)
-        build.js        → 3 builders (left panel, right panel, simulator modal)
-        update.js       → sync DOM ← state (wallet, upgrades, simulator)
-        handlers.js     → event delegation par panel (left, right, simulator)
+        build.js        → builders (zone panel systemMap, wallet/upgrades worldMap, simulator modal)
+        update.js       → sync DOM ← state (wallet, upgrades, zones, simulator)
+        handlers.js     → event delegation (wallet, upgrades, zone-toggle, simulator)
         index.js        → façade publique (init, show/hide panels + simulator modal)
     menu/               → menu principal
       state.js          → état + persistence volumes
@@ -162,7 +173,18 @@ js/
       draw-credits.js   → écran crédits
       handlers.js       → input menu
       index.js          → façade publique
+    persistence/
+      progress-storage.js → sauvegarde/chargement progression (localStorage)
     screens/
+      stats-screen.js   → écran stats fin de niveau (étoiles, temps, minerais)
+      system-map/       → carte du système planétaire (sélection zones)
+        index.js        → rendu (étoile centrale, orbites, chemins, instructions)
+        draw-nodes.js   → rendu nœuds par type (belt, moon, station, planet, nebula, core)
+      world-map/        → carte des niveaux d'une zone
+        index.js        → façade (drawWorldMap, getNodePositions)
+        draw-nodes.js   → rendu nœuds (étoiles, lock, sélection)
+        draw-effects.js → effets visuels (lignes, particules)
+        utils.js        → helpers (positions, hitboxes)
       upgrade-screen/   → écran d'upgrade (accessible depuis worldMap)
         state.js        → sélection catégorie/upgrade
         draw.js         → rendu complet (tabs, items, coûts, bouton achat)
@@ -204,10 +226,11 @@ import { Foo } from './bar';           // ❌
 ## Contrôles
 
 Desktop :
-- Flèches gauche/droite → déplacer le vaisseau
-- Espace → lancer le drone
-- Échap → pause
-- R → retour au menu (depuis pause ou fin de partie)
+- Flèches gauche/droite → déplacer le vaisseau / naviguer (systemMap, worldMap, upgrade)
+- Espace / Entrée → lancer le drone / confirmer (entrer zone, lancer niveau)
+- Échap → pause / retour (playing→paused, worldMap→systemMap, systemMap→menu)
+- U → ouvrir l'atelier d'upgrades (depuis worldMap)
+- R → retour au menu (depuis pause)
 
 Mobile :
 - Glisser le doigt → le vaisseau suit
@@ -220,7 +243,10 @@ Mobile :
 - **Clean Architecture** : Domain (entités pures) → Use Cases (game logic) → Infra (DOM/Canvas/Audio)
 - **DI systématique** : config injectée par constructeur, toutes les dépendances via `{ deps }` (pas d'import CONFIG dans les entités)
 - GameSession est pur état (~72 lignes), CollisionResolver gère la détection, CollisionHandler orchestre
-- États du jeu : menu → worldMap → upgrade → playing → paused / gameOver / won → stats → worldMap
+- États du jeu : menu → systemMap → worldMap → upgrade → playing → paused / gameOver / won → stats → worldMap
+  - systemMap : sélection de zone (planètes sur orbites concentriques)
+  - worldMap : sélection de niveau dans une zone
+  - Échap remonte d'un cran : playing→paused, worldMap→systemMap, systemMap→menu
 - Canvas interne 800x600 (paysage) ou 800xN (portrait, hauteur dynamique)
 - Fond étoilé parallaxe sur un canvas séparé (bg-canvas, plein écran)
 - Touch & keyboard coexistent
@@ -234,7 +260,7 @@ Serveur local requis (ES modules) :
 npx serve .              # serveur statique → http://localhost:3000
 ```
 
-Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`, ~370 tests) :
+Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`, ~417 tests) :
 ```bash
 npm test                          # une passe (vitest run)
 npx vitest                        # mode watch

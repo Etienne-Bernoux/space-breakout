@@ -80,7 +80,7 @@ Stinger spécial aux paliers ronds (×5, ×10, ×15…) : arpège majeur 7 en sq
 5 presets visuels (calm → climax), lerp progressif chaque frame (speed 0.06).
 Effets pilotés : starSpeed, vignetteAlpha/Hue, microShake, deathLine RGB, scoreGlow/Color.
 
-`music-lab/` (?mus) : panel de test avec 3 onglets :
+`music-lab/` (via `?lab` → Music Lab) : panel de test avec 3 onglets :
 - **Sons** : sections, instruments, stingers isolés + sélecteur piste (prêt multi-pistes)
 - **Gameplay** : triggers simulés (destroy, combo, lives, PU) + override intensité 0-4
 - **Mix** : toggle layers ON/OFF, effets (muffle)
@@ -117,12 +117,43 @@ Game over uniquement quand le dernier drone est perdu ET vies à 0.
 Le lifecycle drone est centralisé dans `DroneManager` (spawn, removeExtra, resetLast).
 `CollisionHandler` et `PowerUpManager` utilisent le DroneManager via DI — aucune manipulation directe de `drones[]`.
 
-## Dev overlay (?dev, desktop)
+## Progression multi-zones
+Système de progression à 2 niveaux : zones (systemMap) → niveaux (worldMap).
+
+**Domain** (`domain/progression/`) :
+- `zone-catalog.js` : 6 zones déclaratives (id, name, description, type, accent), chacune associée à un type d'astre visuel (belt, moon, station, planet, nebula, core).
+- `level-catalog.js` : catalogue de niveaux indexé par zone. `getLevelsForZone(zoneId)` retourne les niveaux de la zone. `ALL_LEVELS_FLAT` pour la recherche cross-zone.
+- `player-progress.js` : état du joueur (niveaux complétés, étoiles, `unlockedZoneUpTo`). Méthodes `isZoneUnlocked(id)`, `completeZone(id)`. Sérialisé via `toJSON()`.
+- `star-rating.js` : 1-3 étoiles basées sur `livesLost` et `timeSpent / timeTarget`.
+
+**Screens** (`infra/screens/`) :
+- `system-map/` : vue de dessus du système planétaire. Étoile centrale, orbites elliptiques, nœuds-astres typés (6 drawers visuels distincts), chemins énergie/pointillés, mini-vaisseau sur la zone sélectionnée.
+- `world-map/` : carte des niveaux d'une zone. Titre et accent dynamiques selon la zone courante.
+- `stats-screen.js` : écran post-victoire (étoiles, temps, minerais récoltés).
+
+**State machine** : `menu → systemMap → worldMap → upgrade → playing → paused / gameOver / won → stats → worldMap`. Échap remonte d'un cran.
+
+**Persistence** (`infra/persistence/progress-storage.js`) : wrapper localStorage pour PlayerProgress.
+
+## InputHandler — DI groupée
+Le constructeur accepte 3 groupes sémantiques (au lieu de 18 params à plat) :
+- `nav` : `{ goToWorldMap, goToUpgrade, goToSystemMap, finishLevel }`
+- `progression` : `{ progress, mapState, systemMapState, wallet, upgrades }`
+- `infra` : adapters (touch, menu, labs, screens)
+
+## Progress Lab — swap systemMap/worldMap
+Le progress lab (`?lab` → Progress Lab) affiche un contenu différent selon l'état :
+- **systemMap** : panel zone details (nom, description, lock/unlock)
+- **worldMap** : minerais, upgrades, reset, simulateur
+
+Swap géré par les classes CSS `state-systemMap` / `state-worldMap` sur `<body>` (ajoutées dans `loop.js`).
+
+## Dev overlay (?lab, desktop)
 Deux panels DOM (pas canvas) de part et d'autre du jeu :
 - **Panel gauche** (`#dev-overlay`) : boutons power-ups avec icônes, vie +/-, Win instant, Asteroid HP -1
 - **Panel droit** (`#dev-stats`) : timer, niveau d'intensité (barre colorée), combo
 
-Activé seulement en mode `?dev` + desktop (pas mobile).
+Activé seulement en mode `?lab` + desktop (pas mobile).
 Cliquer un bouton power-up = exactement comme ramasser la capsule en jeu.
 Le resize du canvas tient compte des panels (`resize.js` déduit leur largeur).
 

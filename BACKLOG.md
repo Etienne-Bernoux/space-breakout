@@ -25,16 +25,20 @@ Nouveau matériau "alien/organique" — astéroïdes vivants qui se défendent.
 
 ## Progression
 
-| Feature | Description | Effort |
-|---|---|---|
-| Récolte de matière | Fragments d'astéroïdes récupérables par le vaisseau | M |
-| Boss Zone 1 | Boss de fin de zone 1 (astéroïde géant multi-hits ou habité) | L |
-| Carte monde — polish | Animations vaisseau, déco roches flottantes, transitions fluides | M |
-| Menu pause → carte | Depuis le menu pause, pouvoir retourner directement à la carte monde | S |
-| Zones supplémentaires | Nouvelles zones (glace, lave, cristal…) avec niveaux, thèmes visuels et matériaux spécifiques | L |
-| Upgrades vaisseau | Drone renforcé, achetées avec matériaux récoltés (shop entre niveaux) | L |
-| Upgrades power-ups | 2-3 niveaux par power-up (ex: élargi ×1.5 → ×1.8 → ×2.0) | L |
-| Déverrouillage | Certains power-ups verrouillés par défaut, débloqués en progression | M |
+| Feature | Description | Effort | Statut |
+|---|---|---|---|
+| ~~Carte système planétaire~~ | ~~Sélection de zones sur une carte du système~~ | ~~L~~ | ✅ Fait |
+| ~~Zones (6)~~ | ~~Ceinture, Lune, Station, Planète, Nébuleuse, Noyau Alien~~ | ~~L~~ | ✅ Fait |
+| ~~Upgrades vaisseau~~ | ~~7 upgrades, 4 catégories, coûts en minerais~~ | ~~L~~ | ✅ Fait |
+| ~~Récolte de minerais~~ | ~~4 minerais (cuivre, argent, or, platine) droppés par les astéroïdes~~ | ~~M~~ | ✅ Fait |
+| ~~Menu pause → carte~~ | ~~Depuis pause, retourner à la carte monde~~ | ~~S~~ | ✅ Fait |
+| Boss Zone 1 | Boss de fin de zone 1 (astéroïde géant multi-hits ou habité) | L | |
+| Niveaux zones 2-6 | Créer les niveaux pour les zones 2 à 6 (patterns + configs) | L | |
+| Thème visuel par zone | Fond étoilé, palette, matériaux dominants spécifiques par zone | L | |
+| Carte monde — polish | Animations vaisseau, déco roches flottantes, transitions fluides | M | |
+| Zoom systemMap → worldMap | Transition fluide de zoom quand on entre dans une zone | M | |
+| Upgrades power-ups | 2-3 niveaux par power-up (ex: élargi ×1.5 → ×1.8 → ×2.0) | L | |
+| Déverrouillage | Certains power-ups verrouillés par défaut, débloqués en progression | M | |
 
 ## Skins & Feedback visuel
 

@@ -12,7 +12,7 @@ export class GameLoop {
    * @param {object} deps.infra      - infra adapters (stars, touch, menu, particles, shake, renderers, panels, devOverlay)
    * @param {object} deps.alienCombat - AlienCombatManager instance
    */
-  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, getLevelResult, alienCombat, wallet, upgrades }) {
+  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, systemMapState, getLevelResult, alienCombat, wallet, upgrades }) {
     this.render = render;
     this.entities = entities;
     this.session = session;
@@ -24,6 +24,7 @@ export class GameLoop {
     this.infra = infra;
     this.progress = progress;
     this.mapState = mapState;
+    this.systemMapState = systemMapState;
     this.getLevelResult = getLevelResult;
     this.alienCombat = alienCombat;
     this.wallet = wallet;
@@ -54,12 +55,23 @@ export class GameLoop {
     this.infra.updateMenu(ctx);
   }
 
+  #loopSystemMap(ctx, fx, dt) {
+    if (!this.ui.mapAnimPhase) this.ui.mapAnimPhase = 0;
+    this.ui.mapAnimPhase += dt;
+    this.infra.drawSystemMap(
+      ctx, this.canvas.width, this.canvas.height,
+      this.infra.getAllZones(), this.progress, this.systemMapState.selectedZone, this.ui.mapAnimPhase,
+    );
+  }
+
   #loopWorldMap(ctx, fx, dt) {
     if (!this.ui.mapAnimPhase) this.ui.mapAnimPhase = 0;
     this.ui.mapAnimPhase += dt;
+    const zones = this.infra.getAllZones();
+    const zone = zones[this.systemMapState.selectedZone] || zones[0];
     this.infra.drawWorldMap(
       ctx, this.canvas.width, this.canvas.height,
-      this.infra.getAllLevels(), this.progress, this.mapState.selectedIndex, this.ui.mapAnimPhase,
+      this.infra.getAllLevels(zone.id), this.progress, this.mapState.selectedIndex, this.ui.mapAnimPhase, zone,
     );
   }
 
@@ -192,7 +204,9 @@ export class GameLoop {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.infra.updateStars(fx.starSpeed);
 
-    document.body.classList.toggle('menu', ['menu', 'paused', 'worldMap', 'stats', 'upgrade'].includes(this.session.state));
+    document.body.classList.toggle('menu', ['menu', 'systemMap', 'paused', 'worldMap', 'stats', 'upgrade'].includes(this.session.state));
+    document.body.classList.toggle('state-systemMap', this.session.state === 'systemMap');
+    document.body.classList.toggle('state-worldMap', this.session.state === 'worldMap');
 
     // Overlays prioritaires (interceptent tous les états sauf progress lab)
     if (this.infra.isMusicLabActive()) {
@@ -201,17 +215,17 @@ export class GameLoop {
       this.#loopDevPanel(ctx, fx);
     } else {
       // Dispatch par état de jeu (progress lab laisse le canvas rendre normalement)
-      const handler = {
-        menu:     () => this.#loopMenu(ctx, fx),
-        worldMap: () => this.#loopWorldMap(ctx, fx, dt),
-        upgrade:  () => this.#loopUpgrade(ctx),
-        stats:    () => this.#loopStats(ctx, fx, dt),
-        paused:   () => this.#loopPaused(ctx, fx),
-        gameOver: () => this.#loopGameOver(ctx, fx, dt),
-        won:      () => this.#loopWon(ctx, fx, dt),
-        playing:  () => this.#loopPlaying(ctx, fx, dt),
-      }[this.session.state];
-      if (handler) handler();
+      switch (this.session.state) {
+        case 'menu':      this.#loopMenu(ctx, fx); break;
+        case 'systemMap': this.#loopSystemMap(ctx, fx, dt); break;
+        case 'worldMap':  this.#loopWorldMap(ctx, fx, dt); break;
+        case 'upgrade':   this.#loopUpgrade(ctx); break;
+        case 'stats':     this.#loopStats(ctx, fx, dt); break;
+        case 'paused':    this.#loopPaused(ctx, fx); break;
+        case 'gameOver':  this.#loopGameOver(ctx, fx, dt); break;
+        case 'won':       this.#loopWon(ctx, fx, dt); break;
+        case 'playing':   this.#loopPlaying(ctx, fx, dt); break;
+      }
     }
 
     this.infra.updateDevOverlay();

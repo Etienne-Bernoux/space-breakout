@@ -1,6 +1,7 @@
 // --- Event handlers du progress lab (panel + simulator modal) ---
 
 import state from './state.js';
+import { getZoneIndex, ZONES } from '../../../domain/progression/zone-catalog.js';
 
 const STEP = 10;      // +/- par clic pour wallet
 const SIM_STEP = 1;   // +/- par clic pour simulator minerals
@@ -40,7 +41,7 @@ export function attachHandlers(roots, deps) {
     if (action === 'upgrade-plus') {
       const id = btn.dataset.upgrade;
       if (!deps.upgrades.isMaxed(id)) {
-        deps.upgrades._levels.set(id, deps.upgrades.getLevel(id) + 1);
+        deps.upgrades.setLevel(id, deps.upgrades.getLevel(id) + 1);
         deps.upgrades.save();
       }
       deps.refresh();
@@ -49,9 +50,24 @@ export function attachHandlers(roots, deps) {
     if (action === 'upgrade-minus') {
       const id = btn.dataset.upgrade;
       if (deps.upgrades.getLevel(id) > 0) {
-        deps.upgrades._levels.set(id, deps.upgrades.getLevel(id) - 1);
+        deps.upgrades.setLevel(id, deps.upgrades.getLevel(id) - 1);
         deps.upgrades.save();
       }
+      deps.refresh();
+      return;
+    }
+    if (action === 'zone-toggle') {
+      const zoneId = btn.dataset.zone;
+      const unlocked = deps.progress.isZoneUnlocked(zoneId);
+      if (unlocked) {
+        // Verrouiller : remettre unlockedZoneUpTo à la zone précédente
+        const idx = getZoneIndex(zoneId);
+        deps.progress.unlockedZoneUpTo = idx > 0 ? ZONES[idx - 1].id : ZONES[0].id;
+      } else {
+        // Débloquer : mettre unlockedZoneUpTo à cette zone
+        deps.progress.unlockedZoneUpTo = zoneId;
+      }
+      deps.saveProgress(deps.progress);
       deps.refresh();
       return;
     }

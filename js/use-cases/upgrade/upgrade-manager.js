@@ -72,6 +72,13 @@ export class UpgradeManager {
     return effects;
   }
 
+  /** Force le niveau d'un upgrade (usage dev/progress lab). */
+  setLevel(upgradeId, level) {
+    const upgrade = UPGRADES[upgradeId];
+    if (!upgrade) return;
+    this._levels.set(upgradeId, Math.max(0, Math.min(level, upgrade.maxLevel)));
+  }
+
   /** Est-ce que l'upgrade est au max ? */
   isMaxed(upgradeId) {
     const upgrade = UPGRADES[upgradeId];

@@ -19,6 +19,20 @@ export function updateRightPanel(refs, upgrades) {
   }
 }
 
+/** Rafraîchit le panel zones (systemMap). */
+export function updateZonePanel(refs, zones, progress) {
+  if (!refs.zone) return;
+  for (const z of zones) {
+    const row = refs.zone.rows[z.id];
+    if (!row) continue;
+    const unlocked = progress.isZoneUnlocked(z.id);
+    row.lockBtn.textContent = unlocked ? '🔓' : '🔒';
+    row.lockBtn.title = unlocked ? 'Verrouiller' : 'Débloquer';
+    row.progress.textContent = unlocked ? 'Débloquée' : 'Verrouillée';
+    row.progress.style.color = unlocked ? '#6c6' : '#666';
+  }
+}
+
 /** Rafraîchit le modal simulateur. */
 export function updateSimulator(refs) {
   const sim = state.sim;

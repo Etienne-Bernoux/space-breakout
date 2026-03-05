@@ -1,5 +1,6 @@
 // Catalogue des niveaux — données pures, zéro side-effect.
 // Chaque niveau définit sa config astéroïdes (mergée avec CONFIG.asteroids dans init).
+// Multi-zone : chaque zone a ses propres levels. Seule zone1 est définie pour l'instant.
 
 import { PATTERNS } from '../patterns.js';
 
@@ -17,25 +18,51 @@ export const ZONE_1 = {
   ],
 };
 
-const ALL_LEVELS = ZONE_1.levels;
+/** Map zone id → levels array. Les zones futures seront ajoutées ici. */
+const LEVELS_BY_ZONE = {
+  zone1: ZONE_1.levels,
+};
 
-/** Retourne la définition d'un niveau par son id. */
+/** Tous les levels à plat (toutes zones confondues). */
+const ALL_LEVELS_FLAT = Object.values(LEVELS_BY_ZONE).flat();
+
+/** Retourne les niveaux d'une zone. Défaut : zone1. */
+export function getLevelsForZone(zoneId = 'zone1') {
+  return LEVELS_BY_ZONE[zoneId] || [];
+}
+
+/** Retourne la définition d'un niveau par son id (cherche dans toutes les zones). */
 export function getLevel(id) {
-  return ALL_LEVELS.find(l => l.id === id) || null;
+  return ALL_LEVELS_FLAT.find(l => l.id === id) || null;
 }
 
-/** Retourne l'index (0-based) d'un niveau. -1 si introuvable. */
+/** Retourne l'index (0-based) d'un niveau dans sa zone. -1 si introuvable. */
 export function getLevelIndex(id) {
-  return ALL_LEVELS.findIndex(l => l.id === id);
+  for (const levels of Object.values(LEVELS_BY_ZONE)) {
+    const idx = levels.findIndex(l => l.id === id);
+    if (idx >= 0) return idx;
+  }
+  return -1;
 }
 
-/** Retourne le niveau suivant, ou null si dernier. */
+/** Retourne le niveau suivant dans la même zone, ou null si dernier. */
 export function getNextLevel(id) {
-  const idx = getLevelIndex(id);
-  return idx >= 0 && idx < ALL_LEVELS.length - 1 ? ALL_LEVELS[idx + 1] : null;
+  for (const levels of Object.values(LEVELS_BY_ZONE)) {
+    const idx = levels.findIndex(l => l.id === id);
+    if (idx >= 0) return idx < levels.length - 1 ? levels[idx + 1] : null;
+  }
+  return null;
 }
 
-/** Retourne tous les niveaux de la zone courante. */
-export function getAllLevels() {
-  return ALL_LEVELS;
+/** Retourne la zone (id) qui contient le niveau donné, ou null. */
+export function getZoneForLevel(levelId) {
+  for (const [zoneId, levels] of Object.entries(LEVELS_BY_ZONE)) {
+    if (levels.some(l => l.id === levelId)) return zoneId;
+  }
+  return null;
+}
+
+/** Retourne tous les niveaux de la zone courante (rétro-compatible). */
+export function getAllLevels(zoneId = 'zone1') {
+  return getLevelsForZone(zoneId);
 }

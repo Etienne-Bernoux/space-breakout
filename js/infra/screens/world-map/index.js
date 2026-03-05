@@ -27,20 +27,22 @@ export function getNodePositions(W, H, count) {
   return nodes;
 }
 
-/** Dessine la carte du monde. */
-export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPhase) {
+/** Dessine la carte du monde. zone (optionnel) = { name, accent } pour titre dynamique. */
+export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPhase, zone) {
   ctx.save();
   const s = gameScale(W);
   const nodes = getNodePositions(W, H, levels.length);
   const t = Date.now() * 0.001;
 
-  // Titre avec glow doré
-  ctx.shadowColor = '#8b6914';
+  // Titre avec glow (dynamique si zone fournie)
+  const title = zone ? zone.name.toUpperCase() : 'NUAGE D\'ASTÉROÏDES';
+  const accent = zone ? zone.accent : '#8b6914';
+  ctx.shadowColor = accent;
   ctx.shadowBlur = 10 + Math.sin(t * 1.5) * 4;
-  ctx.fillStyle = '#8b6914';
+  ctx.fillStyle = accent;
   ctx.font = `bold ${Math.round(22 * s)}px monospace`;
   ctx.textAlign = 'center';
-  ctx.fillText('NUAGE D\'ASTÉROÏDES', W / 2, H * 0.08);
+  ctx.fillText(title, W / 2, H * 0.08);
   ctx.shadowBlur = 0;
 
   // Couches de fond

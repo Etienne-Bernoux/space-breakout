@@ -58,9 +58,27 @@ export class GameLoop {
   #loopSystemMap(ctx, fx, dt) {
     if (!this.ui.mapAnimPhase) this.ui.mapAnimPhase = 0;
     this.ui.mapAnimPhase += dt;
+
+    // Init animation unlock si on arrive sur systemMap avec un zoneUnlocked
+    const result = this.getLevelResult ? this.getLevelResult() : null;
+    if (result?.zoneUnlocked && !this.ui.zoneUnlockAnim) {
+      this.ui.zoneUnlockAnim = { zoneId: result.zoneUnlocked, frame: 0 };
+    }
+    // Avancer l'animation
+    let unlockAnim = null;
+    if (this.ui.zoneUnlockAnim) {
+      this.ui.zoneUnlockAnim.frame += dt;
+      unlockAnim = this.ui.zoneUnlockAnim;
+      if (unlockAnim.frame > 120) {
+        this.ui.zoneUnlockAnim = null; // fin de l'animation
+        // Nettoyer le flag pour ne pas redéclencher
+        if (result) result.zoneUnlocked = null;
+      }
+    }
+
     this.infra.drawSystemMap(
       ctx, this.canvas.width, this.canvas.height,
-      this.infra.getAllZones(), this.progress, this.systemMapState.selectedZone, this.ui.mapAnimPhase,
+      this.infra.getAllZones(), this.progress, this.systemMapState.selectedZone, this.ui.mapAnimPhase, unlockAnim,
     );
   }
 

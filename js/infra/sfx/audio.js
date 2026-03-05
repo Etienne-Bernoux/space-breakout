@@ -356,6 +356,51 @@ export function playMineralPickup(mineralKey) {
   osc2.stop(now + dur);
 }
 
+/** Achat upgrade : frappe d'enclume métallique (harmoniques inharmoniques + impact) */
+export function playForgePurchase() {
+  const ctx = getCtx();
+  const now = ctx.currentTime;
+
+  // A. Impact : bruit court filtré passe-haut (claquement marteau)
+  const impLen = ctx.sampleRate * 0.04;
+  const impBuf = ctx.createBuffer(1, impLen, ctx.sampleRate);
+  const impData = impBuf.getChannelData(0);
+  for (let i = 0; i < impLen; i++) impData[i] = Math.random() * 2 - 1;
+  const imp = ctx.createBufferSource();
+  imp.buffer = impBuf;
+  const impF = ctx.createBiquadFilter();
+  impF.type = 'highpass';
+  impF.frequency.value = 2000;
+  impF.Q.value = 1;
+  const impG = ctx.createGain();
+  impG.gain.setValueAtTime(0.4, now);
+  impG.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+  imp.connect(impF);
+  impF.connect(impG);
+  impG.connect(sfxGain);
+  imp.start(now);
+
+  // B. Résonance enclume : harmoniques inharmoniques (métal = non-multiples)
+  const partials = [
+    { freq: 800,  vol: 0.12, decay: 0.5  },
+    { freq: 1340, vol: 0.08, decay: 0.35 },
+    { freq: 2120, vol: 0.05, decay: 0.25 },
+    { freq: 3050, vol: 0.03, decay: 0.15 },
+  ];
+  for (const p of partials) {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(p.freq, now);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(p.vol, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + p.decay);
+    osc.connect(g);
+    g.connect(sfxGain);
+    osc.start(now);
+    osc.stop(now + p.decay);
+  }
+}
+
 // Débloquer l'audio au premier tap/clic (politique navigateur)
 export function unlockAudio() {
   const ctx = getCtx();

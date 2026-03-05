@@ -4,21 +4,88 @@ import { MINERAL_IDS, getMineral } from '../../../domain/mineral/index.js';
 import { UPGRADE_IDS, getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
 
 /**
- * Construit le panel unique (wallet + upgrades + reset).
+ * Construit le panel unique (wallet + upgrades + reset + zone details).
+ * Les sections worldMap (minerais/upgrades) et systemMap (zones) sont swappées par CSS.
  * @param {HTMLElement} root - #pl-panel
- * @returns {object} refs - { wallet: { rows }, upgrades: { rows }, reset: { feedback } }
+ * @param {object[]} zones - getAllZones()
+ * @returns {object} refs
  */
-export function buildPanel(root) {
+export function buildPanel(root, zones) {
   root.innerHTML = '';
 
-  // Back button
+  // Back button (toujours visible)
   const backBtn = el('button', 'lab-back-btn');
   backBtn.textContent = '\u2190 LAB';
   backBtn.dataset.action = 'back';
   root.appendChild(backBtn);
 
-  // --- Section Minerais ---
-  root.appendChild(sectionTitle('MINERAIS'));
+  // --- Contenu systemMap (zone details) ---
+  const systemContent = el('div', 'pl-system-content');
+  const zoneRefs = buildZoneSection(systemContent, zones);
+  root.appendChild(systemContent);
+
+  // --- Contenu worldMap (minerais + upgrades + reset) ---
+  const worldContent = el('div', 'pl-world-content');
+  const { walletRows, upgradeRows, feedback } = buildWorldSection(worldContent);
+  root.appendChild(worldContent);
+
+  return {
+    wallet: { rows: walletRows },
+    upgrades: { rows: upgradeRows },
+    reset: { feedback },
+    zone: zoneRefs,
+  };
+}
+
+// --- Section zones (systemMap) ---
+
+function buildZoneSection(container, zones) {
+  container.appendChild(sectionTitle('ZONES'));
+  const body = el('div', 'pl-body');
+
+  const zoneRows = {};
+  for (const z of zones) {
+    const row = el('div', 'pl-zone-row');
+    row.dataset.zone = z.id;
+
+    // Indicateur couleur
+    const swatch = el('span', 'pl-swatch');
+    swatch.style.background = z.accent;
+    row.appendChild(swatch);
+
+    // Nom
+    row.appendChild(txt('span', z.name, 'pl-label'));
+
+    // Progression (ex: "3/6 • 8★")
+    const progress = txt('span', '', 'pl-zone-progress');
+    progress.dataset.zone = z.id;
+    row.appendChild(progress);
+
+    // Bouton lock/unlock
+    const lockBtn = el('button', 'pl-btn-sm');
+    lockBtn.dataset.action = 'zone-toggle';
+    lockBtn.dataset.zone = z.id;
+    lockBtn.textContent = '🔓';
+    row.appendChild(lockBtn);
+
+    body.appendChild(row);
+    zoneRows[z.id] = { progress, lockBtn };
+  }
+  container.appendChild(body);
+
+  // Feedback
+  const feedback = txt('div', '', 'pl-feedback');
+  feedback.dataset.id = 'zone-feedback';
+  container.appendChild(feedback);
+
+  return { rows: zoneRows };
+}
+
+// --- Section worldMap (minerais + upgrades + reset) ---
+
+function buildWorldSection(container) {
+  // Minerais
+  container.appendChild(sectionTitle('MINERAIS'));
   const walletBody = el('div', 'pl-body');
   const walletRows = {};
   for (const id of MINERAL_IDS) {
@@ -36,10 +103,10 @@ export function buildPanel(root) {
     walletBody.appendChild(row);
     walletRows[id] = qty;
   }
-  root.appendChild(walletBody);
+  container.appendChild(walletBody);
 
-  // --- Section Upgrades ---
-  root.appendChild(sectionTitle('UPGRADES'));
+  // Upgrades
+  container.appendChild(sectionTitle('UPGRADES'));
   const upgradeBody = el('div', 'pl-body');
   const upgradeRows = {};
   for (const id of UPGRADE_IDS) {
@@ -54,9 +121,9 @@ export function buildPanel(root) {
     upgradeBody.appendChild(row);
     upgradeRows[id] = lvl;
   }
-  root.appendChild(upgradeBody);
+  container.appendChild(upgradeBody);
 
-  // --- Reset ---
+  // Reset
   const resetBody = el('div', 'pl-body');
   resetBody.appendChild(el('div', 'pl-separator'));
   const resetBtn = el('button', 'pl-btn pl-btn-danger');
@@ -65,13 +132,9 @@ export function buildPanel(root) {
   resetBody.appendChild(resetBtn);
   const feedback = txt('div', '', 'pl-feedback');
   resetBody.appendChild(feedback);
-  root.appendChild(resetBody);
+  container.appendChild(resetBody);
 
-  return {
-    wallet: { rows: walletRows },
-    upgrades: { rows: upgradeRows },
-    reset: { feedback },
-  };
+  return { walletRows, upgradeRows, feedback };
 }
 
 /**

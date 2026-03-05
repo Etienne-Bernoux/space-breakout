@@ -4,15 +4,16 @@
 import {
   enableAdaptiveMode, requestNextSection, setLayerVolume,
   getCurrentSection, setBPM,
-  startMusic, isPlaying, fadeOutMusic,
+  startMusic, stopMusic, isPlaying, fadeOutMusic,
   muffle, unmuffle,
-  setTrack,
+  setTrack, getTrack,
   playWinStinger, playGameOverStinger, playPowerUpAccent, playComboAccent, playComboMilestone,
 } from '../music/index.js';
 
 import {
   playBounce, playAsteroidHit, playAlienHit, playLoseLife,
   playWin, playGameOver, playShipExplosion, playBossExplosion, playLaunch, unlockAudio,
+  playForgePurchase,
 } from '../sfx/audio.js';
 
 // BPM par niveau d'intensité : calm→climax
@@ -46,10 +47,29 @@ export class MusicDirector {
     this.enabled = true;
     this.intensity = 0;
     unlockAudio();
-    setTrack(boss ? 'dark' : 'main');
-    enableAdaptiveMode();
-    this._applyLayers();
-    this._ensureMusic();
+    const target = boss ? 'dark' : 'main';
+    if (isPlaying() && getTrack() === target) {
+      // Déjà sur le bon track (ex: worldMap → level main) → transition fluide
+      enableAdaptiveMode();
+      setBPM(INTENSITY_BPM[0]);
+      this._applyLayers();
+      this.requestSectionChange();
+    } else if (isPlaying()) {
+      // Mauvais track → crossfade
+      fadeOutMusic(0.8, () => {
+        setTrack(target);
+        enableAdaptiveMode();
+        setBPM(INTENSITY_BPM[0]);
+        this._applyLayers();
+        startMusic();
+      });
+    } else {
+      setTrack(target);
+      enableAdaptiveMode();
+      setBPM(INTENSITY_BPM[0]);
+      this._applyLayers();
+      startMusic();
+    }
   }
 
   disable() {
@@ -106,6 +126,22 @@ export class MusicDirector {
 
   onLaunch() { playLaunch(); }
 
+  onUpgradePurchased() { unlockAudio(); playForgePurchase(); }
+
+  onEnterWorldMap() {
+    unlockAudio();
+    this._crossfadeTo('main');
+  }
+
+  onEnterUpgrade() {
+    unlockAudio();
+    this._crossfadeTo('cantina');
+  }
+
+  onLeaveUpgrade() {
+    // Délégué à onEnterWorldMap (appelé par init.js)
+  }
+
   onPause() { muffle(); }
 
   onResume() { unmuffle(); }
@@ -124,6 +160,29 @@ export class MusicDirector {
   }
 
   // === Interne ===
+
+  /** Crossfade vers un track hors-gameplay (toutes couches à 1). */
+  _crossfadeTo(track) {
+    if (isPlaying() && getTrack() === track) return; // déjà dessus
+    const start = () => {
+      setTrack(track);
+      enableAdaptiveMode();
+      this._startAllLayers();
+      startMusic();
+    };
+    if (isPlaying()) {
+      fadeOutMusic(0.8, start);
+    } else {
+      start();
+    }
+  }
+
+  /** Hors gameplay : toutes les couches à 1. */
+  _startAllLayers() {
+    for (const layer of ['drums', 'bass', 'pad', 'lead', 'high']) {
+      setLayerVolume(layer, 1, 0.3);
+    }
+  }
 
   _applyLayers() {
     const config = INTENSITY_LAYERS[this.intensity];

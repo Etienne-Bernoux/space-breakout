@@ -30,6 +30,17 @@ export function prevCategory() {
   state.selectedUpgrade = 0;
 }
 
+export function getSelectedUpgradeIndex() {
+  return state.selectedUpgrade;
+}
+
+export function selectUpgrade(index) {
+  const upgrades = getVisibleUpgrades();
+  if (index >= 0 && index < upgrades.length) {
+    state.selectedUpgrade = index;
+  }
+}
+
 export function nextUpgrade() {
   const upgrades = getVisibleUpgrades();
   if (upgrades.length > 0) {

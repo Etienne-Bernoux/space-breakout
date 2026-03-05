@@ -3,8 +3,10 @@
 import { getBeat } from './audio-core.js';
 import { kick, snare, hihat, bass, lead, pad, arp, arpFast, leadOctave } from './instruments-main.js';
 import { timpani, cymbal, cello, brass, strings, harp, brassHigh, choir } from './instruments-dark.js';
+import { jazzKick, brushSnare, rimclick, walkBass, piano, pianoChord, sax, trumpet } from './instruments-cantina.js';
 import { MAIN_INTRO, MAIN_VERSE, MAIN_CHORUS, MAIN_BRIDGE, MAIN_BREAKDOWN, MAIN_CLIMAX, MAIN_OUTRO } from './sections-main.js';
 import { DARK_INTRO, DARK_VERSE, DARK_CHORUS, DARK_BRIDGE, DARK_BREAKDOWN, DARK_CLIMAX, DARK_OUTRO } from './sections-dark.js';
+import { CANTINA_INTRO, CANTINA_VERSE, CANTINA_CHORUS, CANTINA_BRIDGE, CANTINA_BREAKDOWN, CANTINA_CLIMAX, CANTINA_OUTRO } from './sections-cantina.js';
 
 // Chaque instrument est référencé par nom dans les configs.
 const INSTRUMENTS = {
@@ -12,6 +14,8 @@ const INSTRUMENTS = {
   kick, snare, hihat, bass, lead, pad, arp, arpFast, leadOctave,
   // Dark orchestral
   timpani, cymbal, cello, brass, strings, harp, brassHigh, choir,
+  // Cantina jazz
+  jazzKick, brushSnare, rimclick, walkBass, piano, pianoChord, sax, trumpet,
 };
 
 /**
@@ -53,6 +57,11 @@ const SECTIONS = {
     intro: DARK_INTRO, verse: DARK_VERSE, chorus: DARK_CHORUS,
     bridge: DARK_BRIDGE, breakdown: DARK_BREAKDOWN,
     climax: DARK_CLIMAX, outro: DARK_OUTRO,
+  },
+  cantina: {
+    intro: CANTINA_INTRO, verse: CANTINA_VERSE, chorus: CANTINA_CHORUS,
+    bridge: CANTINA_BRIDGE, breakdown: CANTINA_BREAKDOWN,
+    climax: CANTINA_CLIMAX, outro: CANTINA_OUTRO,
   },
 };
 

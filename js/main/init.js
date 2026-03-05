@@ -3,7 +3,7 @@ import { Ship } from '../domain/ship/ship.js';
 import { Drone } from '../domain/drone/drone.js';
 import { AsteroidField } from '../domain/asteroid/index.js';
 import { PlayerProgress } from '../domain/progression/player-progress.js';
-import { getLevel, getNextLevel, getAllLevels } from '../domain/progression/level-catalog.js';
+import { getLevel, getNextLevel, getAllLevels, getZoneForLevel } from '../domain/progression/level-catalog.js';
 import { computeStars } from '../domain/progression/star-rating.js';
 import { loadProgress, saveProgress } from '../infra/persistence/progress-storage.js';
 import { GameSession } from '../use-cases/game-logic/game-session.js';
@@ -237,9 +237,22 @@ export function finishLevel() {
   const stars = computeStars(livesLost, timeSpent, level?.timeTarget || 120);
 
   G.progress.complete(levelId, stars);
+
+  // Dernier niveau de la zone → débloquer la zone suivante (si pas déjà fait)
+  let zoneUnlocked = null;
+  if (!getNextLevel(levelId)) {
+    const zoneId = getZoneForLevel(levelId);
+    if (zoneId) {
+      const before = G.progress.unlockedZoneUpTo;
+      G.progress.completeZone(zoneId);  // no-op si déjà débloquée
+      if (G.progress.unlockedZoneUpTo !== before) {
+        zoneUnlocked = G.progress.unlockedZoneUpTo;
+      }
+    }
+  }
   saveProgress(G.progress);
 
-  G.levelResult = { levelId, stars, timeSpent, livesLost, levelName: level?.name || '' };
+  G.levelResult = { levelId, stars, timeSpent, livesLost, levelName: level?.name || '', zoneUnlocked };
   G.session.goToStats();
 }
 
@@ -282,6 +295,7 @@ G.inputHandler = new InputHandler({
   nav: { goToWorldMap, goToUpgrade, goToSystemMap, finishLevel },
   progression: { progress: G.progress, mapState: G.mapState, systemMapState: G.systemMapState, wallet: G.wallet, upgrades: G.upgrades },
   infra: inputInfra,
+  getLevelResult: () => G.levelResult,
 });
 
 // --- Resize handler ---

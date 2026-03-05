@@ -1,6 +1,6 @@
 // --- Fills de transition : roulements et montées entre sections ---
 
-import { getCtx, freq, getBeat } from './audio-core.js';
+import { getCtx, freq, getBeat, getMasterGain } from './audio-core.js';
 
 // Transitions qui méritent un fill
 const FILL_TRANSITIONS = new Set([
@@ -8,9 +8,18 @@ const FILL_TRANSITIONS = new Set([
   'verse→bridge', 'intro→verse',
 ]);
 
-/** Retourne true si la transition from→to mérite un fill. */
-export function shouldFill(from, to) {
+// Tracks qui n'utilisent pas de fills (jazz = pas de fills synthétiques)
+const NO_FILL_TRACKS = new Set(['cantina']);
+
+/** Retourne true si la transition from→to mérite un fill pour ce track. */
+export function shouldFill(from, to, track) {
+  if (NO_FILL_TRACKS.has(track)) return false;
   return FILL_TRANSITIONS.has(`${from}→${to}`);
+}
+
+/** Noeud de sortie pour les fills (masterGain ou destination en fallback). */
+function fillOutput() {
+  return getMasterGain() || getCtx().destination;
 }
 
 /**
@@ -19,6 +28,7 @@ export function shouldFill(from, to) {
  */
 export function playSnareRoll(startTime) {
   const c = getCtx();
+  const out = fillOutput();
   const hits = 8;
   const totalDur = getBeat() * 2;
 
@@ -44,7 +54,7 @@ export function playSnareRoll(startTime) {
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
     src.connect(f);
     f.connect(g);
-    g.connect(c.destination);
+    g.connect(out);
     src.start(t);
   }
 }
@@ -54,6 +64,7 @@ export function playSnareRoll(startTime) {
  */
 export function playArpRise(startTime) {
   const c = getCtx();
+  const out = fillOutput();
   const notes = [52, 55, 59, 62, 64, 67, 71, 76]; // Em montant sur 2 octaves
   const totalDur = getBeat() * 2;
 
@@ -69,7 +80,7 @@ export function playArpRise(startTime) {
     g.gain.linearRampToValueAtTime(vol, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.001, t + getBeat() * 0.4);
     osc.connect(g);
-    g.connect(c.destination);
+    g.connect(out);
     osc.start(t);
     osc.stop(t + getBeat() * 0.5);
   }

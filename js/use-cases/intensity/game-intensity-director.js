@@ -5,6 +5,7 @@
 // Ports attendus (DI) :
 //   music  : { enable, disable, onBounce, onAsteroidHit, onBossDestroyed, onCombo,
 //              onPowerUp, onLoseLife, onLaunch, onPause, onResume, onWin, onGameOver,
+//              onUpgradePurchased, onEnterUpgrade, onLeaveUpgrade, onEnterWorldMap,
 //              setIntensity, requestSectionChange }
 //   effects: { setIntensity, update, getEffects }
 
@@ -14,7 +15,9 @@ const NOOP_MUSIC = {
   enable() { /* accepts { boss } */ }, disable() {}, update() {}, onBounce() {},
   onAsteroidHit() {}, onBossDestroyed() {}, onCombo() {},
   onPowerUp() {}, onLoseLife() {}, onLaunch() {}, onPause() {}, onResume() {},
-  onWin() {}, onGameOver() {}, setIntensity() {}, requestSectionChange() {},
+  onWin() {}, onGameOver() {}, onUpgradePurchased() {},
+  onEnterUpgrade() {}, onLeaveUpgrade() {}, onEnterWorldMap() {},
+  setIntensity() {}, requestSectionChange() {},
 };
 const NOOP_EFFECTS = {
   setIntensity() {}, update() {}, getEffects() { return {}; },
@@ -128,6 +131,16 @@ export class GameIntensityDirector {
   onWin() { this.music.onWin(); }
 
   onGameOver() { this.music.onGameOver(); }
+
+  /** Achat upgrade (hors gameplay — pas de recalcul d'intensité) */
+  onUpgradePurchased() { this.music.onUpgradePurchased(); }
+
+  /** Entrée/sortie écran atelier (musique cantina) */
+  onEnterUpgrade() { this.music.onEnterUpgrade(); }
+  onLeaveUpgrade() { this.music.onLeaveUpgrade(); }
+
+  /** Arrivée sur la carte du monde (main theme, toutes couches) */
+  onEnterWorldMap() { this.music.onEnterWorldMap(); }
 
   // === Frame update ===
 

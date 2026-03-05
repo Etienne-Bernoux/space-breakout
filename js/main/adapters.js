@@ -20,10 +20,12 @@ import { drawField } from '../infra/renderers/field-render.js';
 import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
 import { drawProjectile } from '../infra/renderers/projectile-render.js';
 import { drawWorldMap, getNodePositions, getUpgradeButtonRect } from '../infra/screens/world-map/index.js';
+import { drawSystemMap, getSystemNodePositions } from '../infra/screens/system-map/index.js';
 import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';
-import { drawUpgradeScreen, getUpgradeScreenButtons, nextCategory, prevCategory, nextUpgrade, prevUpgrade, getVisibleUpgrades } from '../infra/screens/upgrade-screen/index.js';
+import { drawUpgradeScreen, getUpgradeScreenButtons, nextCategory, prevCategory, nextUpgrade, prevUpgrade, selectUpgrade, getSelectedUpgradeIndex, getVisibleUpgrades } from '../infra/screens/upgrade-screen/index.js';
 import { AlienProjectile } from '../domain/projectile/index.js';
 import { getAllLevels } from '../domain/progression/level-catalog.js';
+import { getAllZones } from '../domain/progression/zone-catalog.js';
 
 export const loopInfra = {
   updateStars, getMousePos, getTouchX,
@@ -38,7 +40,7 @@ export const loopInfra = {
   updateDevOverlay,
   drawShip, drawDrone, drawField,
   updateDebris,
-  drawWorldMap, drawStatsScreen, drawUpgradeScreen, getAllLevels,
+  drawWorldMap, drawSystemMap, drawStatsScreen, drawUpgradeScreen, getAllLevels, getAllZones,
   AlienProjectile,
   drawProjectile,
   playAlienShoot,
@@ -51,9 +53,9 @@ export const inputInfra = {
   isMusicLabActive, isLabHubActive,
   isProgressLabActive, isSimulatorOpen, showSimulatorModal, hideSimulatorModal,
   initProgressLab, showProgressLab, hideProgressLab,
-  getNodePositions, getUpgradeButtonRect, getStatsButtons, getUpgradeScreenButtons,
-  nextCategory, prevCategory, nextUpgrade, prevUpgrade, getVisibleUpgrades,
-  getAllLevels,
+  getNodePositions, getUpgradeButtonRect, getSystemNodePositions, getStatsButtons, getUpgradeScreenButtons,
+  nextCategory, prevCategory, nextUpgrade, prevUpgrade, selectUpgrade, getSelectedUpgradeIndex, getVisibleUpgrades,
+  getAllLevels, getAllZones,
 };
 
 export const collisionEffects = {

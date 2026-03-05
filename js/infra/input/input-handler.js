@@ -13,7 +13,7 @@ export class InputHandler {
    * @param {object} deps.progression - { progress, mapState, systemMapState, wallet, upgrades }
    * @param {object} deps.infra      - infra adapters (touch, menu, devPanel, musicLab)
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, nav, progression, infra }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, nav, progression, infra, getLevelResult }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -32,6 +32,7 @@ export class InputHandler {
     this.wallet = progression.wallet;
     this.upgrades = progression.upgrades;
     this.infra = infra;
+    this.getLevelResult = getLevelResult || (() => null);
 
     infra.setupTouch();
     this.#bindTouchHandlers();
@@ -196,7 +197,7 @@ export class InputHandler {
     if (this.#hitBtn(x, y, btns.next)) {
       this.#nextLevelOrMap();
     } else if (this.#hitBtn(x, y, btns.map)) {
-      this.goToWorldMap();
+      this.#statsToMap();
     }
   }
 
@@ -262,7 +263,26 @@ export class InputHandler {
     }
   }
 
+  /** Redirige vers systemMap (si zone débloquée) ou worldMap. */
+  #statsToMap() {
+    const result = this.getLevelResult();
+    if (result?.zoneUnlocked) {
+      const zones = this.infra.getAllZones();
+      const idx = zones.findIndex(z => z.id === result.zoneUnlocked);
+      if (idx >= 0) this.systemMapState.selectedZone = idx;
+      this.goToSystemMap();
+    } else {
+      this.goToWorldMap();
+    }
+  }
+
   #nextLevelOrMap() {
+    // Si une zone vient d'être débloquée → systemMap
+    const result = this.getLevelResult();
+    if (result?.zoneUnlocked) {
+      this.#statsToMap();
+      return;
+    }
     const levels = this.infra.getAllLevels(this.#currentZoneId());
     const nextIdx = this.mapState.selectedIndex + 1;
     if (nextIdx < levels.length && this.progress.isUnlocked(levels[nextIdx].id)) {
@@ -328,7 +348,7 @@ export class InputHandler {
 
       if (this.session.state === 'stats') {
         if (e.key === ' ' || e.key === 'Enter') this.#nextLevelOrMap();
-        if (e.key === 'Escape') this.goToWorldMap();
+        if (e.key === 'Escape') this.#statsToMap();
         return;
       }
 

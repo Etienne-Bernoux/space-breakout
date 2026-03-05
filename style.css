@@ -305,6 +305,25 @@ body.menu #game {
   margin-top: 6px;
 }
 
+/* Panel swap selon l'état du jeu */
+.pl-system-content { display: none; }
+.pl-world-content  { display: block; }
+.state-systemMap .pl-system-content { display: block; }
+.state-systemMap .pl-world-content  { display: none; }
+
+/* Zone rows */
+.pl-zone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.pl-zone-progress {
+  font-size: 11px;
+  min-width: 70px;
+  text-align: right;
+}
+
 /* ============================================================
    Dev Panel Lab (?dev) — overlay DOM par-dessus le canvas
    ============================================================ */

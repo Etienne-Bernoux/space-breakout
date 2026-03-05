@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ZONE_1, getLevel, getLevelIndex, getNextLevel, getAllLevels } from './level-catalog.js';
+import { ZONE_1, getLevel, getLevelIndex, getNextLevel, getAllLevels, getZoneForLevel } from './level-catalog.js';
 
 describe('level-catalog', () => {
   it('ZONE_1 has 6 levels', () => {
@@ -33,6 +33,15 @@ describe('level-catalog', () => {
 
   it('getAllLevels returns all levels', () => {
     expect(getAllLevels()).toHaveLength(6);
+  });
+
+  it('getZoneForLevel returns the zone id', () => {
+    expect(getZoneForLevel('z1-1')).toBe('zone1');
+    expect(getZoneForLevel('z1-6')).toBe('zone1');
+  });
+
+  it('getZoneForLevel returns null for unknown level', () => {
+    expect(getZoneForLevel('nope')).toBeNull();
   });
 
   it('each level has required fields', () => {

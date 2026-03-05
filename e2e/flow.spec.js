@@ -11,11 +11,13 @@ async function waitForState(page, expected, timeout = 3000) {
   );
 }
 
-/** Lance une partie depuis le menu : menu → worldMap → playing. */
+/** Lance une partie depuis le menu : menu → systemMap → worldMap → playing. */
 async function launchGame(page) {
   await page.goto(BASE);
   await page.waitForTimeout(500);
-  await page.keyboard.press('Enter');        // menu → worldMap
+  await page.keyboard.press('Enter');        // menu → systemMap
+  await waitForState(page, 'systemMap');
+  await page.keyboard.press('Enter');        // systemMap → worldMap (zone1 sélectionnée)
   await waitForState(page, 'worldMap');
   await page.keyboard.press('Enter');        // worldMap → playing (z1-1 sélectionné)
   await waitForState(page, 'playing');

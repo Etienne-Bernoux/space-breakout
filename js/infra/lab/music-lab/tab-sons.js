@@ -2,12 +2,13 @@
 // Draw functions removed (DOM version).
 
 import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../../music/index.js';
-import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion } from '../../sfx/audio.js';
+import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion, playForgePurchase } from '../../sfx/audio.js';
 
 // --- Data multi-pistes ---
 export const TRACKS = [
   { id: 'main', label: 'SPACE MAIN' },
   { id: 'dark', label: 'DARK ORCH' },
+  { id: 'cantina', label: 'CANTINA' },
 ];
 
 const SECTIONS = [
@@ -41,8 +42,22 @@ export const INSTRUMENTS_DARK = [
   { id: 'brassHi', label: 'BRASS HI', color: '#ffee44' },
 ];
 
+export const INSTRUMENTS_CANTINA = [
+  { id: 'jazzKick',   label: 'KICK',    color: '#ff6644' },
+  { id: 'brushSnare', label: 'BRUSH',   color: '#ffaa33' },
+  { id: 'rimclick',   label: 'RIM',     color: '#ffdd44' },
+  { id: 'walkBass',   label: 'BASS',    color: '#44aaff' },
+  { id: 'piano',      label: 'PIANO',   color: '#ff44aa' },
+  { id: 'pianoChord', label: 'CHORDS',  color: '#aa88ff' },
+  { id: 'sax',        label: 'SAX',     color: '#ffcc44' },
+  { id: 'trumpet',    label: 'TRUMPET', color: '#44ffaa' },
+];
+
 export function getInstruments() {
-  return getTrack() === 'dark' ? INSTRUMENTS_DARK : INSTRUMENTS_MAIN;
+  const t = getTrack();
+  if (t === 'dark') return INSTRUMENTS_DARK;
+  if (t === 'cantina') return INSTRUMENTS_CANTINA;
+  return INSTRUMENTS_MAIN;
 }
 
 const STINGER_GROUPS = [
@@ -57,6 +72,7 @@ const STINGER_GROUPS = [
     { id: 'launch',    label: 'LAUNCH',    color: '#88ccff', fn: playLaunch },
     { id: 'loselife',  label: 'LOSE LIFE', color: '#ff6666', fn: playLoseLife },
     { id: 'explosion', label: 'SHIP EXPL', color: '#ff8800', fn: playShipExplosion },
+    { id: 'forge',     label: 'FORGE',     color: '#ffd700', fn: playForgePurchase },
   ]},
   { label: 'SFX ALIEN', items: [
     { id: 'alienhit',  label: 'ALIEN HIT', color: '#33cc55', fn: playAlienHit },

@@ -1,14 +1,17 @@
 import { getLevelIndex, getNextLevel } from './level-catalog.js';
+import { getZoneIndex, ZONES } from './zone-catalog.js';
 
 export class PlayerProgress {
   /**
    * @param {object} [data] - données sérialisées (depuis localStorage)
    * @param {Array}  [data.stars] - entrées [levelId, starCount]
    * @param {string} [data.unlockedUpTo] - id du dernier niveau débloqué
+   * @param {string} [data.unlockedZoneUpTo] - id de la dernière zone débloquée
    */
   constructor(data) {
     this.stars = new Map(data?.stars || []);
     this.unlockedUpTo = data?.unlockedUpTo || 'z1-1';
+    this.unlockedZoneUpTo = data?.unlockedZoneUpTo || 'zone1';
   }
 
   isUnlocked(levelId) {
@@ -17,6 +20,11 @@ export class PlayerProgress {
 
   getStars(levelId) {
     return this.stars.get(levelId) || 0;
+  }
+
+  /** Vérifie si une zone est débloquée. */
+  isZoneUnlocked(zoneId) {
+    return getZoneIndex(zoneId) <= getZoneIndex(this.unlockedZoneUpTo);
   }
 
   /** Enregistre la complétion, garde le meilleur score, débloque le suivant. */
@@ -30,16 +38,27 @@ export class PlayerProgress {
     }
   }
 
+  /** Débloque la zone suivante (appelé quand le boss d'une zone est battu). */
+  completeZone(zoneId) {
+    const idx = getZoneIndex(zoneId);
+    const currentMax = getZoneIndex(this.unlockedZoneUpTo);
+    if (idx >= currentMax && idx + 1 < ZONES.length) {
+      this.unlockedZoneUpTo = ZONES[idx + 1].id;
+    }
+  }
+
   /** Reset complet : remet tout à zéro. */
   reset() {
     this.stars.clear();
     this.unlockedUpTo = 'z1-1';
+    this.unlockedZoneUpTo = 'zone1';
   }
 
   toJSON() {
     return {
       stars: Array.from(this.stars.entries()),
       unlockedUpTo: this.unlockedUpTo,
+      unlockedZoneUpTo: this.unlockedZoneUpTo,
     };
   }
 }

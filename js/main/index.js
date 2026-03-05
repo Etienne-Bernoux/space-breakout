@@ -6,8 +6,9 @@ import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../i
 import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
 import { isLabMode, initLabHub, showLabHub, hideLabHub, isLabHubActive } from '../infra/lab/hub/index.js';
 import { getAllLevels } from '../domain/progression/level-catalog.js';
+import { getAllZones } from '../domain/progression/zone-catalog.js';
 import { saveProgress } from '../infra/persistence/progress-storage.js';
-import { G, startGame } from './init.js';
+import { G, startGame, goToSystemMap } from './init.js';
 
 loadSettings();
 loadDevConfig();
@@ -37,9 +38,10 @@ initProgressLab({
   upgrades: G.upgrades,
   progress: G.progress,
   levels: getAllLevels(),
+  zones: getAllZones(),
   saveProgress,
   onBack: () => { hideProgressLab(); showLabHub(); },
-  onSetWorldMap: () => { G.session.goToWorldMap(); },
+  onSetSystemMap: () => { goToSystemMap(); },
   onBackToMenu: () => { G.session.backToMenu(); },
 });
 

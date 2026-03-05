@@ -4,7 +4,7 @@ import { getCtx, getBeat, LAYER_NAMES, getMasterGain, resetAudio as coreResetAud
 import { playSectionConfig, SECTIONS } from './section-engine.js';
 import { shouldFill, playSnareRoll, playArpRise } from './fills.js';
 
-const TRACK_NAMES = ['main', 'dark'];
+const TRACK_NAMES = ['main', 'dark', 'cantina'];
 let currentTrack = 'main';
 
 function setTrack(name) {
@@ -55,7 +55,7 @@ function peekNextSectionName() {
 function scheduleFill() {
   if (!playing) return;
   const nextName = peekNextSectionName();
-  if (currentSectionName && shouldFill(currentSectionName, nextName)) {
+  if (currentSectionName && shouldFill(currentSectionName, nextName, currentTrack)) {
     const c = getCtx();
     const fillStart = currentSectionStartTime + sectionLen() - getBeat() * 2;
     // Alterner snare roll et arp rise

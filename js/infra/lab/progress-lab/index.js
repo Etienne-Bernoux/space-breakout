@@ -2,7 +2,7 @@
 
 import state from './state.js';
 import { buildPanel, buildSimulatorModal } from './build.js';
-import { updateLeftPanel, updateRightPanel, updateSimulator } from './update.js';
+import { updateLeftPanel, updateRightPanel, updateZonePanel, updateSimulator } from './update.js';
 import { attachHandlers } from './handlers.js';
 import { applySimulation } from '../../../use-cases/simulator/run-simulator.js';
 
@@ -19,7 +19,7 @@ export function isSimulatorOpen() {
 
 /**
  * Initialise le progress lab. Construit le DOM, attache les handlers.
- * @param {object} d - { wallet, upgrades, progress, levels, saveProgress, onBack, onSetWorldMap }
+ * @param {object} d - { wallet, upgrades, progress, levels, zones, saveProgress, onBack, onSetSystemMap }
  */
 export function initProgressLab(d) {
   deps = d;
@@ -27,7 +27,7 @@ export function initProgressLab(d) {
   const sim = document.getElementById('pl-simulator');
   if (!panel || !sim) return;
 
-  const panelRefs = buildPanel(panel);
+  const panelRefs = buildPanel(panel, d.zones || []);
   const simRefs = buildSimulatorModal(sim, d.levels);
 
   refs = { ...panelRefs, simulator: simRefs };
@@ -35,6 +35,7 @@ export function initProgressLab(d) {
   const refresh = () => {
     updateLeftPanel(refs, d.wallet);
     updateRightPanel(refs, d.upgrades);
+    if (d.zones) updateZonePanel(refs, d.zones, d.progress);
   };
   const refreshSim = () => updateSimulator(refs);
 
@@ -74,8 +75,9 @@ export function showProgressLab() {
   if (refs && deps) {
     updateLeftPanel(refs, deps.wallet);
     updateRightPanel(refs, deps.upgrades);
+    if (deps.zones) updateZonePanel(refs, deps.zones, deps.progress);
   }
-  if (deps?.onSetWorldMap) deps.onSetWorldMap();
+  if (deps?.onSetSystemMap) deps.onSetSystemMap();
 }
 
 export function hideProgressLab() {

@@ -43,6 +43,9 @@ initProgressLab({
   onBack: () => { hideProgressLab(); showLabHub(); },
   onSetSystemMap: () => { goToSystemMap(); },
   onBackToMenu: () => { G.session.backToMenu(); },
+  onZoneUnlocked: (zoneId) => {
+    G.ui.zoneUnlockAnim = { zoneId, frame: 0 };
+  },
 });
 
 setVolumeChangeCallback((music, sfx) => {

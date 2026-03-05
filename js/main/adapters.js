@@ -40,7 +40,7 @@ export const loopInfra = {
   updateDevOverlay,
   drawShip, drawDrone, drawField,
   updateDebris,
-  drawWorldMap, drawSystemMap, drawStatsScreen, drawUpgradeScreen, getAllLevels, getAllZones,
+  drawWorldMap, drawSystemMap, getSystemNodePositions, drawStatsScreen, drawUpgradeScreen, getAllLevels, getAllZones,
   AlienProjectile,
   drawProjectile,
   playAlienShoot,

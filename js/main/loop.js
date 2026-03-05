@@ -93,6 +93,95 @@ export class GameLoop {
     );
   }
 
+  /** Rendu d'une transition zoom entre systemMap et worldMap. */
+  #loopMapTransition(ctx, fx, dt) {
+    const tr = this.ui.mapTransition;
+    tr.frame += dt;
+    const p = Math.min(tr.frame / tr.duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
+    const { width: W, height: H } = this.canvas;
+
+    // Position du nœud de zone sur la systemMap (point focal du zoom)
+    const zones = this.infra.getAllZones();
+    const nodes = this.infra.getSystemNodePositions(W, H, zones);
+    const focal = nodes[tr.zoneIdx] || { x: W / 2, y: H / 2 };
+
+    if (tr.type === 'zoomIn') {
+      // Première moitié : systemMap qui zoome
+      // Seconde moitié : worldMap qui dézoome
+      if (ease < 0.5) {
+        const subP = ease / 0.5; // 0→1
+        const scale = 1 + subP * 1.5;
+        const alpha = 1 - subP;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(focal.x * (1 - scale), focal.y * (1 - scale));
+        ctx.scale(scale, scale);
+        this.#drawSystemMapRaw(ctx, dt);
+        ctx.restore();
+      } else {
+        const subP = (ease - 0.5) / 0.5; // 0→1
+        const scale = 2.5 - subP * 1.5; // 2.5→1
+        const alpha = subP;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const cx = W / 2, cy = H / 2;
+        ctx.translate(cx * (1 - scale), cy * (1 - scale));
+        ctx.scale(scale, scale);
+        this.#drawWorldMapRaw(ctx, dt);
+        ctx.restore();
+      }
+    } else {
+      // zoomOut — inverse
+      if (ease < 0.5) {
+        const subP = ease / 0.5;
+        const scale = 1 - subP * 0.5; // 1→0.5
+        const alpha = 1 - subP;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const cx = W / 2, cy = H / 2;
+        ctx.translate(cx * (1 - scale), cy * (1 - scale));
+        ctx.scale(scale, scale);
+        this.#drawWorldMapRaw(ctx, dt);
+        ctx.restore();
+      } else {
+        const subP = (ease - 0.5) / 0.5;
+        const scale = 2.5 - subP * 1.5; // 2.5→1
+        const alpha = subP;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(focal.x * (1 - scale), focal.y * (1 - scale));
+        ctx.scale(scale, scale);
+        this.#drawSystemMapRaw(ctx, dt);
+        ctx.restore();
+      }
+    }
+
+    if (p >= 1) this.ui.mapTransition = null;
+  }
+
+  /** Rendu brut systemMap (sans gestion du transition state). */
+  #drawSystemMapRaw(ctx, dt) {
+    if (!this.ui.mapAnimPhase) this.ui.mapAnimPhase = 0;
+    this.ui.mapAnimPhase += dt * 0.5;
+    this.infra.drawSystemMap(
+      ctx, this.canvas.width, this.canvas.height,
+      this.infra.getAllZones(), this.progress, this.systemMapState.selectedZone, this.ui.mapAnimPhase,
+    );
+  }
+
+  /** Rendu brut worldMap (sans gestion du transition state). */
+  #drawWorldMapRaw(ctx, dt) {
+    if (!this.ui.mapAnimPhase) this.ui.mapAnimPhase = 0;
+    this.ui.mapAnimPhase += dt * 0.5;
+    const zones = this.infra.getAllZones();
+    const zone = zones[this.systemMapState.selectedZone] || zones[0];
+    this.infra.drawWorldMap(
+      ctx, this.canvas.width, this.canvas.height,
+      this.infra.getAllLevels(zone.id), this.progress, this.mapState.selectedIndex, this.ui.mapAnimPhase, zone,
+    );
+  }
+
   #loopUpgrade(ctx) {
     this.infra.drawUpgradeScreen(ctx, this.canvas.width, this.canvas.height, this.wallet, this.upgrades);
   }
@@ -231,6 +320,9 @@ export class GameLoop {
       this.#loopMusicLab(ctx, fx);
     } else if (this.infra.isDevPanelActive()) {
       this.#loopDevPanel(ctx, fx);
+    } else if (this.ui.mapTransition) {
+      // Transition zoom entre systemMap ↔ worldMap
+      this.#loopMapTransition(ctx, fx, dt);
     } else {
       // Dispatch par état de jeu (progress lab laisse le canvas rendre normalement)
       switch (this.session.state) {

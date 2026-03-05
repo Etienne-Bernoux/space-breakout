@@ -52,7 +52,7 @@ export function initProgressLab(d) {
     onSimulate: (simState) => {
       const level = d.levels[simState.levelIndex];
       if (!level) return;
-      applySimulation(level.id, simState, {
+      const { zoneUnlocked } = applySimulation(level.id, simState, {
         progress: d.progress,
         wallet: d.wallet,
         saveProgress: d.saveProgress,
@@ -64,6 +64,8 @@ export function initProgressLab(d) {
       setTimeout(() => { simRefs.feedback.textContent = ''; }, 3000);
       hideSimulatorModal();
       refresh();
+      // Déclencher l'animation d'unlock sur la systemMap
+      if (zoneUnlocked && d.onZoneUnlocked) d.onZoneUnlocked(zoneUnlocked);
     },
     onCloseSimulator: () => hideSimulatorModal(),
   });

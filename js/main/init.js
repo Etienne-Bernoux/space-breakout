@@ -63,7 +63,7 @@ export const G = {
   },
   wallet: MineralWallet.load(),
   upgrades: UpgradeManager.load(),
-  ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null },
+  ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null, mapTransition: null },
   progress: new PlayerProgress(loadProgress()),
   mapState: { selectedIndex: 0 },
   systemMapState: { selectedZone: 0 },
@@ -211,13 +211,19 @@ function applyUpgradeEffects() {
   }
 }
 
-/** Transition vers la carte du système planétaire. */
+/** Transition vers la carte du système planétaire (avec zoom-out si depuis worldMap). */
 export function goToSystemMap() {
+  if (G.session.state === 'worldMap') {
+    G.ui.mapTransition = { type: 'zoomOut', frame: 0, duration: 40, zoneIdx: G.systemMapState.selectedZone };
+  }
   G.session.goToSystemMap();
 }
 
-/** Transition vers la carte du monde (zone). */
+/** Transition vers la carte du monde (avec zoom-in si depuis systemMap). */
 export function goToWorldMap() {
+  if (G.session.state === 'systemMap') {
+    G.ui.mapTransition = { type: 'zoomIn', frame: 0, duration: 40, zoneIdx: G.systemMapState.selectedZone };
+  }
   G.session.goToWorldMap();
   G.systems.intensity.onEnterWorldMap();
 }

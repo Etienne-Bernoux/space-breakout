@@ -31,7 +31,9 @@ function mockInfra() {
     handleMusicLabTap: vi.fn(),
     handleMusicLabScroll: vi.fn(),
     getAllLevels: vi.fn(() => [{ id: 'z1-1' }, { id: 'z1-2' }]),
+    getAllZones: vi.fn(() => [{ id: 'zone1', name: 'Zone 1' }]),
     getNodePositions: vi.fn(() => [{ x: 100, y: 200 }, { x: 300, y: 300 }]),
+    getSystemNodePositions: vi.fn(() => [{ x: 200, y: 250 }]),
     getStatsButtons: vi.fn(() => ({
       next: { x: 200, y: 400, w: 180, h: 40 },
       map:  { x: 200, y: 460, w: 180, h: 40 },
@@ -45,6 +47,19 @@ function makeDeps(overrides = {}) {
   const ship = { x: 100, y: 600, width: 80, movingLeft: false, movingRight: false };
   const drone = { launched: false, launch: vi.fn(), launchAtAngle: vi.fn() };
   const infra = mockInfra();
+  const nav = {
+    goToWorldMap: vi.fn(),
+    goToUpgrade: vi.fn(),
+    goToSystemMap: vi.fn(),
+    finishLevel: vi.fn(),
+  };
+  const progression = {
+    progress: { isUnlocked: vi.fn(() => true), isZoneUnlocked: vi.fn(() => true), getStars: vi.fn(() => 0) },
+    mapState: { selectedIndex: 0 },
+    systemMapState: { selectedZone: 0 },
+    wallet: {},
+    upgrades: {},
+  };
   return {
     entities: { ship, drones: [drone] },
     session: { state: 'menu', pause: vi.fn(), resume: vi.fn(), backToMenu: vi.fn(), start: vi.fn() },
@@ -59,10 +74,8 @@ function makeDeps(overrides = {}) {
       menuBtn:   { x: 50, y: 470, w: 400, h: 44 },
     }),
     startGame: vi.fn(),
-    goToWorldMap: vi.fn(),
-    finishLevel: vi.fn(),
-    progress: { isUnlocked: vi.fn(() => true), getStars: vi.fn(() => 0) },
-    mapState: { selectedIndex: 0 },
+    nav,
+    progression,
     infra,
     ...overrides,
   };
@@ -142,7 +155,7 @@ describe('InputHandler', () => {
       d.session.currentLevelId = 'z1-1';
       new InputHandler(d);
       d.infra._handlers.tap(100, 300);
-      expect(d.goToWorldMap).toHaveBeenCalled();
+      expect(d.nav.goToWorldMap).toHaveBeenCalled();
     });
   });
 
@@ -154,7 +167,7 @@ describe('InputHandler', () => {
       new InputHandler(d);
       d.infra._handlers.menuTap(250, 400);
       expect(d.infra.handleMenuTap).toHaveBeenCalled();
-      expect(d.goToWorldMap).toHaveBeenCalled();
+      expect(d.nav.goToSystemMap).toHaveBeenCalled();
     });
 
     it('ne délègue plus au devPanel (DOM gère ses events)', () => {

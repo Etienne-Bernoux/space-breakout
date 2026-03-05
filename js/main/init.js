@@ -66,6 +66,7 @@ export const G = {
   ui: { combo: 0, comboDisplay: 0, comboFadeTimer: 0, slowMoTimer: 0, deathAnimTimer: 0, winAnimTimer: 0, deathZoomCenter: null, deathDebris: null },
   progress: new PlayerProgress(loadProgress()),
   mapState: { selectedIndex: 0 },
+  systemMapState: { selectedZone: 0 },
   levelResult: null,   // { levelId, stars, timeSpent, livesLost } — set après victoire
 };
 
@@ -210,14 +211,21 @@ function applyUpgradeEffects() {
   }
 }
 
-/** Transition vers la carte du monde. */
+/** Transition vers la carte du système planétaire. */
+export function goToSystemMap() {
+  G.session.goToSystemMap();
+}
+
+/** Transition vers la carte du monde (zone). */
 export function goToWorldMap() {
   G.session.goToWorldMap();
+  G.systems.intensity.onEnterWorldMap();
 }
 
 /** Transition vers l'écran d'upgrade. */
 export function goToUpgrade() {
   G.session.goToUpgrade();
+  G.systems.intensity.onEnterUpgrade();
 }
 
 /** Appelé après victoire : calcule les étoiles, sauvegarde, passe à l'écran stats. */
@@ -255,6 +263,7 @@ G.gameLoop = new GameLoop({
   infra: { ...loopInfra, finishLevel, updateDevOverlay },
   progress: G.progress,
   mapState: G.mapState,
+  systemMapState: G.systemMapState,
   getLevelResult: () => G.levelResult,
   alienCombat: G.alienCombat,
   wallet: G.wallet,
@@ -270,13 +279,8 @@ G.inputHandler = new InputHandler({
   pauseBtnLayout,
   pauseScreenLayout,
   startGame,
-  goToWorldMap,
-  goToUpgrade,
-  finishLevel,
-  progress: G.progress,
-  mapState: G.mapState,
-  wallet: G.wallet,
-  upgrades: G.upgrades,
+  nav: { goToWorldMap, goToUpgrade, goToSystemMap, finishLevel },
+  progression: { progress: G.progress, mapState: G.mapState, systemMapState: G.systemMapState, wallet: G.wallet, upgrades: G.upgrades },
   infra: inputInfra,
 });
 

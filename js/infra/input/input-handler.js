@@ -9,9 +9,11 @@ export class InputHandler {
    * @param {function} deps.pauseBtnLayout
    * @param {function} deps.pauseScreenLayout
    * @param {function} deps.startGame
+   * @param {object} deps.nav        - { goToWorldMap, goToUpgrade, goToSystemMap, finishLevel }
+   * @param {object} deps.progression - { progress, mapState, systemMapState, wallet, upgrades }
    * @param {object} deps.infra      - infra adapters (touch, menu, devPanel, musicLab)
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, goToWorldMap, goToUpgrade, goToSystemMap, finishLevel, progress, mapState, systemMapState, wallet, upgrades, infra }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, nav, progression, infra }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -20,15 +22,15 @@ export class InputHandler {
     this.pauseBtnLayout = pauseBtnLayout;
     this.pauseScreenLayout = pauseScreenLayout;
     this.startGame = startGame;
-    this.goToWorldMap = goToWorldMap;
-    this.goToUpgrade = goToUpgrade;
-    this.goToSystemMap = goToSystemMap;
-    this.finishLevel = finishLevel;
-    this.progress = progress;
-    this.mapState = mapState;
-    this.systemMapState = systemMapState;
-    this.wallet = wallet;
-    this.upgrades = upgrades;
+    this.goToWorldMap = nav.goToWorldMap;
+    this.goToUpgrade = nav.goToUpgrade;
+    this.goToSystemMap = nav.goToSystemMap;
+    this.finishLevel = nav.finishLevel;
+    this.progress = progression.progress;
+    this.mapState = progression.mapState;
+    this.systemMapState = progression.systemMapState;
+    this.wallet = progression.wallet;
+    this.upgrades = progression.upgrades;
     this.infra = infra;
 
     infra.setupTouch();

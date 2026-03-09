@@ -181,6 +181,7 @@ export class CollisionHandler {
         m.alive = false;
         this.wallet.add(m.mineralKey, m.quantity);
         this.wallet.save();
+        if (this.effects.addMineralSessionGain) this.effects.addMineralSessionGain(m.mineralKey, m.quantity);
         const mineral = getMineral(m.mineralKey);
         this.effects.spawnExplosion(m.x, m.y, mineral?.color || '#ffcc00');
         if (this.effects.playMineralPickup) this.effects.playMineralPickup(m.mineralKey);

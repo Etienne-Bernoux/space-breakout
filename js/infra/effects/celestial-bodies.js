@@ -29,9 +29,11 @@ export function randomBody(canvas, startY) {
   const w = canvas.width;
   const type = BODY_TYPES[Math.floor(Math.random() * BODY_TYPES.length)];
   const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
-  const radius = type === 'planet'
+  // Scale radius for small screens (mobile portrait)
+  const sizeScale = Math.min(1, w / 800);
+  const radius = (type === 'planet'
     ? 30 + Math.random() * 50
-    : 50 + Math.random() * 80;
+    : 50 + Math.random() * 80) * sizeScale;
 
   const bandCount = 4 + Math.floor(Math.random() * 5);
   const bands = Array.from({ length: bandCount }, () => ({
@@ -43,8 +45,9 @@ export function randomBody(canvas, startY) {
   const ringGap = hasRing ? 0.05 + Math.random() * 0.1 : 0;
   const lightAngle = Math.random() * Math.PI * 2;
 
+  const alphaScale = Math.min(1, w / 600); // dimmer on small screens
   return {
-    type, radius, alpha: 0.15 + Math.random() * 0.1, palette,
+    type, radius, alpha: (0.15 + Math.random() * 0.1) * alphaScale, palette,
     x: radius + Math.random() * (w - radius * 2),
     y: startY !== undefined ? startY : Math.random() * (canvas.height + radius * 2) - radius,
     rotation: Math.random() * Math.PI * 2,

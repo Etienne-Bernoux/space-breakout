@@ -9,6 +9,10 @@ import { getAllLevels } from '../domain/progression/level-catalog.js';
 import { getAllZones } from '../domain/progression/zone-catalog.js';
 import { saveProgress } from '../infra/persistence/progress-storage.js';
 import { G, startGame, goToSystemMap } from './init.js';
+import { menuItemLayout } from '../infra/menu/draw-menu.js';
+import { getSystemNodePositions } from '../infra/screens/system-map/index.js';
+import { getNodePositions } from '../infra/screens/world-map/index.js';
+import { CONFIG } from '../config.js';
 
 loadSettings();
 loadDevConfig();
@@ -69,6 +73,32 @@ window.__GAME__ = {
   forceWin() {
     if (!G.entities.field) return;
     for (const a of G.entities.field.grid) a.alive = false;
+  },
+  /** Retourne les hitZones cliquables (coordonnées canvas) selon l'état courant. */
+  get hitZones() {
+    const W = CONFIG.canvas.width;
+    const H = CONFIG.canvas.height;
+    const state = G.session.state;
+    if (state === 'menu') {
+      const items = ['play', 'settings', 'credits'];
+      return items.map((id, i) => {
+        const { y, itemH, halfW } = menuItemLayout(i);
+        return { id, x: W / 2, y, w: halfW * 2, h: itemH };
+      });
+    }
+    if (state === 'systemMap') {
+      const zones = getAllZones();
+      const nodes = getSystemNodePositions(W, H, zones);
+      return nodes.map((n, i) => ({ id: `zone-${i}`, x: n.x, y: n.y, r: 30 }));
+    }
+    if (state === 'worldMap') {
+      const zones = getAllZones();
+      const zone = zones[G.systemMapState.selectedZone] || zones[0];
+      const levels = getAllLevels(zone.id);
+      const nodes = getNodePositions(W, H, levels.length);
+      return nodes.map((n, i) => ({ id: `level-${i}`, x: n.x, y: n.y, r: 20 }));
+    }
+    return [];
   },
 };
 

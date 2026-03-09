@@ -16,8 +16,10 @@ export function drawMineralCapsule(ctx, mc) {
   const bob = Math.sin(t * 3.5 + x * 0.12) * 2;
   const y = mc.y + bob;
 
+  const s = gameScale();
   ctx.save();
   ctx.translate(x, y);
+  if (s > 1) ctx.scale(s, s);
 
   // Lueur douce
   const glowPulse = 1 + Math.sin(t * 5) * 0.2;
@@ -72,12 +74,42 @@ export function drawMineralCapsule(ctx, mc) {
   ctx.restore();
 }
 
-/** Dessiner le HUD des minerais (en haut à droite). */
-export function drawMineralHUD(ctx, canvasWidth = 800) {
-  // wallet est injecté via closure (set par initMineralHUD)
+/** Dessiner le HUD des minerais (en haut à droite, ou sous VIES en portrait). */
+export function drawMineralHUD(ctx, canvasWidth = 800, canvasHeight = 600) {
   if (!_wallet) return;
 
   const s = gameScale(canvasWidth);
+  const portrait = canvasHeight > canvasWidth;
+
+  if (portrait) {
+    // Portrait: only show minerals gained this session, under VIES line (left side)
+    const gained = MINERAL_IDS.filter(id => (_sessionGains[id] || 0) > 0);
+    if (gained.length === 0) return;
+    const fontSize = Math.round(14 * s);
+    const iconSize = Math.round(7 * s);
+    const pad = Math.round(15 * s);
+    const startY = Math.round(42 * s);
+    const lineH = Math.round(20 * s);
+
+    ctx.font = `${fontSize}px monospace`;
+    ctx.textBaseline = 'middle';
+
+    for (let i = 0; i < gained.length; i++) {
+      const id = gained[i];
+      const mineral = getMineral(id);
+      const qty = _sessionGains[id];
+      const y = startY + i * lineH;
+
+      ctx.fillStyle = mineral.color;
+      ctx.fillRect(pad, y - iconSize / 2, iconSize, iconSize);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(`+${qty}`, pad + iconSize + 4, y);
+    }
+    return;
+  }
+
+  // Desktop: all minerals top-right
   const fontSize = Math.round(12 * s);
   const iconSize = Math.round(6 * s);
   const pad = Math.round(10 * s);
@@ -95,18 +127,15 @@ export function drawMineralHUD(ctx, canvasWidth = 800) {
     const qty = _wallet.get(id);
     const y = startY + i * lineH;
 
-    // Icône (petit carré coloré)
     ctx.fillStyle = mineral.color;
     ctx.fillRect(rightX - fontSize * 4 - iconSize * 2, y - iconSize / 2, iconSize, iconSize);
     ctx.strokeStyle = mineral.glowColor;
     ctx.lineWidth = 0.5;
     ctx.strokeRect(rightX - fontSize * 4 - iconSize * 2, y - iconSize / 2, iconSize, iconSize);
 
-    // Quantité
     ctx.fillStyle = qty > 0 ? '#ffffff' : '#666666';
     ctx.fillText(`${qty}`, rightX, y);
 
-    // Nom court
     ctx.fillStyle = mineral.color;
     ctx.textAlign = 'left';
     ctx.fillText(mineral.name, rightX - fontSize * 4 - iconSize * 2 + iconSize + 4, y);
@@ -114,10 +143,22 @@ export function drawMineralHUD(ctx, canvasWidth = 800) {
   }
 }
 
-// --- Injection du wallet pour le HUD ---
+// --- Injection du wallet + session gains tracker ---
 let _wallet = null;
+const _sessionGains = {};
+
 export function initMineralHUD(wallet) {
   _wallet = wallet;
+}
+
+/** Reset session gains (call at startGame). */
+export function resetMineralSessionGains() {
+  for (const id of MINERAL_IDS) _sessionGains[id] = 0;
+}
+
+/** Record a mineral gain for the current session. */
+export function addMineralSessionGain(mineralKey, qty) {
+  _sessionGains[mineralKey] = (_sessionGains[mineralKey] || 0) + qty;
 }
 
 // --- Utilitaire couleur ---

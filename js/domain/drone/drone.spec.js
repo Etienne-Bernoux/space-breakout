@@ -193,6 +193,76 @@ describe('Drone', () => {
     });
   });
 
+  describe('smart speed boost (upgrade)', () => {
+    function setupBoostedDrone(ship, { dx, dy, y }) {
+      const drone = makeDrone(ship);
+      drone.launched = true;
+      drone._baseSpeed = 6;
+      drone.speed = 6;
+      drone.speedBoost = 2;
+      drone.dx = dx;
+      drone.dy = dy;
+      drone.x = 400;
+      drone.y = y;
+      return drone;
+    }
+
+    it('maintient la vitesse boostée en montant (dy < 0)', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = setupBoostedDrone(ship, { dx: 2, dy: -5, y: 300 });
+
+      for (let i = 0; i < 30; i++) drone.update(ship, 800);
+
+      const speed = Math.hypot(drone.dx, drone.dy);
+      expect(speed).to.be.closeTo(6, 0.2); // converge vers vitesse boostée
+    });
+
+    it('maintient la vitesse boostée en descendant dans la zone d\'astéroïdes', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = setupBoostedDrone(ship, { dx: 2, dy: 3, y: 200 });
+
+      for (let i = 0; i < 30; i++) drone.update(ship, 800);
+
+      const speed = Math.hypot(drone.dx, drone.dy);
+      expect(speed).to.be.closeTo(6, 0.2); // reste boosté
+    });
+
+    it('ralentit progressivement en zone de retour', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = setupBoostedDrone(ship, { dx: 3, dy: 5, y: 420 });
+
+      const speedBefore = Math.hypot(drone.dx, drone.dy); // ~5.83
+
+      // Après 1 frame : commence à ralentir mais pas encore à vitesse cible
+      drone.update(ship, 800);
+      const speedAfter1 = Math.hypot(drone.dx, drone.dy);
+      expect(speedAfter1).to.be.below(speedBefore); // ralentit
+      expect(speedAfter1).to.be.above(3.5);          // pas encore convergé
+
+      // Après beaucoup de frames : convergé vers la vitesse originale
+      for (let i = 0; i < 60; i++) {
+        drone.y = 420; // maintenir en zone de retour
+        drone.update(ship, 800);
+      }
+      const speedFinal = Math.hypot(drone.dx, drone.dy);
+      expect(speedFinal).to.be.closeTo(3, 0.3); // vitesse originale (6/2)
+    });
+
+    it('pas d\'effet si speedBoost === 1', () => {
+      const ship = makeShip(100, 500, 100);
+      const drone = makeDrone(ship);
+      drone.launched = true;
+      drone.dx = 1;
+      drone.dy = 2;
+      drone.x = 400;
+      drone.y = 300;
+
+      drone.update(ship, 800);
+
+      expect(drone.speedBoost).to.equal(1);
+    });
+  });
+
   describe('pas de sortie par le bas (non géré par drone)', () => {
     it('ne clamp pas en bas — c\'est main.js qui gère la perte de vie', () => {
       const ship = makeShip(100, 500, 100);

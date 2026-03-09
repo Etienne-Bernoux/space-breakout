@@ -42,10 +42,11 @@ export class Ship {
     }
     const prevX = this.x;
     if (touchX !== null && touchX !== undefined) {
-      // Tactile : le vaisseau suit le doigt (lerp indépendant du framerate)
+      // Tactile : le vaisseau suit le doigt (lerp modulé par speed, indépendant du framerate)
       const target = touchX - this.width / 2;
       const diff = target - this.x;
-      this.x += diff * (1 - Math.pow(1 - 0.3, dt));
+      const lerpBase = Math.min(0.6, this.speed / 7 * 0.3);
+      this.x += diff * (1 - Math.pow(1 - lerpBase, dt));
     } else {
       if (this.movingLeft) this.x -= this.speed * dt;
       if (this.movingRight) this.x += this.speed * dt;

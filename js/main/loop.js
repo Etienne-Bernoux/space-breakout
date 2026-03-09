@@ -363,7 +363,7 @@ export class GameLoop {
     this.#drawVignette(ctx, fx);
     this.hud.drawHUD(fx);
     infra.drawPowerUpHUD(ctx, this.systems.powerUp.getActive(), this.canvas.width);
-    if (infra.drawMineralHUD) infra.drawMineralHUD(ctx, this.canvas.width);
+    if (infra.drawMineralHUD) infra.drawMineralHUD(ctx, this.canvas.width, this.canvas.height);
     this.hud.drawPauseButton();
     if (this.ui.comboFadeTimer > 0) this.hud.drawCombo(dt);
   }

@@ -11,7 +11,7 @@ import { updateStars } from '../infra/effects/stars.js';
 import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/input/touch.js';
 import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/power-up-render.js';
-import { drawMineralCapsule, drawMineralHUD } from '../infra/renderers/mineral-render.js';
+import { drawMineralCapsule, drawMineralHUD, resetMineralSessionGains, addMineralSessionGain } from '../infra/renderers/mineral-render.js';
 import { isMusicLabActive } from '../infra/lab/music-lab/index.js';
 import { isProgressLabActive, isSimulatorOpen, showSimulatorModal, hideSimulatorModal, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
 import { drawShip } from '../infra/renderers/ship-render.js';
@@ -59,5 +59,7 @@ export const inputInfra = {
 };
 
 export const collisionEffects = {
-  spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, triggerShake, spawnDebris, playMineralPickup,
+  spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, triggerShake, spawnDebris, playMineralPickup, addMineralSessionGain,
 };
+
+export { resetMineralSessionGains };

@@ -22,6 +22,7 @@ export class DroneManager {
     );
     d.piercing = ref.piercing;
     d.sticky = ref.sticky;
+    d.speedBoost = ref.speedBoost;
     d.launchAtAngle(ship, (Math.random() - 0.5) * 0.6);
     drones.push(d);
   }

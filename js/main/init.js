@@ -27,7 +27,7 @@ import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input/input-handler.js';
-import { loopInfra, inputInfra, collisionEffects } from './adapters.js';
+import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains } from './adapters.js';
 import { initMineralHUD } from '../infra/renderers/mineral-render.js';
 
 // --- Canvas setup ---
@@ -146,11 +146,16 @@ function spawnEntities(ent, levelAsteroids) {
   const isMobile = 'ontouchstart' in window;
   ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
   ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width, CONFIG.canvas.height)];
-  const astConfig = isLabMode()
+  let astConfig = isLabMode()
     ? getDevAsteroidConfig()
     : levelAsteroids
       ? { ...CONFIG.asteroids, ...levelAsteroids, _autoSize: true }
-      : CONFIG.asteroids;
+      : { ...CONFIG.asteroids };
+  // Portrait mode: push asteroid field down to reduce empty gap between asteroids and ship
+  if (CONFIG.canvas.height > CONFIG.canvas.baseHeight) {
+    const extraH = CONFIG.canvas.height - CONFIG.canvas.baseHeight;
+    astConfig = { ...astConfig, offsetTop: (astConfig.offsetTop || 45) + Math.round(extraH * 0.25) };
+  }
   ent.field = new AsteroidField(astConfig);
   ent.capsules = [];
   ent.mineralCapsules = [];
@@ -170,6 +175,7 @@ export function startGame(levelId) {
   const level = levelId ? getLevel(levelId) : null;
   spawnEntities(G.entities, level?.asteroids);
   resetSystems(G.systems);
+  resetMineralSessionGains();
   applyUpgradeEffects();
   G.session.start(levelId);
 }
@@ -195,6 +201,7 @@ function applyUpgradeEffects() {
       drone._baseSpeed *= effects.drone.speed;
       drone.speed = drone._baseSpeed;
       drone.dy = -drone.speed;
+      drone.speedBoost = effects.drone.speed;
     }
     if (effects.drone.damage) drone.damage = effects.drone.damage;
   }

@@ -42,7 +42,7 @@ export const UPGRADES = {
   droneSpeed: {
     id: 'droneSpeed',
     name: 'Acc\u00e9l\u00e9rateur',
-    description: 'Augmente la vitesse du drone',
+    description: 'Le drone acc\u00e9l\u00e8re vers les ast\u00e9ro\u00efdes, revient \u00e0 vitesse normale',
     category: 'drone',
     maxLevel: 3,
     costs: [

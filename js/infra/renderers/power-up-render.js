@@ -18,8 +18,10 @@ export function drawCapsule(ctx, capsule) {
   const bob = Math.sin(t * 3 + x * 0.1) * 3;
   const y = capsule.y + bob;
 
+  const s = gameScale();
   ctx.save();
   ctx.translate(x, y);
+  if (s > 1) ctx.scale(s, s);
 
   // Lueur pulsante
   const glowPulse = 1 + Math.sin(t * 4) * 0.3;

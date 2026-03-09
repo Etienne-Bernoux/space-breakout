@@ -121,7 +121,7 @@ export class HudRenderer {
   drawPauseButton() {
     const ctx = this.render.ctx;
     const { x, y, size } = this.pauseBtnLayout();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.fillRect(x, y, size, size);
     ctx.fillStyle = '#ffffff';
     const barW = Math.round(size * 0.13);

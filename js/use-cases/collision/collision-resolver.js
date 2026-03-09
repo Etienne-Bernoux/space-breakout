@@ -78,8 +78,9 @@ export class CollisionResolver {
           continue;
         }
 
-        // Décrémenter HP
-        a.hp--;
+        // Décrémenter HP (damage upgrade : drone.damage, default 1)
+        const dmg = drone.damage || 1;
+        a.hp -= dmg;
         if (a.hp > 0) {
           const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: a.color, hpLeft: a.hp, maxHp: a.maxHp, materialKey: a.materialKey };
           if (!effectivePiercing) return ev;

@@ -13,6 +13,7 @@ export class Drone {
     this.radius = this._baseRadius;
     this.speed = this._baseSpeed;
     this.color = config.color;
+    this.speedBoost = 1;   // upgrade factor (>1 = smart boost: fast up, normal down)
     this.piercing = false;
     this.sticky = false;
     this.warp = false;
@@ -92,6 +93,22 @@ export class Drone {
       // Si dx === 0 (lancement tout droit), direction aléatoire
       const sign = this.dx === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(this.dx);
       this.dx = sign * minDx;
+    }
+
+    // Smart speed boost: rapide partout, ralentit progressivement en zone de retour
+    if (this.speedBoost > 1) {
+      const inReturnZone = this.dy > 0 && this.y > ship.y * 0.7;
+      const targetSpeed = inReturnZone
+        ? this._baseSpeed / this.speedBoost         // zone retour → vitesse originale
+        : this._baseSpeed;                           // ailleurs → vitesse boostée
+      const currentSpeed = Math.hypot(this.dx, this.dy);
+      if (currentSpeed > 0) {
+        const lerpRate = 0.08 * dt;    // transition progressive (~12 frames pour converger)
+        const lerpedSpeed = currentSpeed + (targetSpeed - currentSpeed) * lerpRate;
+        const scale = lerpedSpeed / currentSpeed;
+        this.dx *= scale;
+        this.dy *= scale;
+      }
     }
   }
 

@@ -74,6 +74,10 @@ window.__GAME__ = {
     if (!G.entities.field) return;
     for (const a of G.entities.field.grid) a.alive = false;
   },
+  /** Lance un niveau spécifique par son id (usage e2e / dev). */
+  startLevel(levelId) {
+    startGame(levelId);
+  },
   /** Retourne les hitZones cliquables (coordonnées canvas) selon l'état courant. */
   get hitZones() {
     const W = CONFIG.canvas.width;

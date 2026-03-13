@@ -96,8 +96,8 @@ js/
       music-director.js → gère TOUS les sons/musique (reçoit events du GID)
       effect-director.js → effets visuels par intensité (lerp entre presets)
     input/              → interaction utilisateur + viewport
-      input-handler.js  → handlers tactiles/clavier, pause (DI groupée : nav, progression, infra)
-      touch.js          → contrôles tactiles + souris
+      input-handler/    → handlers clavier/pause (dossier-module, DI groupée)
+      pointer.js        → contrôles tactiles + souris unifiés
       resize.js         → canvas responsive
     effects/            → effets visuels et fond
       particles.js      → explosions + traînée
@@ -277,14 +277,14 @@ npx vitest                        # mode watch
 
 Tests e2e (Playwright + Gherkin via playwright-bdd, dossier `e2e/`) :
 ```bash
-npm run test:e2e                  # bddgen + playwright test (20 scénarios)
+npm run test:e2e                  # bddgen + playwright test (22 scénarios)
 npx bddgen                       # génère les specs depuis les .feature
 npm run test:all                  # unit + e2e
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 Les specs sont générées dans `.features-gen/` (gitignored).
 
-Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, `progressLab`, `labHub`, `wallet`, `upgrades`, et `forceWin()` (tue tous les astéroïdes).
+Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, `progressLab`, `labHub`, `wallet`, `upgrades`, `forceWin()` (tue tous les astéroïdes), et `startLevel(levelId)` (lance un niveau spécifique).
 
 Mode spécial : `?lab` — ouvre le Lab Hub (choix entre Dev Panel, Music Lab, Progress Lab). En jeu, active le dev overlay (desktop only).
 

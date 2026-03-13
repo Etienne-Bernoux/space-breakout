@@ -37,3 +37,24 @@ Feature: Audit desktop — 800×600
     And j'attends 300ms
     Then je capture "desktop-11-paused.png"
     And je log le diagnostic desktop
+
+  Scenario: Niveau boss Parasite (z1-6) avec screenshots
+    Given je suis sur la page d'accueil
+    When je lance le niveau "z1-6"
+    Then je capture "desktop-boss-01-before-launch.png"
+
+    When j'appuie sur "Space"
+    And j'attends 300ms
+    Then je capture "desktop-boss-02-launched.png"
+
+    When je déplace la souris horizontalement sur le vaisseau
+    And j'attends 2000ms
+    Then je capture "desktop-boss-03-playing-2s.png"
+
+    When j'attends 2000ms
+    Then je capture "desktop-boss-04-playing-4s.png"
+
+    When j'appuie sur "Escape"
+    And j'attends 300ms
+    Then je capture "desktop-boss-05-paused.png"
+    And je log le diagnostic desktop

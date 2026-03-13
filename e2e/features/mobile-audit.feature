@@ -38,3 +38,24 @@ Feature: Audit mobile — iPhone 13
     And j'attends 300ms
     Then je capture "mobile-11-paused.png"
     And je log le diagnostic mobile
+
+  Scenario: Niveau boss Parasite (z1-6) avec screenshots
+    Given je suis sur la page d'accueil
+    When je lance le niveau "z1-6"
+    Then je capture "mobile-boss-01-before-launch.png"
+
+    When je tap le centre du canvas
+    And j'attends 300ms
+    Then je capture "mobile-boss-02-launched.png"
+
+    When je simule un glissement tactile horizontal
+    And j'attends 2000ms
+    Then je capture "mobile-boss-03-playing-2s.png"
+
+    When j'attends 2000ms
+    Then je capture "mobile-boss-04-playing-4s.png"
+
+    When je tap le bouton pause
+    And j'attends 300ms
+    Then je capture "mobile-boss-05-paused.png"
+    And je log le diagnostic mobile

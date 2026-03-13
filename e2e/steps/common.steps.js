@@ -49,6 +49,11 @@ When('je force la victoire', async ({ page }) => {
   );
 });
 
+When('je lance le niveau {string}', async ({ page, gameHelpers }, levelId) => {
+  await page.evaluate((id) => window.__GAME__.startLevel(id), levelId);
+  await gameHelpers.waitForState('playing');
+});
+
 // ── Assertions état ─────────────────────────────────────────
 
 Then('l\'état du jeu est {string}', async ({ page, gameHelpers }, expected) => {

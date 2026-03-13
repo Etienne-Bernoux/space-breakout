@@ -2,6 +2,7 @@
 
 import { getMineral, MINERAL_IDS } from '../../domain/mineral/index.js';
 import { gameScale } from '../../shared/responsive.js';
+import { isPortrait } from '../../shared/platform.js';
 
 /** Dessiner une capsule minerai qui tombe (pépite ou cristal). */
 export function drawMineralCapsule(ctx, mc) {
@@ -79,7 +80,7 @@ export function drawMineralHUD(ctx, canvasWidth = 800, canvasHeight = 600) {
   if (!_wallet) return;
 
   const s = gameScale(canvasWidth);
-  const portrait = canvasHeight > canvasWidth;
+  const portrait = isPortrait(canvasWidth, canvasHeight);
 
   if (portrait) {
     // Portrait: only show minerals gained this session, under VIES line (left side)
@@ -109,11 +110,11 @@ export function drawMineralHUD(ctx, canvasWidth = 800, canvasHeight = 600) {
     return;
   }
 
-  // Desktop: all minerals top-right
+  // Desktop: all minerals top-right, below SCORE line
   const fontSize = Math.round(12 * s);
   const iconSize = Math.round(6 * s);
   const pad = Math.round(10 * s);
-  const startY = Math.round(12 * s);
+  const startY = Math.round(32 * s);   // décalé sous le HUD score (était 12)
   const lineH = Math.round(16 * s);
   const rightX = canvasWidth - pad;
 

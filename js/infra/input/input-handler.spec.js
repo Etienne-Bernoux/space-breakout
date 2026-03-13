@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { InputHandler } from './input-handler.js';
+import { InputHandler } from './input-handler/index.js';
 
 // Stubs globaux
 globalThis.document = {
@@ -9,7 +9,7 @@ globalThis.document = {
 function mockInfra() {
   const handlers = {};
   return {
-    setupTouch: vi.fn(),
+    setupPointer: vi.fn(),
     setTapHandler: vi.fn((fn) => { handlers.tap = fn; }),
     setMenuTapHandler: vi.fn((fn) => { handlers.menuTap = fn; }),
     setDragHandler: vi.fn((fn) => { handlers.drag = fn; }),
@@ -86,13 +86,13 @@ describe('InputHandler', () => {
     vi.clearAllMocks();
   });
 
-  it('appelle setupTouch à la construction', () => {
+  it('appelle setupPointer à la construction', () => {
     const d = makeDeps();
     new InputHandler(d);
-    expect(d.infra.setupTouch).toHaveBeenCalled();
+    expect(d.infra.setupPointer).toHaveBeenCalled();
   });
 
-  it('enregistre les 4 handlers touch', () => {
+  it('enregistre les 4 handlers pointer', () => {
     const d = makeDeps();
     new InputHandler(d);
     expect(d.infra.setTapHandler).toHaveBeenCalled();

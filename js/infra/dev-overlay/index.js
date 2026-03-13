@@ -2,6 +2,7 @@
 // ?dev + desktop only. Boutons power-ups + vie +/-
 
 import { isLabMode } from '../lab/hub/index.js';
+import { isDesktop } from '../../shared/platform.js';
 import { POWER_UP_IDS, getPowerUp } from '../../domain/power-ups.js';
 import { drawIcon } from '../renderers/power-up-icons.js';
 import { initDevStats, updateDevStats } from './dev-stats.js';
@@ -94,7 +95,7 @@ function buildButtons() {
 }
 
 export function isDevOverlayActive() {
-  return isLabMode() && !('ontouchstart' in window);
+  return isLabMode() && isDesktop();
 }
 
 let wasActive = false;

@@ -36,7 +36,8 @@ function mockInfra() {
   return {
     updateStars: vi.fn(),
     getMousePos: vi.fn(() => ({ x: 0, y: 0 })),
-    getTouchX: vi.fn(() => null),
+    getPointerX: vi.fn(() => null),
+    setGameState: vi.fn(),
     updateMenu: vi.fn(),
     updateMenuHover: vi.fn(),
     spawnTrail: vi.fn(),

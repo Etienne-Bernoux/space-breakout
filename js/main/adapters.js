@@ -8,7 +8,7 @@ import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/lab/dev-p
 import { isLabMode, isLabHubActive } from '../infra/lab/hub/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { updateStars } from '../infra/effects/stars.js';
-import { setupTouch, getTouchX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos } from '../infra/input/touch.js';
+import { setupPointer, getPointerX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos, setGameState } from '../infra/input/pointer.js';
 import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/power-up-render.js';
 import { drawMineralCapsule, drawMineralHUD, resetMineralSessionGains, addMineralSessionGain } from '../infra/renderers/mineral-render.js';
@@ -28,7 +28,7 @@ import { getAllLevels } from '../domain/progression/level-catalog.js';
 import { getAllZones } from '../domain/progression/zone-catalog.js';
 
 export const loopInfra = {
-  updateStars, getMousePos, getTouchX,
+  updateStars, getMousePos, getPointerX, setGameState,
   updateMenu, updateMenuHover,
   spawnTrail, updateParticles,
   updateShake, setAmbientShake,
@@ -47,7 +47,7 @@ export const loopInfra = {
 };
 
 export const inputInfra = {
-  setupTouch, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler,
+  setupPointer, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler,
   handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu,
   isDevPanelActive, hideDevPanel, isLabMode, showDevPanel,
   isMusicLabActive, isLabHubActive,

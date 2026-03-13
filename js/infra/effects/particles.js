@@ -252,8 +252,8 @@ export function spawnTrail(x, y, dx = 0, dy = 0) {
   const speed = Math.sqrt(dx * dx + dy * dy);
   const fast = Math.min(speed / 6, 1); // 0→1 normalisé
 
-  // Taille proportionnelle à la vitesse + jitter
-  const size = 1.5 + fast * 2 + Math.random() * 1.5;
+  // Taille proportionnelle à la vitesse + jitter (renforcée pour visibilité)
+  const size = 2.5 + fast * 3 + Math.random() * 2;
   // Couleur : jaune → blanc quand rapide
   const r = 255;
   const g = Math.round(200 + fast * 55);
@@ -306,7 +306,15 @@ export function updateParticles(ctx, dt = 1) {
       continue;
     }
 
-    ctx.globalAlpha = t.life * 0.5;
+    const alpha = t.life * 0.7;
+    // Glow externe pour renforcer la visibilité
+    ctx.globalAlpha = alpha * 0.3;
+    ctx.fillStyle = t.color || '#ffcc00';
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, t.size * t.life * 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Particule principale
+    ctx.globalAlpha = alpha;
     ctx.fillStyle = t.color || '#ffcc00';
     ctx.beginPath();
     ctx.arc(t.x, t.y, t.size * t.life, 0, Math.PI * 2);

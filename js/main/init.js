@@ -26,7 +26,7 @@ import { AlienProjectile } from '../domain/projectile/index.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
-import { InputHandler } from '../infra/input/input-handler.js';
+import { InputHandler } from '../infra/input/input-handler/index.js';
 import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains } from './adapters.js';
 import { initMineralHUD } from '../infra/renderers/mineral-render.js';
 
@@ -84,6 +84,7 @@ G.systems.powerUp.droneManager = G.systems.droneManager;
 
 // --- Utilitaires responsive ---
 import { gameScale } from '../shared/responsive.js';
+import { isMobile } from '../shared/platform.js';
 export { gameScale };
 
 export function pauseBtnLayout() {
@@ -143,9 +144,9 @@ G.hud = new HudRenderer({
 
 // startGame déclaré avant GameLoop/InputHandler car injecté en dépendance
 function spawnEntities(ent, levelAsteroids) {
-  const isMobile = 'ontouchstart' in window;
-  ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, isMobile);
-  ent.drones = [new Drone(CONFIG.drone, ent.ship, isMobile, CONFIG.canvas.width, CONFIG.canvas.height)];
+  const mobile = isMobile();
+  ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, mobile);
+  ent.drones = [new Drone(CONFIG.drone, ent.ship, mobile, CONFIG.canvas.width, CONFIG.canvas.height)];
   let astConfig = isLabMode()
     ? getDevAsteroidConfig()
     : levelAsteroids

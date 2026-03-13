@@ -1,3 +1,5 @@
+import { isMobile } from '../../shared/platform.js';
+
 const COMBO_ALPHA_FRAMES = 30;       // frames pendant lesquelles le combo est pleinement opaque
 const COMBO_PULSE_AMP = 0.3;         // amplitude du pulse sinusoïdal
 const COMBO_MIN = 2;                 // combo minimum affiché
@@ -209,8 +211,7 @@ export class HudRenderer {
       });
     }
 
-    const isMobile = 'ontouchstart' in window;
-    if (!isMobile) {
+    if (!isMobile()) {
       ctx.font = `${Math.round(12 * s)}px monospace`;
       const instrA = 0.35 + Math.sin(t * 2) * 0.1;
       ctx.fillStyle = `rgba(68, 85, 102, ${instrA})`;

@@ -157,29 +157,38 @@ export function drawSystemMap(ctx, W, H, zones, progress, selectedIndex, animPha
     const unlocked = progress.isZoneUnlocked(selZone.id);
     const R = getNodeRadius(selZone.type, s);
 
+    // Si le nœud est proche du centre (soleil), afficher le tooltip AU-DESSUS
+    const distToCenter = Math.hypot(selNode.x - cx, selNode.y - cy);
+    const tooltipBelow = distToCenter > 80 * s;
+    const sign = tooltipBelow ? 1 : -1;
+    const nameY = tooltipBelow ? selNode.y + R + 18 * s : selNode.y - R - 28 * s;
+    const descY = tooltipBelow ? selNode.y + R + 32 * s : selNode.y - R - 14 * s;
+
     // Nom
     ctx.fillStyle = unlocked ? '#fff' : '#666';
     ctx.font = `bold ${Math.round(13 * s)}px monospace`;
     ctx.textAlign = 'center';
     ctx.shadowColor = unlocked ? selZone.accent : '#000';
     ctx.shadowBlur = unlocked ? 6 : 0;
-    ctx.fillText(selZone.name.toUpperCase(), selNode.x, selNode.y + R + 18 * s);
+    ctx.fillText(selZone.name.toUpperCase(), selNode.x, nameY);
     ctx.shadowBlur = 0;
 
     // Description
     if (unlocked) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = `${Math.round(10 * s)}px monospace`;
-      ctx.fillText(selZone.description, selNode.x, selNode.y + R + 32 * s);
+      ctx.fillText(selZone.description, selNode.x, descY);
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.font = `${Math.round(10 * s)}px monospace`;
-      ctx.fillText('Zone verrouillée', selNode.x, selNode.y + R + 32 * s);
+      ctx.fillText('Zone verrouillée', selNode.x, descY);
     }
 
-    // Mini-vaisseau au-dessus si débloqué
+    // Mini-vaisseau au-dessus (ou en-dessous si tooltip au-dessus)
     if (unlocked) {
-      const shipY = selNode.y - R - 20 * s + Math.sin(animPhase * 0.05) * 3;
+      const shipY = tooltipBelow
+        ? selNode.y - R - 20 * s + Math.sin(animPhase * 0.05) * 3
+        : selNode.y + R + 20 * s + Math.sin(animPhase * 0.05) * 3;
       drawMiniShip(ctx, selNode.x, shipY, s);
     }
   }

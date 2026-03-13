@@ -1,5 +1,6 @@
 import { CONFIG } from '../../config.js';
 import { gameScale } from '../../shared/responsive.js';
+import { isMobile } from '../../shared/platform.js';
 import state from './state.js';
 
 // Layout responsive
@@ -152,9 +153,9 @@ export function drawMenu(ctx) {
   ctx.font = `${Math.round(12 * scale)}px monospace`;
   const instrAlpha = 0.35 + Math.sin(t * 2) * 0.1;
   ctx.fillStyle = `rgba(68, 85, 102, ${instrAlpha})`;
-  const isMobile = 'ontouchstart' in window;
+  const mobile = isMobile();
   ctx.fillText(
-    isMobile ? 'APPUIE POUR SÉLECTIONNER' : '↑↓ NAVIGUER  ·  ESPACE SÉLECTIONNER',
+    mobile ? 'APPUIE POUR SÉLECTIONNER' : '↑↓ NAVIGUER  ·  ESPACE SÉLECTIONNER',
     cx, h * 0.78
   );
 

@@ -30,6 +30,8 @@ export class GameLoop {
     this.wallet = wallet;
     this.upgrades = upgrades;
     this.lastTime = 0;
+    this._prevState = null;
+    this._fadeAlpha = 0;          // overlay noir pour transition fade-in
     this.loop = this.loop.bind(this);
   }
 
@@ -274,7 +276,7 @@ export class GameLoop {
     }
 
     field.update(dtEff);
-    ship.update(infra.getTouchX(), dtEff);
+    ship.update(infra.getPointerX(), dtEff);
     for (const d of drones) {
       d.update(ship, this.canvas.width, dtEff);
       if (d.launched) infra.spawnTrail(d.x, d.y, d.dx, d.dy);
@@ -315,6 +317,9 @@ export class GameLoop {
     document.body.classList.toggle('state-systemMap', this.session.state === 'systemMap');
     document.body.classList.toggle('state-worldMap', this.session.state === 'worldMap');
 
+    // Synchronise l'état du jeu dans le pointer (conditionne le comportement souris)
+    if (this.infra.setGameState) this.infra.setGameState(this.session.state);
+
     // Overlays prioritaires (interceptent tous les états sauf progress lab)
     if (this.infra.isMusicLabActive()) {
       this.#loopMusicLab(ctx, fx);
@@ -336,6 +341,19 @@ export class GameLoop {
         case 'won':       this.#loopWon(ctx, fx, dt); break;
         case 'playing':   this.#loopPlaying(ctx, fx, dt); break;
       }
+    }
+
+    // Fade-in transition (overlay noir qui s'efface)
+    const st = this.session.state;
+    if (st !== this._prevState) {
+      // Déclencher un fade seulement pour les transitions non-gameplay
+      if (this._prevState === 'menu' && st === 'systemMap') this._fadeAlpha = 1;
+      this._prevState = st;
+    }
+    if (this._fadeAlpha > 0) {
+      ctx.fillStyle = `rgba(0, 0, 0, ${this._fadeAlpha})`;
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this._fadeAlpha = Math.max(0, this._fadeAlpha - dt * 0.04);
     }
 
     this.infra.updateDevOverlay();

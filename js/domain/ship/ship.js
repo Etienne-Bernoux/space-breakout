@@ -34,16 +34,16 @@ export class Ship {
     this.stunTimer = duration;
   }
 
-  update(touchX, dt = 1) {
+  update(pointerX, dt = 1) {
     if (this.stunTimer > 0) {
       this.stunTimer -= dt;
       this.vx = 0;
       return;
     }
     const prevX = this.x;
-    if (touchX !== null && touchX !== undefined) {
-      // Tactile : le vaisseau suit le doigt (lerp modulé par speed, indépendant du framerate)
-      const target = touchX - this.width / 2;
+    if (pointerX !== null && pointerX !== undefined) {
+      // Le vaisseau suit le pointeur — touch ou souris (lerp modulé par speed)
+      const target = pointerX - this.width / 2;
       const diff = target - this.x;
       const lerpBase = Math.min(0.6, this.speed / 7 * 0.3);
       this.x += diff * (1 - Math.pow(1 - lerpBase, dt));

@@ -70,10 +70,15 @@ export function drawWorldMap(ctx, W, H, levels, progress, selectedIndex, animPha
       ctx.fillStyle = '#ff4466';
       ctx.font = `bold ${Math.round(16 * s)}px monospace`;
       ctx.fillText('☠', n.x, n.y);
-    } else {
-      ctx.fillStyle = unlocked ? '#fff' : '#555';
+    } else if (unlocked) {
+      ctx.fillStyle = '#fff';
       ctx.font = `bold ${Math.round(14 * s)}px monospace`;
       ctx.fillText(String(i + 1), n.x, n.y);
+    } else {
+      // Cadenas pour les niveaux verrouillés
+      ctx.fillStyle = '#666';
+      ctx.font = `${Math.round(12 * s)}px monospace`;
+      ctx.fillText('🔒', n.x, n.y);
     }
 
     // Étoiles en dessous

@@ -42,13 +42,7 @@ export function initAILab({ onBack, levels, createTrainer }) {
   attachAILabHandlers(root, {
     onBack: () => { stopTraining(); onBack(); },
     onStart: () => toggleTraining(createTrainer),
-    onWatch: () => {
-      if (trainer) {
-        trainer.watchBest = !trainer.watchBest;
-        refs.watchBtn.classList.toggle('ai-btn-active', trainer.watchBest);
-        trainer.restartAgent();
-      }
-    },
+    onWatch: () => toggleWatch(createTrainer),
     onReset: () => {
       if (trainer) {
         localStorage.removeItem('ai-best-genome');
@@ -105,16 +99,62 @@ function startTraining(createTrainer) {
 
 function stopTraining() {
   if (trainer) trainer.stop();
+  trainer = null;
   state.training = false;
+  state.watching = false;
   if (refs) {
     refs.startBtn.textContent = 'Lancer l\'entraînement';
     refs.startBtn.classList.remove('ai-btn-active');
+    refs.watchBtn.classList.remove('ai-btn-active');
     refs.select.disabled = false;
   }
   // Revenir en mode centré
   const root = document.getElementById('ai-lab');
   if (root) root.classList.remove('ai-sidebar');
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+}
+
+/** Active/désactive le mode watch (sans entraînement). */
+function toggleWatch(createTrainer) {
+  if (state.watching) {
+    // Arrêter le watch
+    stopTraining();
+    return;
+  }
+  if (state.training) {
+    // Pendant l'entraînement, toggle watch sur le trainer existant
+    trainer.watchBest = !trainer.watchBest;
+    refs.watchBtn.classList.toggle('ai-btn-active', trainer.watchBest);
+    trainer.restartAgent();
+    return;
+  }
+  // Watch standalone : créer un trainer juste pour le replay
+  trainer = createTrainer(state.selectedLevel);
+  trainer.active = true;
+  trainer.watchBest = true;
+  trainer.population.loadBest();
+  if (!trainer.population.bestGenome) {
+    refs.statsDiv.innerHTML = '<div class="ai-stat-muted">Aucun modèle chargé.</div>';
+    trainer.stop();
+    trainer = null;
+    return;
+  }
+  trainer.restartAgent();
+  state.watching = true;
+  refs.watchBtn.classList.add('ai-btn-active');
+  refs.select.disabled = true;
+  const root = document.getElementById('ai-lab');
+  if (root) root.classList.add('ai-sidebar');
+  startWatchStatsLoop();
+}
+
+function startWatchStatsLoop() {
+  function tick() {
+    if (!state.watching || state.training) return;
+    updateStats(refs.statsDiv, trainer);
+    rafId = requestAnimationFrame(tick);
+  }
+  tick();
 }
 
 function startStatsLoop() {

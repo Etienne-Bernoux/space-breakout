@@ -174,13 +174,16 @@ function resetSystems(sys) {
   sys.intensity.enable({ boss: hasBoss });
 }
 
-/** Lance un niveau. Si levelId est fourni, charge sa config depuis le catalogue. */
-export function startGame(levelId) {
+/** Lance un niveau. Si levelId est fourni, charge sa config depuis le catalogue.
+ *  @param {string} [levelId]
+ *  @param {{ skipUpgrades?: boolean }} [opts]
+ */
+export function startGame(levelId, opts) {
   const level = levelId ? getLevel(levelId) : null;
   spawnEntities(G.entities, level?.asteroids);
   resetSystems(G.systems);
   resetMineralSessionGains();
-  applyUpgradeEffects();
+  if (!opts?.skipUpgrades) applyUpgradeEffects();
   G.session.start(levelId);
 }
 

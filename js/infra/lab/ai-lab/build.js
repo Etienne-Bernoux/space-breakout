@@ -54,7 +54,7 @@ export function buildAILab(root, levels) {
 
   const watchBtn = el('button', 'ai-btn');
   watchBtn.id = 'ai-watch-btn';
-  watchBtn.textContent = 'Regarder le meilleur';
+  watchBtn.textContent = 'Tester le modèle';
   watchBtn.setAttribute('data-action', 'watch');
   ctrlSection.appendChild(watchBtn);
 

@@ -62,7 +62,7 @@ initAILab({
   levels: ZONE_1.levels,
   createTrainer: (levelId) => {
     const trainer = new AITrainer({
-      startGame,
+      startGame: (lvl) => startGame(lvl, { skipUpgrades: true }),
       entities: G.entities,
       session: G.session,
       canvas: CONFIG.canvas,

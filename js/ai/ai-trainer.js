@@ -8,7 +8,7 @@ import { AIPlayer, TOPOLOGY } from './ai-player.js';
 import { simulateAgent } from './simulation.js';
 
 const POPULATION_SIZE = 50;
-const MAX_FRAMES_PER_GAME = 3600; // ~60s à 60fps
+const MAX_FRAMES_PER_GAME = 10800; // ~3min à 60fps
 const AGENTS_PER_CHUNK = 5;       // agents simulés par rAF (pour ne pas bloquer l'UI)
 
 export class AITrainer {
@@ -39,6 +39,7 @@ export class AITrainer {
       genBestDestroys: 0,    // destructions du meilleur de la gen
       genBestRallyScore: 0,  // score rally du meilleur de la gen
       genBestDrops: 0,       // pertes du meilleur de la gen
+      genBestTracking: 0,    // % alignement moyen du meilleur de la gen
       genWinCount: 0,        // agents ayant gagné dans la gen
       improvementStreak: 0,  // générations consécutives avec amélioration
     };
@@ -75,7 +76,7 @@ export class AITrainer {
 
     if (state === 'won' || state === 'gameOver' || this.frameCount >= MAX_FRAMES_PER_GAME) {
       this.stats.current = Math.round(this.currentPlayer.computeFitness());
-      setTimeout(() => { if (this.active && this.watchBest) this.#startWatchAgent(); }, 300);
+      setTimeout(() => { if (this.active && this.watchBest) this.#startWatchAgent(); }, 1500);
       this.currentPlayer = null;
       return null;
     }
@@ -89,7 +90,7 @@ export class AITrainer {
       drone.launch(this.gameState.entities.ship);
     }
 
-    this.stats.current = Math.round(this.currentPlayer.computeFitness());
+    this.stats.current = Math.round(this.currentPlayer.currentFitness());
     return decision;
   }
 
@@ -144,6 +145,7 @@ export class AITrainer {
     this.stats.genBestDestroys = d.destroys || 0;
     this.stats.genBestRallyScore = d.rallyScore || 0;
     this.stats.genBestDrops = d.drops || 0;
+    this.stats.genBestTracking = d.tracking || 0;
     this.stats.genWinCount = genomes.filter(g => g._details?.won).length;
 
     // Streak d'amélioration

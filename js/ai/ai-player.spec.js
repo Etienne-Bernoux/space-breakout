@@ -80,20 +80,32 @@ describe('AIPlayer', () => {
   });
 
   describe('détection de rattrapage (catch)', () => {
-    it('détecte un rebond quand dy passe de positif à négatif', () => {
+    it('détecte un rebond proche du vaisseau (dy+ → dy-)', () => {
       const gs = makeGameState();
       const drone = gs.entities.drones[0];
+      drone.y = 490; // proche du ship (y=500)
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
 
-      // Frame 1 : drone descend (dy > 0)
       drone.dy = 3;
       player.decide();
       expect(player.catchCount).toBe(0);
 
-      // Frame 2 : drone remonte (dy <= 0) → rattrapage
       drone.dy = -3;
       player.decide();
       expect(player.catchCount).toBe(1);
+    });
+
+    it('ne compte pas un rebond loin du vaisseau (astéroïde)', () => {
+      const gs = makeGameState();
+      const drone = gs.entities.drones[0];
+      drone.y = 200; // loin du ship (y=500)
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+
+      drone.dy = 3;
+      player.decide();
+      drone.dy = -3;
+      player.decide();
+      expect(player.catchCount).toBe(0);
     });
 
     it('ne compte pas si drone pas lancé', () => {
@@ -106,7 +118,6 @@ describe('AIPlayer', () => {
       player.decide();
       drone.dy = -3;
       player.decide();
-      // launched=false → prevDroneDy reste à 0
       expect(player.catchCount).toBe(0);
     });
   });
@@ -151,6 +162,7 @@ describe('AIPlayer', () => {
     it('clôture un rally au rattrapage avec score logarithmique', () => {
       const gs = makeGameState();
       const drone = gs.entities.drones[0];
+      drone.y = 490; // proche du ship pour que le catch soit détecté
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
 
       // Simuler 3 destructions
@@ -171,12 +183,13 @@ describe('AIPlayer', () => {
   });
 
   describe('computeFitness', () => {
-    it('retourne 0 minimum (jamais négatif)', () => {
+    it('peut être négatif (drops > catches)', () => {
       const gs = makeGameState();
       gs.session.state = 'gameOver';
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.dropCount = 100; // grosse pénalité
-      expect(player.computeFitness()).toBe(0);
+      player.catchCount = 1;  // +50
+      player.dropCount = 3;   // -300
+      expect(player.computeFitness()).toBe(-250);
     });
 
     it('récompense les rattrapages (50 par catch)', () => {
@@ -192,10 +205,20 @@ describe('AIPlayer', () => {
       gs.session.state = 'won';
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.catchCount = 0;
-      player.framesSurvived = 1800; // 50% du temps
+      player.framesSurvived = 5400; // 50% du temps (10800 max)
       const fitness = player.computeFitness();
-      // 500 + timeBonus(0.5) * 300 = 650
+      // tracking(0) + 500 + timeBonus(0.5) * 300 = 650
       expect(fitness).toBeCloseTo(650, 0);
+    });
+
+    it('inclut le tracking score (alignement moyen × 30)', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.trackingScore = 80;  // somme alignement
+      player.trackingFrames = 100; // 80% aligné en moyenne
+      const fitness = player.computeFitness();
+      // tracking: 0.8 * 30 = 24
+      expect(fitness).toBeCloseTo(24, 0);
     });
 
     it('pénalise les drops (-100 par drop)', () => {
@@ -204,7 +227,7 @@ describe('AIPlayer', () => {
       player.catchCount = 3; // +150
       player.dropCount = 2;  // -200
       const fitness = player.computeFitness();
-      expect(fitness).toBe(0); // max(0, 150-200)
+      expect(fitness).toBe(-50);
     });
 
     it('clôture le rally en cours avant le calcul', () => {
@@ -216,6 +239,18 @@ describe('AIPlayer', () => {
       const fitness = player.computeFitness();
       // rallyScore = 10 + 5 = 15, + victoire(500+300) = 815
       expect(fitness).toBeCloseTo(815, 0);
+    });
+
+    it('currentFitness inclut le rally en cours sans le clôturer', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.catchCount = 1; // +50
+      player.rallyDestroys = 2; // rally en cours (non clôturé)
+      const fitness = player.currentFitness();
+      // 50 + pendingRally(10+5) = 65 + tracking(0)
+      expect(fitness).toBeCloseTo(65, 0);
+      // Le rally n'est pas clôturé
+      expect(player.rallyDestroys).toBe(2);
     });
   });
 });

@@ -138,8 +138,8 @@ if (!SILENT) {
   console.log(`\n🧠 Entraînement IA — ${GENERATIONS} générations, pop ${POP_SIZE}, niveau ${LEVEL_ID}`);
   console.log(`   Mutation: rate=${MUTATION_RATE} power=${MUTATION_POWER}`);
   console.log(`   Sortie: ${OUTPUT_FILE}\n`);
-  console.log('Gen'.padStart(5), 'Best'.padStart(7), 'Avg'.padStart(7), 'Catch'.padStart(6), 'Destr'.padStart(6), 'Rally'.padStart(6), 'Drops'.padStart(6), 'Wins'.padStart(5));
-  console.log('-'.repeat(60));
+  console.log('Gen'.padStart(5), 'Best'.padStart(7), 'Avg'.padStart(7), 'Catch'.padStart(6), 'Destr'.padStart(6), 'Rally'.padStart(6), 'Drops'.padStart(6), 'Track'.padStart(6), 'Wins'.padStart(5));
+  console.log('-'.repeat(66));
 }
 
 const t0 = Date.now();
@@ -183,8 +183,9 @@ for (let gen = 0; gen < GENERATIONS; gen++) {
     const destrStr = String(d.destroys || 0).padStart(6);
     const rallyStr = String(d.rallyScore || 0).padStart(6);
     const dropStr = String(d.drops || 0).padStart(6);
+    const trackStr = String((d.tracking || 0) + '%').padStart(6);
     const winStr = String(winCount).padStart(5);
-    console.log(genStr, bestStr, avgStr, catchStr, destrStr, rallyStr, dropStr, winStr);
+    console.log(genStr, bestStr, avgStr, catchStr, destrStr, rallyStr, dropStr, trackStr, winStr);
   }
 
   population.evolve(MUTATION_RATE, MUTATION_POWER);

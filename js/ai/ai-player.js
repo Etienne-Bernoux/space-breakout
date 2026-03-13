@@ -20,6 +20,8 @@ export class AIPlayer {
     this.dropCount = 0;      // nombre de fois où le drone tombe (vie perdue)
     this.rallyDestroys = 0;  // destructions dans le rally courant (entre 2 rattrapages)
     this.rallyScore = 0;     // score cumulé des rallies (log décroissant)
+    this.trackingScore = 0;  // bonus continu d'alignement X quand le drone descend
+    this.trackingFrames = 0; // frames où le tracking est mesuré
   }
 
   /** Appelé chaque frame pendant 'playing'. Retourne { pointerX, shouldLaunch }. */
@@ -43,13 +45,24 @@ export class AIPlayer {
     this.prevRemaining = field.remaining;
     this.framesSurvived++;
 
-    // Détecter les rattrapages (dy passe de >0 à <=0 = rebond sur vaisseau)
+    // Détecter les rattrapages (dy+ → dy- ET drone proche du vaisseau)
     if (drone.launched && this.prevDroneDy > 0 && drone.dy <= 0) {
-      this.catchCount++;
-      // Clôturer le rally : score log décroissant (10 + 5 + 3.3 + 2.5 + ...)
-      this.#closeRally();
+      const shipTop = ship.y;
+      const nearShip = drone.y >= shipTop - 20;
+      if (nearShip) {
+        this.catchCount++;
+        // Clôturer le rally : score log décroissant (10 + 5 + 3.3 + 2.5 + ...)
+        this.#closeRally();
+      }
     }
     this.prevDroneDy = drone.launched ? drone.dy : 0;
+
+    // Tracking continu : bonus quand le ship est aligné sous le drone (drone descend)
+    if (drone.launched && drone.dy > 0) {
+      const dist = Math.abs(drone.x - shipCx) / W; // 0 = parfait, 1 = opposé
+      this.trackingScore += 1 - dist; // 1 si parfait, 0 si à l'opposé
+      this.trackingFrames++;
+    }
 
     // Détecter les pertes de vie (drone tombé)
     if (this.prevLives < 0) this.prevLives = session.lives;
@@ -108,26 +121,40 @@ export class AIPlayer {
     this.rallyDestroys = 0;
   }
 
-  /** Calcule la fitness de cet agent. */
+  /** Calcule la fitness finale (clôture le rally en cours — appel unique en fin de partie). */
   computeFitness() {
-    // Clôturer un éventuel rally en cours (victoire sans dernier rebond)
     this.#closeRally();
+    return this.#calcFitness();
+  }
 
+  /** Fitness courante sans effets de bord (safe pour appel chaque frame). */
+  currentFitness() {
+    // Simuler le rally en cours sans le clôturer
+    let pendingRally = 0;
+    for (let n = 1; n <= this.rallyDestroys; n++) pendingRally += 10 / n;
+    return this.#calcFitness(pendingRally);
+  }
+
+  #calcFitness(extraRally = 0) {
     const won = this.gs.session.state === 'won';
 
     let fitness = 0;
+    // Tracking : alignement moyen sous le drone (0–30 pts, guide l'apprentissage)
+    if (this.trackingFrames > 0) {
+      fitness += (this.trackingScore / this.trackingFrames) * 30;
+    }
     // Rattrapage du drone (signal principal)
     fitness += this.catchCount * 50;
     // Rallies : destructions entre rattrapages (log décroissant)
-    fitness += this.rallyScore;
+    fitness += this.rallyScore + extraRally;
     // Victoire + bonus temps (finir vite = mieux)
     if (won) {
-      const timeBonus = Math.max(0, 1 - this.framesSurvived / 3600);
+      const timeBonus = Math.max(0, 1 - this.framesSurvived / 10800);
       fitness += 500 + timeBonus * 300;
     }
     // Pénalité forte quand le drone tombe (vie perdue)
     fitness -= this.dropCount * 100;
-    return Math.max(0, fitness);
+    return fitness;
   }
 
   /** Trouve les N astéroïdes vivants les plus proches du drone. */

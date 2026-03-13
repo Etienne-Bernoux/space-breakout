@@ -3,7 +3,7 @@
 
 import { AIPlayer } from './ai-player.js';
 
-const MAX_FRAMES = 3600; // ~60s à 60fps
+const MAX_FRAMES = 10800; // ~3min à 60fps
 
 /**
  * Simule un agent complet (headless, synchrone).
@@ -33,12 +33,16 @@ export function simulateAgent(genome, gameState, startGame, tick, levelId) {
     tick(decision.pointerX);
   }
 
+  const avgTracking = player.trackingFrames > 0
+    ? Math.round(player.trackingScore / player.trackingFrames * 100) : 0;
+
   return {
     fitness: player.computeFitness(),
     catches: player.catchCount,
     destroys: player.asteroidsDestroyed,
     drops: player.dropCount,
     rallyScore: Math.round(player.rallyScore),
+    tracking: avgTracking, // % alignement moyen sous le drone
     won: gameState.session.state === 'won',
   };
 }

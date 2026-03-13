@@ -15,6 +15,7 @@ const LABS = [
   { id: 'dev',      label: 'Dev Panel',    desc: 'Config asteroids, presets, patterns' },
   { id: 'music',    label: 'Music Lab',    desc: 'Instruments, sections, stingers, mix' },
   { id: 'progress', label: 'Progress Lab', desc: 'Wallet, upgrades, simulation' },
+  { id: 'ai',       label: 'AI Lab',       desc: 'Neuroévolution, entraînement, replay' },
 ];
 
 export function buildLabHub(root) {

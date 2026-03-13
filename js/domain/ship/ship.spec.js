@@ -42,15 +42,21 @@ describe('Ship', () => {
     expect(s.x).to.equal(800 - s.width);
   });
 
-  it('tactile : suit le doigt avec lissage modulé par speed', () => {
+  it('tactile : suit le doigt avec lissage, bridé par vitesse max', () => {
     const s = new Ship(CFG, 800, 600);
     s.x = 100;
     s.update(400); // pointerX = 400
-    // target = 400 - 40 = 360, diff = 260, lerpBase = 6/7*0.3 ≈ 0.2571
-    // x += 260 * (1 - (1-0.2571)^1) ≈ 260 * 0.2571 ≈ 66.86 → ~166.86
-    const lerpBase = Math.min(0.6, CFG.speed / 7 * 0.3);
-    const expected = 100 + 260 * (1 - Math.pow(1 - lerpBase, 1));
-    expect(s.x).to.be.closeTo(expected, 1);
+    // target = 360, diff = 260, lerp donnerait ~66.86 mais clampé à speed (6)
+    expect(s.x).to.be.closeTo(100 + CFG.speed, 1);
+  });
+
+  it('tactile : lerp non clampé quand le déplacement est inférieur à speed', () => {
+    const s = new Ship(CFG, 800, 600);
+    const x0 = 360;
+    s.x = x0;
+    s.update(400); // pointerX = 400, target = 360, diff = 0 → pas de déplacement
+    // diff = 0 → le vaisseau est déjà à la cible
+    expect(s.x).to.equal(x0);
   });
 
   it('mobile : largeur adaptée si mobileWidthRatio', () => {

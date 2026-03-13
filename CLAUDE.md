@@ -67,6 +67,14 @@ js/
     projectile/           → projectiles alien
       alien-projectile.js → AlienProjectile (balle guidée)
       index.js            → re-export
+  ai/                   → IA auto-apprenante (neuroévolution)
+    neural-network.js   → réseau feedforward (tanh, Xavier init, encode/decode)
+    genome.js           → génome + population (sélection tournoi, crossover, mutation, élitisme, export/import)
+    ai-player.js        → observation jeu (18 inputs) → 2 outputs (position vaisseau, lancer drone)
+    ai-trainer.js       → boucle d'entraînement (50 agents/génération, fitness rally, évolution)
+    train-cli.js        → entraînement CLI headless (node js/ai/train-cli.js --help)
+    models/best.json    → meilleur modèle commité (chargé par défaut si pas de localStorage)
+    index.js            → façade re-export
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic/
       game-session.js   → GameSession : état, score, vies (~72 lignes)
@@ -166,6 +174,12 @@ js/
         update.js       → sync DOM ← state (wallet, upgrades, zones, simulator)
         handlers.js     → event delegation (wallet, upgrades, zone-toggle, simulator)
         index.js        → façade publique (init, show/hide panels + simulator modal)
+      ai-lab/           → lab IA auto-apprenante (neuroévolution)
+        state.js        → état UI (active, selectedLevel)
+        build.js        → construction DOM (sélecteur niveau, boutons, stats, graphe, import/export)
+        update.js       → sync DOM ← trainer (stats temps réel, graphe fitness)
+        handlers.js     → event delegation (start/stop, watch, reset, export, import, level)
+        index.js        → façade publique (init, show/hide, export/import modèle, chargement modèle commité)
     menu/               → menu principal
       state.js          → état + persistence volumes
       draw-menu.js      → écran menu principal
@@ -280,6 +294,8 @@ Tests e2e (Playwright + Gherkin via playwright-bdd, dossier `e2e/`) :
 pnpm test:e2e                    # bddgen + playwright test (22 scénarios)
 pnpm bddgen                      # génère les specs depuis les .feature
 pnpm test:all                    # unit + e2e
+pnpm train                       # entraînement IA CLI (voir options ci-dessous)
+pnpm train -- --generations 200 --population 80 --level z1-2
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 Les specs sont générées dans `.features-gen/` (gitignored).

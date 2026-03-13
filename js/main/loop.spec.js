@@ -52,6 +52,7 @@ function mockInfra() {
     drawDevPanel: vi.fn(),
     handleDevHover: vi.fn(),
     isMusicLabActive: vi.fn(() => false),
+    isLabOverlayActive: vi.fn(() => false),
     drawMusicLab: vi.fn(),
     handleMusicLabHover: vi.fn(),
     updateDevOverlay: vi.fn(),
@@ -134,23 +135,13 @@ describe('GameLoop', () => {
     expect(d.collisionHandler.update).not.toHaveBeenCalled();
   });
 
-  it('devPanel actif → ne dessine pas le menu ni le jeu', () => {
+  it('lab overlay actif → ne dessine pas le menu ni le jeu', () => {
     const d = makeDeps();
     d.session.state = 'menu';
-    d.infra.isDevPanelActive.mockReturnValue(true);
+    d.infra.isLabOverlayActive.mockReturnValue(true);
     const loop = new GameLoop(d);
     loop.loop();
-    // Dev panel est DOM, pas de canvas draw, mais le menu ne tourne pas non plus
-    expect(d.infra.updateMenu).not.toHaveBeenCalled();
-  });
-
-  it('musicLab actif → ne dessine pas le menu ni le jeu', () => {
-    const d = makeDeps();
-    d.session.state = 'menu';
-    d.infra.isMusicLabActive.mockReturnValue(true);
-    const loop = new GameLoop(d);
-    loop.loop();
-    // Music lab est DOM, pas de canvas draw, mais le menu ne tourne pas non plus
+    // Lab overlay (dev/music/ai) est DOM, pas de canvas draw
     expect(d.infra.updateMenu).not.toHaveBeenCalled();
   });
 

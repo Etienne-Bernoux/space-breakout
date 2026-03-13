@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:e2e": "bddgen && playwright test",
-    "test:all": "vitest run && bddgen && playwright test"
+    "test:all": "vitest run && bddgen && playwright test",
+    "train": "node js/ai/train-cli.js"
   },
   "repository": {
     "type": "git",

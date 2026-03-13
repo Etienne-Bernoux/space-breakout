@@ -12,8 +12,8 @@ let callbacks = {};
  * Initialise le lab hub. Construit le DOM, attache les handlers.
  * @param {object} opts - { openDev, openMusic, openProgress }
  */
-export function initLabHub({ openDev, openMusic, openProgress }) {
-  callbacks = { dev: openDev, music: openMusic, progress: openProgress };
+export function initLabHub({ openDev, openMusic, openProgress, ai }) {
+  callbacks = { dev: openDev, music: openMusic, progress: openProgress, ai };
   const root = document.getElementById('lab-hub');
   if (!root) return;
 

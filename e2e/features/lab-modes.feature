@@ -40,6 +40,34 @@ Feature: Lab Hub — mode ?lab
     Then le flag "__GAME__.labHub" est true
     And le flag "__GAME__.devPanel" est false
 
+  Scenario: Clic AI Lab ouvre le AI lab
+    Given je suis sur la page "?lab"
+    When je clique sur "[data-lab=ai]"
+    And j'attends 200ms
+    Then le flag "__GAME__.aiLab" est true
+    And le flag "__GAME__.labHub" est false
+
+  Scenario: AI Lab — bouton retour revient au hub
+    Given je suis sur la page "?lab"
+    When je clique sur "[data-lab=ai]"
+    And j'attends 200ms
+    And je clique sur "#ai-lab .lab-back-btn"
+    And j'attends 200ms
+    Then le flag "__GAME__.labHub" est true
+    And le flag "__GAME__.aiLab" est false
+
+  Scenario: AI Lab — le sélecteur de niveau est présent
+    Given je suis sur la page "?lab"
+    When je clique sur "[data-lab=ai]"
+    And j'attends 200ms
+    Then l'élément "#ai-level-select" est visible
+
+  Scenario: AI Lab — le bouton d'entraînement est présent
+    Given je suis sur la page "?lab"
+    When je clique sur "[data-lab=ai]"
+    And j'attends 200ms
+    Then l'élément "#ai-start-btn" est visible
+
   Scenario: Expose wallet et upgrades via __GAME__
     Given je suis sur la page "?lab"
     Then __GAME__.wallet expose une méthode "get"

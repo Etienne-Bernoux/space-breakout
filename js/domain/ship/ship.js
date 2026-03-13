@@ -46,7 +46,11 @@ export class Ship {
       const target = pointerX - this.width / 2;
       const diff = target - this.x;
       const lerpBase = Math.min(0.6, this.speed / 7 * 0.3);
-      this.x += diff * (1 - Math.pow(1 - lerpBase, dt));
+      let move = diff * (1 - Math.pow(1 - lerpBase, dt));
+      // Clamp à la vitesse max (même contrainte qu'au clavier)
+      const maxMove = this.speed * dt;
+      if (Math.abs(move) > maxMove) move = Math.sign(move) * maxMove;
+      this.x += move;
     } else {
       if (this.movingLeft) this.x -= this.speed * dt;
       if (this.movingRight) this.x += this.speed * dt;

@@ -67,6 +67,10 @@ Then('le canvas {string} est visible', async ({ page }, selector) => {
   await expect(canvas).toBeVisible();
 });
 
+Then('l\'élément {string} est visible', async ({ page }, selector) => {
+  await expect(page.locator(selector)).toBeVisible();
+});
+
 Then('le nombre de vies est supérieur à {int}', async ({ gameHelpers }, min) => {
   const lives = await gameHelpers.getLives();
   expect(lives).toBeGreaterThan(min);

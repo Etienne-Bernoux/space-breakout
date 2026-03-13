@@ -10,6 +10,7 @@ export function bindKeyboardHandlers(ih) {
     if (infra.isSimulatorOpen && infra.isSimulatorOpen()) return;
     if (infra.isMusicLabActive()) return;
     if (infra.isDevPanelActive()) return;
+    if (infra.isAILabActive && infra.isAILabActive()) return;
 
     if (ih.session.state === 'menu') {
       const action = infra.handleMenuInput(e.key);

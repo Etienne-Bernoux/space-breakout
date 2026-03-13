@@ -8,6 +8,7 @@ import { scale } from './resize.js';
 const canvas = document.getElementById('game');
 
 let pointerX = null;
+let aiPointerX = null; // Override IA (prioritaire sur pointerX)
 let onTap = null;
 let onMenuTap = null;
 let onDrag = null;
@@ -34,7 +35,10 @@ function toCanvasY(clientY) {
 // --- API publique ---
 
 /** Position X du pointeur en coords canvas (touch ou souris). null si inactif. */
-export function getPointerX() { return pointerX; }
+export function getPointerX() { return aiPointerX !== null ? aiPointerX : pointerX; }
+
+/** Override IA du pointeur. Passer null pour désactiver. */
+export function setAIPointerX(x) { aiPointerX = x; }
 
 /** Position souris en coords canvas (pour hover menu). */
 export function getMousePos() { return { x: mouseCanvasX, y: mouseCanvasY }; }

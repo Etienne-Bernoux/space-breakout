@@ -2,7 +2,7 @@
 
 const state = {
   active: false,
-  currentLab: null, // 'dev' | 'music' | 'progress' | null
+  currentLab: null, // 'dev' | 'music' | 'progress' | 'ai' | null
 };
 
 export function isLabMode() {

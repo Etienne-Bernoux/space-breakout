@@ -4,15 +4,18 @@ import { setVolume as setMusicVolume } from '../infra/music/index.js';
 import { setSfxVolume, perceptualVolume } from '../infra/sfx/audio.js';
 import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../infra/lab/music-lab/index.js';
 import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
+import { isAILabActive, isAILabOpen, initAILab, showAILab, hideAILab } from '../infra/lab/ai-lab/index.js';
 import { isLabMode, initLabHub, showLabHub, hideLabHub, isLabHubActive } from '../infra/lab/hub/index.js';
 import { getAllLevels } from '../domain/progression/level-catalog.js';
 import { getAllZones } from '../domain/progression/zone-catalog.js';
+import { ZONE_1 } from '../domain/progression/level-catalog.js';
 import { saveProgress } from '../infra/persistence/progress-storage.js';
 import { G, startGame, goToSystemMap } from './init.js';
 import { menuItemLayout } from '../infra/menu/draw-menu.js';
 import { getSystemNodePositions } from '../infra/screens/system-map/index.js';
 import { getNodePositions } from '../infra/screens/world-map/index.js';
 import { CONFIG } from '../config.js';
+import { AITrainer } from '../ai/index.js';
 
 loadSettings();
 loadDevConfig();
@@ -22,6 +25,7 @@ initLabHub({
   openDev: () => { hideLabHub(); showDevPanel(); },
   openMusic: () => { hideLabHub(); showMusicLab(); },
   openProgress: () => { hideLabHub(); showProgressLab(); },
+  ai: () => { hideLabHub(); showAILab(); },
 });
 if (isLabMode()) showLabHub();
 
@@ -52,6 +56,39 @@ initProgressLab({
   },
 });
 
+// Init AI Lab DOM
+initAILab({
+  onBack: () => { hideAILab(); showLabHub(); },
+  levels: ZONE_1.levels,
+  createTrainer: (levelId) => {
+    const trainer = new AITrainer({
+      startGame,
+      entities: G.entities,
+      session: G.session,
+      canvas: CONFIG.canvas,
+      levelId,
+      /** Tick physique pur (sans rendu). Le ship reçoit pointerX directement. */
+      tick: (pointerX) => {
+        const { ship, drones, field } = G.entities;
+        field.update(1);
+        ship.update(pointerX, 1);
+        for (const d of drones) d.update(ship, CONFIG.canvas.width, 1);
+        for (const c of G.entities.capsules) c.update(CONFIG.canvas.height, 1);
+        G.entities.capsules = G.entities.capsules.filter(c => c.alive);
+        for (const mc of G.entities.mineralCapsules) mc.update(CONFIG.canvas.height, 1);
+        G.entities.mineralCapsules = G.entities.mineralCapsules.filter(mc => mc.alive);
+        if (G.alienCombat) {
+          G.entities.projectiles = G.alienCombat.update(field, ship, G.entities.projectiles, 1, CONFIG.canvas);
+        }
+        G.collisionHandler.update();
+      },
+    });
+    // Injecte le trainer dans la boucle de jeu pour le mode "watch"
+    G.gameLoop._aiTrainer = trainer;
+    return trainer;
+  },
+});
+
 setVolumeChangeCallback((music, sfx) => {
   setMusicVolume(perceptualVolume(music) * 0.3);
   setSfxVolume(perceptualVolume(sfx));
@@ -66,6 +103,7 @@ window.__GAME__ = {
   get devPanel() { return isDevPanelActive(); },
   get musicLab() { return isMusicLabActive(); },
   get progressLab() { return isProgressLabActive(); },
+  get aiLab() { return isAILabOpen(); },
   get labHub() { return isLabHubActive(); },
   get wallet() { return G.wallet; },
   get upgrades() { return G.upgrades; },

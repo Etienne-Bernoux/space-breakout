@@ -772,3 +772,112 @@ body.menu #game {
   color: #ffd700;
   border-color: rgba(255, 215, 0, 0.4);
 }
+
+/* --- AI Lab --- */
+#ai-lab {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  width: 620px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: rgba(10, 10, 26, 0.94);
+  border: 1px solid rgba(0, 255, 100, 0.35);
+  border-radius: 8px;
+  font: 13px/1.5 monospace;
+  color: #ccc;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+#ai-lab.active { display: flex; flex-direction: column; }
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid rgba(0, 255, 100, 0.2);
+}
+.ai-title {
+  color: #0fa;
+  font-weight: bold;
+  font-size: 14px;
+  letter-spacing: 2px;
+  flex: 1;
+}
+.ai-body {
+  padding: 12px 14px 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+}
+.ai-col { display: flex; flex-direction: column; gap: 8px; }
+.ai-section { display: flex; flex-direction: column; gap: 6px; }
+.ai-label { color: #0fa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+
+.ai-select {
+  background: #1a1a2e;
+  color: #ccc;
+  border: 1px solid rgba(0,255,100,0.25);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font: 12px monospace;
+  width: 100%;
+}
+.ai-select:disabled { opacity: 0.4; }
+
+.ai-btn {
+  background: #1a1a2e;
+  color: #0f0;
+  border: 1px solid rgba(0,255,100,0.25);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font: 12px monospace;
+  transition: background 0.15s;
+  text-align: left;
+}
+.ai-btn:hover { background: rgba(0,255,100,0.1); }
+.ai-btn-primary { border-color: rgba(0,255,100,0.5); color: #0fa; font-weight: bold; }
+.ai-btn-active { background: rgba(0,255,100,0.15); border-color: #0f0; }
+.ai-btn-danger { color: #f55; border-color: rgba(255,80,80,0.3); }
+.ai-btn-danger:hover { background: rgba(255,80,80,0.1); }
+
+.ai-stats { display: flex; flex-direction: column; gap: 3px; }
+.ai-stat { font-size: 12px; }
+.ai-stat b { color: #0f0; }
+.ai-best { color: #0fa !important; font-size: 14px; }
+.ai-stat-muted { color: #556; font-style: italic; }
+.ai-stat-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 3px 0; }
+
+.ai-graph {
+  width: 100%;
+  height: 120px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,255,100,0.1);
+  border-radius: 4px;
+}
+
+/* Mode sidebar : panel à droite pendant l'entraînement */
+#ai-lab.ai-sidebar {
+  top: 10px;
+  right: 10px;
+  left: auto;
+  transform: none;
+  width: 260px;
+  max-height: 95vh;
+  opacity: 0.92;
+}
+#ai-lab.ai-sidebar .ai-body {
+  grid-template-columns: 1fr;
+}
+#ai-lab.ai-sidebar .ai-select,
+#ai-lab.ai-sidebar .ai-graph { width: 100%; }
+
+@media (max-width: 600px) {
+  #ai-lab { width: auto; }
+  .ai-body { grid-template-columns: 1fr; }
+}

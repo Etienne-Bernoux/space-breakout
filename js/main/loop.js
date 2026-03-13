@@ -41,14 +41,6 @@ export class GameLoop {
 
   // --- State handlers (chaque état a sa propre logique) ---
 
-  #loopMusicLab(_ctx) {
-    // Music lab est maintenant en DOM, pas de canvas draw.
-  }
-
-  #loopDevPanel(_ctx) {
-    // Dev panel est maintenant en DOM, pas de canvas draw.
-  }
-
   #loopMenu(ctx, fx) {
     // En mode lab, ne pas dessiner le menu d'accueil
     if (this.infra.isLabHubActive && this.infra.isLabHubActive()) return;
@@ -264,6 +256,36 @@ export class GameLoop {
     }
   }
 
+  /** Tick physique seul (sans rendu) — utilisé pour l'accélération IA. */
+  #tickPlaying(dt) {
+    const { ship, drones, field } = this.entities;
+    let dtEff = dt;
+    if (this.ui.slowMoTimer > 0) { this.ui.slowMoTimer -= dt; dtEff = dt * 0.33; }
+
+    field.update(dtEff);
+    ship.update(this.infra.getPointerX(), dtEff);
+    for (const d of drones) d.update(ship, this.canvas.width, dtEff);
+    for (const c of this.entities.capsules) c.update(this.canvas.height, dtEff);
+    this.entities.capsules = this.entities.capsules.filter(c => c.alive);
+    for (const mc of this.entities.mineralCapsules) mc.update(this.canvas.height, dtEff);
+    this.entities.mineralCapsules = this.entities.mineralCapsules.filter(mc => mc.alive);
+    if (this.alienCombat) {
+      this.entities.projectiles = this.alienCombat.update(field, ship, this.entities.projectiles, dtEff, this.canvas);
+    }
+    this.collisionHandler.update();
+  }
+
+  /** Boucle playing allégée pour l'IA : physique + rendu minimal (pas d'effets). */
+  #loopPlayingAI(ctx, dt) {
+    this.#tickPlaying(dt);
+    const { ship, drones, field } = this.entities;
+    const infra = this.infra;
+    infra.drawField(ctx, field);
+    infra.drawShip(ctx, ship);
+    for (const d of drones) infra.drawDrone(ctx, d);
+    this.hud.drawHUD(null);
+  }
+
   #loopPlaying(ctx, fx, dt) {
     const { ship, drones, field } = this.entities;
     const infra = this.infra;
@@ -304,14 +326,29 @@ export class GameLoop {
     const dt = this.lastTime ? Math.min((now - this.lastTime) / 16.667, 3) : 1;
     this.lastTime = now;
 
-    const ctx = this.render.ctx;
+    // --- AI : mode "watch" (le meilleur cerveau joue avec rendu) ---
+    const ai = this._aiTrainer;
+    if (ai && !ai.active && this.infra.setAIPointerX) {
+      this.infra.setAIPointerX(null);
+      this._aiTrainer = null;
+    }
+    if (ai && ai.active) {
+      const decision = ai.update();
+      if (decision && decision.pointerX !== null && this.infra.setAIPointerX) {
+        this.infra.setAIPointerX(decision.pointerX);
+      }
+    }
 
-    this.systems.intensity.update();
-    const fx = this.systems.intensity.getEffects();
-    this.infra.setAmbientShake(fx.microShake);
+    const ctx = this.render.ctx;
+    const aiActive = ai && ai.active;
+
+    // Intensité : désactivée pendant l'entraînement IA (pas de musique/effets)
+    if (!aiActive) this.systems.intensity.update();
+    const fx = aiActive ? null : this.systems.intensity.getEffects();
+    if (fx) this.infra.setAmbientShake(fx.microShake);
 
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.infra.updateStars(fx.starSpeed);
+    if (!aiActive) this.infra.updateStars(fx.starSpeed);
 
     document.body.classList.toggle('menu', ['menu', 'systemMap', 'paused', 'worldMap', 'stats', 'upgrade'].includes(this.session.state));
     document.body.classList.toggle('state-systemMap', this.session.state === 'systemMap');
@@ -320,11 +357,10 @@ export class GameLoop {
     // Synchronise l'état du jeu dans le pointer (conditionne le comportement souris)
     if (this.infra.setGameState) this.infra.setGameState(this.session.state);
 
-    // Overlays prioritaires (interceptent tous les états sauf progress lab)
-    if (this.infra.isMusicLabActive()) {
-      this.#loopMusicLab(ctx, fx);
-    } else if (this.infra.isDevPanelActive()) {
-      this.#loopDevPanel(ctx, fx);
+    // Overlays DOM prioritaires : labs qui masquent le canvas
+    const labOverlay = this.infra.isLabOverlayActive();
+    if (labOverlay) {
+      // Labs DOM-only (music, dev, ai) → pas de rendu canvas
     } else if (this.ui.mapTransition) {
       // Transition zoom entre systemMap ↔ worldMap
       this.#loopMapTransition(ctx, fx, dt);
@@ -339,7 +375,11 @@ export class GameLoop {
         case 'paused':    this.#loopPaused(ctx, fx); break;
         case 'gameOver':  this.#loopGameOver(ctx, fx, dt); break;
         case 'won':       this.#loopWon(ctx, fx, dt); break;
-        case 'playing':   this.#loopPlaying(ctx, fx, dt); break;
+        case 'playing':
+          if (aiActive && ai.watchBest) this.#loopPlayingAI(ctx, dt);
+          else if (!aiActive) this.#loopPlaying(ctx, fx, dt);
+          // AI batch (pas watch) → pas de rendu canvas
+          break;
       }
     }
 

@@ -32,6 +32,7 @@ export function bindPointerHandlers(ih) {
     if (infra.isLabHubActive()) return;
     if (infra.isMusicLabActive()) return;
     if (infra.isDevPanelActive()) return;
+    if (infra.isAILabActive && infra.isAILabActive()) return;
 
     const state = ih.session.state;
     if (state === 'menu') {

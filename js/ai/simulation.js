@@ -43,6 +43,7 @@ export function simulateAgent(genome, gameState, startGame, tick, levelId) {
     drops: player.dropCount,
     rallyScore: Math.round(player.rallyScore),
     tracking: avgTracking, // % alignement moyen sous le drone
+    capsules: player.capsulesCaught,
     won: gameState.session.state === 'won',
   };
 }

@@ -852,6 +852,7 @@ body.menu #game {
 .ai-best { color: #0fa !important; font-size: 14px; }
 .ai-stat-muted { color: #556; font-style: italic; }
 .ai-stat-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 3px 0; }
+.ai-log { font: 10px/1.4 monospace; color: #8f8; margin: 0; white-space: pre; overflow-x: auto; max-height: 320px; overflow-y: auto; }
 
 .ai-graph {
   width: 100%;

@@ -179,6 +179,7 @@ export class CollisionHandler {
       const cy = Math.max(ship.y, Math.min(m.y, ship.y + ship.height));
       if (Math.hypot(m.x - cx, m.y - cy) < m.radius + 4) {
         m.alive = false;
+        m.collected = true;
         this.wallet.add(m.mineralKey, m.quantity);
         this.wallet.save();
         if (this.effects.addMineralSessionGain) this.effects.addMineralSessionGain(m.mineralKey, m.quantity);

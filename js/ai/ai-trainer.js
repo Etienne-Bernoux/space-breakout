@@ -6,6 +6,7 @@
 import { Population } from './genome.js';
 import { AIPlayer, TOPOLOGY } from './ai-player.js';
 import { simulateAgent } from './simulation.js';
+import { computeGenStats } from './gen-stats.js';
 
 const POPULATION_SIZE = 50;
 const MAX_FRAMES_PER_GAME = 10800; // ~3min à 60fps
@@ -32,16 +33,14 @@ export class AITrainer {
     this.active = false;
     this.watchBest = false;
     this.levelId = levelId;
+    /** Historique des stats par génération (même format que CLI). */
+    this.genHistory = [];
+    /** Historiques fitness pour le graphe (best + avg par génération). */
+    this.bestHistory = [];
+    this.avgHistory = [];
     this.stats = {
-      gen: 0, agent: 0, best: 0, current: 0, avgFitness: 0,
-      genBestFitness: 0,     // meilleur fitness de la génération courante
-      genBestCatches: 0,     // rattrapages du meilleur de la gen
-      genBestDestroys: 0,    // destructions du meilleur de la gen
-      genBestRallyScore: 0,  // score rally du meilleur de la gen
-      genBestDrops: 0,       // pertes du meilleur de la gen
-      genBestTracking: 0,    // % alignement moyen du meilleur de la gen
-      genWinCount: 0,        // agents ayant gagné dans la gen
-      improvementStreak: 0,  // générations consécutives avec amélioration
+      gen: 0, agent: 0, best: 0, current: 0,
+      improvementStreak: 0,
     };
     this.onGenerationEnd = null;
     this._batchTimer = null;
@@ -51,6 +50,8 @@ export class AITrainer {
   start() {
     this.active = true;
     this.population.loadBest();
+    this.stats.best = this.population.bestFitness > -Infinity
+      ? Math.round(this.population.bestFitness) : 0;
     this.currentIdx = 0;
     this.#runBatch();
   }
@@ -132,35 +133,26 @@ export class AITrainer {
   }
 
   #evolve() {
-    const genomes = this.population.genomes;
-    const total = genomes.reduce((s, g) => s + g.fitness, 0);
-    this.stats.avgFitness = Math.round(total / this.population.size);
-
-    // Stats détaillées de la génération
-    const sorted = [...genomes].sort((a, b) => b.fitness - a.fitness);
-    const best = sorted[0];
-    const d = best._details || {};
-    this.stats.genBestFitness = Math.round(best.fitness);
-    this.stats.genBestCatches = d.catches || 0;
-    this.stats.genBestDestroys = d.destroys || 0;
-    this.stats.genBestRallyScore = d.rallyScore || 0;
-    this.stats.genBestDrops = d.drops || 0;
-    this.stats.genBestTracking = d.tracking || 0;
-    this.stats.genWinCount = genomes.filter(g => g._details?.won).length;
+    const genStats = computeGenStats(this.population.genomes, this.population.generation);
+    this.genHistory.push(genStats);
 
     // Streak d'amélioration
     const prevBest = this.stats.best;
     this.stats.best = Math.round(this.population.bestFitness);
-    if (Math.round(best.fitness) > prevBest) {
+    if (genStats.bestFitness > prevBest) {
       this.stats.improvementStreak++;
     } else {
       this.stats.improvementStreak = 0;
     }
 
-    this.population.evolve();
-    this.population.saveBest();
+    this.bestHistory.push(Math.round(this.population.bestFitness > -Infinity
+      ? this.population.bestFitness : genStats.bestFitness));
+    this.avgHistory.push(genStats.avg);
 
-    if (this.onGenerationEnd) this.onGenerationEnd(this.population.bestFitness, this.stats.avgFitness);
+    this.population.evolve();
+    this.population.saveBest({ bestHistory: this.bestHistory, avgHistory: this.avgHistory });
+
+    if (this.onGenerationEnd) this.onGenerationEnd(this.population.bestFitness, genStats.avg);
   }
 
   // ─── Mode "watch" : rejouer le meilleur avec rendu ─────────

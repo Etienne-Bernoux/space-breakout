@@ -143,6 +143,7 @@ export class CollisionResolver {
       const cy = Math.max(ship.y, Math.min(cap.y, ship.y + ship.height));
       if (Math.hypot(cap.x - cx, cap.y - cy) < cap.radius + 4) {
         cap.alive = false;
+        cap.collected = true;
         events.push({ type: 'capsuleCollected', powerUpId: cap.powerUpId, x: cap.x, y: cap.y });
       }
     }

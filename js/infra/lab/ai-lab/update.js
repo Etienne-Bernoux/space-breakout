@@ -1,5 +1,7 @@
 // --- AI Lab DOM Update ---
 
+import { formatGenStats, genStatsHeader, genStatsSeparator } from '../../../ai/gen-stats.js';
+
 /** Met à jour les stats affichées selon le mode (training ou watch). */
 export function updateStats(el, trainer) {
   if (!el || !trainer) return;
@@ -39,30 +41,29 @@ function updateWatchStats(el, trainer) {
     <div class="ai-stat">Tracking <b>${tracking}%</b></div>
     <div class="ai-stat">Destructions <b>${p.asteroidsDestroyed}</b></div>
     <div class="ai-stat">Rally <b>${Math.round(p.rallyScore)}</b></div>
+    <div class="ai-stat">Capsules <b>${p.capsulesCaught}</b></div>
     <div class="ai-stat-sep"></div>
     <div class="ai-stat-muted">frame ${trainer.frameCount}</div>
   `;
 }
 
-/** Stats de la boucle d'entraînement batch. */
+/** Stats de la boucle d'entraînement batch (tableau monospace comme CLI). */
 function updateTrainingStats(el, trainer) {
   const pop = trainer.population;
   const s = trainer.stats;
   const streak = s.improvementStreak > 0 ? ` ↑${s.improvementStreak}` : '';
+  const history = trainer.genHistory;
+
+  // Limiter aux N dernières lignes visibles
+  const MAX_LINES = 20;
+  const visible = history.slice(-MAX_LINES);
+  const lines = visible.map(g => formatGenStats(g)).join('\n');
 
   el.innerHTML = `
-    <div class="ai-stat">Génération <b>${pop.generation}</b></div>
     <div class="ai-stat">Agent <b>${s.agent}</b> / ${pop.size}</div>
-    <div class="ai-stat-sep"></div>
     <div class="ai-stat ai-best">Record <b>${s.best}</b>${streak}</div>
-    <div class="ai-stat">Gen best <b>${s.genBestFitness}</b></div>
-    <div class="ai-stat">Moyenne <b>${s.avgFitness}</b></div>
     <div class="ai-stat-sep"></div>
-    <div class="ai-stat">Rattrapages <b>${s.genBestCatches}</b></div>
-    <div class="ai-stat">Destructions <b>${s.genBestDestroys}</b> (rally ${s.genBestRallyScore})</div>
-    <div class="ai-stat">Pertes drone <b>${s.genBestDrops}</b></div>
-    <div class="ai-stat">Tracking <b>${s.genBestTracking}%</b></div>
-    <div class="ai-stat">Victoires <b>${s.genWinCount}</b> / ${pop.size}</div>
+    <pre class="ai-log">${genStatsHeader()}\n${genStatsSeparator()}\n${lines}</pre>
   `;
 }
 

@@ -25,6 +25,7 @@ import { getLevel } from '../domain/progression/level-catalog.js';
 import { Population } from './genome.js';
 import { TOPOLOGY } from './ai-player.js';
 import { simulateAgent } from './simulation.js';
+import { computeGenStats, formatGenStats, genStatsHeader, genStatsSeparator } from './gen-stats.js';
 
 // ─── Parse args ────────────────────────────────────
 
@@ -138,8 +139,8 @@ if (!SILENT) {
   console.log(`\n🧠 Entraînement IA — ${GENERATIONS} générations, pop ${POP_SIZE}, niveau ${LEVEL_ID}`);
   console.log(`   Mutation: rate=${MUTATION_RATE} power=${MUTATION_POWER}`);
   console.log(`   Sortie: ${OUTPUT_FILE}\n`);
-  console.log('Gen'.padStart(5), 'Best'.padStart(7), 'Avg'.padStart(7), 'Catch'.padStart(6), 'Destr'.padStart(6), 'Rally'.padStart(6), 'Drops'.padStart(6), 'Track'.padStart(6), 'Wins'.padStart(5));
-  console.log('-'.repeat(66));
+  console.log(genStatsHeader());
+  console.log(genStatsSeparator());
 }
 
 const t0 = Date.now();
@@ -156,37 +157,19 @@ if (INPUT_FILE) {
 }
 
 for (let gen = 0; gen < GENERATIONS; gen++) {
-  let genBest = null;
-  let winCount = 0;
-
   for (const genome of population.genomes) {
     const result = simulate(genome);
     genome.fitness = result.fitness;
     genome._details = result;
-    if (!genBest || genome.fitness > genBest.fitness) genBest = genome;
-    if (result.won) winCount++;
   }
 
-  const total = population.genomes.reduce((s, g) => s + g.fitness, 0);
-  const avg = Math.round(total / POP_SIZE);
-  const d = genBest._details || {};
+  const genStats = computeGenStats(population.genomes, population.generation);
 
-  const bestFit = population.bestFitness > -Infinity ? population.bestFitness : genBest.fitness;
+  const bestFit = population.bestFitness > -Infinity ? population.bestFitness : genStats.bestFitness;
   bestHistory.push(Math.round(bestFit));
-  avgHistory.push(avg);
+  avgHistory.push(genStats.avg);
 
-  if (!SILENT) {
-    const genStr = String(population.generation).padStart(5);
-    const bestStr = String(Math.round(genBest.fitness)).padStart(7);
-    const avgStr = String(avg).padStart(7);
-    const catchStr = String(d.catches || 0).padStart(6);
-    const destrStr = String(d.destroys || 0).padStart(6);
-    const rallyStr = String(d.rallyScore || 0).padStart(6);
-    const dropStr = String(d.drops || 0).padStart(6);
-    const trackStr = String((d.tracking || 0) + '%').padStart(6);
-    const winStr = String(winCount).padStart(5);
-    console.log(genStr, bestStr, avgStr, catchStr, destrStr, rallyStr, dropStr, trackStr, winStr);
-  }
+  if (!SILENT) console.log(formatGenStats(genStats));
 
   population.evolve(MUTATION_RATE, MUTATION_POWER);
 }

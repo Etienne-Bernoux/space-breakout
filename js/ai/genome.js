@@ -98,9 +98,9 @@ export class Population {
   }
 
   /** Sauvegarde le meilleur génome en localStorage. */
-  saveBest() {
+  saveBest(stats) {
     if (!this.bestGenome) return;
-    const data = this.exportModel();
+    const data = this.exportModel(stats);
     if (data) localStorage.setItem('ai-best-genome', JSON.stringify(data));
   }
 

@@ -278,9 +278,11 @@ export class GameLoop {
   /** Boucle playing allégée pour l'IA : physique + rendu minimal (pas d'effets). */
   #loopPlayingAI(ctx, dt) {
     this.#tickPlaying(dt);
-    const { ship, drones, field } = this.entities;
+    const { ship, drones, field, capsules, mineralCapsules } = this.entities;
     const infra = this.infra;
     infra.drawField(ctx, field);
+    for (const c of capsules) infra.drawCapsule(ctx, c);
+    for (const mc of mineralCapsules) infra.drawMineralCapsule(ctx, mc);
     infra.drawShip(ctx, ship);
     for (const d of drones) infra.drawDrone(ctx, d);
     this.hud.drawHUD(null);
@@ -326,12 +328,20 @@ export class GameLoop {
     const dt = this.lastTime ? Math.min((now - this.lastTime) / 16.667, 3) : 1;
     this.lastTime = now;
 
-    // --- AI : mode "watch" (le meilleur cerveau joue avec rendu) ---
+    // --- AI ---
     const ai = this._aiTrainer;
     if (ai && !ai.active && this.infra.setAIPointerX) {
       this.infra.setAIPointerX(null);
       this._aiTrainer = null;
     }
+
+    // Batch training : aucun rendu, le trainer gère tout en headless
+    if (ai && ai.active && !ai.watchBest) {
+      requestAnimationFrame(this.loop);
+      return;
+    }
+
+    // Watch mode : le meilleur cerveau joue avec rendu
     if (ai && ai.active) {
       const decision = ai.update();
       if (decision && decision.pointerX !== null && this.infra.setAIPointerX) {

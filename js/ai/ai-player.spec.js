@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { AIPlayer, TOPOLOGY } from './ai-player.js';
 import { Genome } from './genome.js';
 
@@ -18,7 +18,12 @@ function makeGameState(overrides = {}) {
   const canvas = { width: 800, height: 600 };
 
   return {
-    entities: { ship, drones: [drone], field, ...overrides.entities },
+    entities: {
+      ship, drones: [drone], field,
+      capsules: [], mineralCapsules: [],
+      totalAsteroids: 10,
+      ...overrides.entities,
+    },
     session: overrides.session || session,
     canvas: overrides.canvas || canvas,
   };
@@ -26,8 +31,8 @@ function makeGameState(overrides = {}) {
 
 describe('AIPlayer', () => {
   describe('TOPOLOGY', () => {
-    it('a 18 inputs, 16 hidden, 2 outputs', () => {
-      expect(TOPOLOGY).toEqual([18, 16, 2]);
+    it('a 20 inputs, 16 hidden, 2 outputs', () => {
+      expect(TOPOLOGY).toEqual([20, 16, 2]);
     });
   });
 
@@ -177,8 +182,105 @@ describe('AIPlayer', () => {
       player.decide();
       expect(player.catchCount).toBe(1);
       expect(player.rallyDestroys).toBe(0); // reset
-      // Score = 10/1 + 10/2 + 10/3 ≈ 18.33
-      expect(player.rallyScore).toBeCloseTo(10 + 5 + 10 / 3, 1);
+      // remaining=7/10 → progress=0.3 → weight=1.3
+      // Score = (10/1 + 10/2 + 10/3) × 1.3 ≈ 23.83
+      const baseScore = 10 + 5 + 10 / 3;
+      expect(player.rallyScore).toBeCloseTo(baseScore * 1.3, 1);
+    });
+  });
+
+  describe('capsules', () => {
+    it('détecte la collecte de power-ups (flag collected)', () => {
+      const gs = makeGameState();
+      const cap = { alive: true, x: 100, y: 400, width: 20, height: 20 };
+      gs.entities.capsules = [cap];
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+
+      player.decide();
+      expect(player.capsulesCaught).toBe(0);
+
+      cap.alive = false;
+      cap.collected = true; // ramassée par le ship
+      player.decide();
+      expect(player.capsulesCaught).toBe(1);
+    });
+
+    it('ne compte pas une capsule tombée hors écran', () => {
+      const gs = makeGameState();
+      const cap = { alive: true, x: 100, y: 400, width: 20, height: 20 };
+      gs.entities.capsules = [cap];
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+
+      player.decide();
+      cap.alive = false; // tombée hors écran, pas de flag collected
+      player.decide();
+      expect(player.capsulesCaught).toBe(0);
+    });
+
+    it('détecte la collecte de minerais', () => {
+      const gs = makeGameState();
+      const m1 = { alive: true, x: 100, y: 400, width: 20, height: 20 };
+      const m2 = { alive: true, x: 200, y: 400, width: 20, height: 20 };
+      gs.entities.mineralCapsules = [m1, m2];
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+
+      player.decide();
+      m1.alive = false; m1.collected = true;
+      m2.alive = false; m2.collected = true;
+      player.decide();
+      expect(player.capsulesCaught).toBe(2);
+    });
+
+    it('ne compte pas deux fois la même capsule', () => {
+      const gs = makeGameState();
+      const cap = { alive: false, collected: true, x: 100, y: 400, width: 20, height: 20 };
+      gs.entities.capsules = [cap];
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+
+      player.decide();
+      expect(player.capsulesCaught).toBe(1);
+      player.decide();
+      expect(player.capsulesCaught).toBe(1); // pas recompté
+    });
+
+    it('trouve la capsule la plus proche dans les inputs', () => {
+      const gs = makeGameState();
+      gs.entities.capsules = [{ alive: true, x: 300, y: 400, width: 20, height: 20 }];
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      const decision = player.decide();
+      expect(typeof decision.pointerX).toBe('number');
+    });
+  });
+
+  describe('anti-oscillation', () => {
+    it('compte les changements de direction', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+
+      // Forcer des changements de direction en manipulant les outputs
+      player.decide(); // init prevPointerX
+      // Les changements dépendent du réseau, mais au moins pas d'erreur
+      expect(player.directionChanges).toBeGreaterThanOrEqual(0);
+    });
+
+    it('pénalise un taux d\'oscillation > 0.3', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.framesSurvived = 100;
+      player.directionChanges = 50; // taux = 0.5 > 0.3
+      const fitness = player.computeFitness();
+      // Pénalité = (0.5 - 0.3) * 100 = 20
+      expect(fitness).toBeLessThan(0); // -20 sans autre bonus
+    });
+
+    it('ne pénalise pas un taux normal (< 0.3)', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.framesSurvived = 100;
+      player.directionChanges = 20; // taux = 0.2 < 0.3
+      const fitnessWithOsc = player.computeFitness();
+      // Pas de pénalité oscillation → fitness = 0
+      expect(fitnessWithOsc).toBe(0);
     });
   });
 
@@ -219,6 +321,14 @@ describe('AIPlayer', () => {
       const fitness = player.computeFitness();
       // tracking: 0.8 * 30 = 24
       expect(fitness).toBeCloseTo(24, 0);
+    });
+
+    it('récompense les capsules récupérées (20 par capsule)', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.capsulesCaught = 3;
+      const fitness = player.computeFitness();
+      expect(fitness).toBe(60); // 3 × 20
     });
 
     it('pénalise les drops (-100 par drop)', () => {

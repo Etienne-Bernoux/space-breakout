@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:e2e": "npx bddgen && npx playwright test",
-    "test:all": "vitest run && npx bddgen && npx playwright test"
+    "test:e2e": "bddgen && playwright test",
+    "test:all": "vitest run && bddgen && playwright test"
   },
   "repository": {
     "type": "git",

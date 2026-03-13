@@ -38,11 +38,11 @@ flèches gauche/droite pour bouger, espace pour lancer le drone, échap pour met
 ```bash
 git clone https://github.com/etienne-bernoux/space-breakout.git
 cd space-breakout
-npm install                        # installe les devDependencies
-npx serve .                        # serveur local → http://localhost:3000
-npm test                           # tests unitaires — 417 tests (Vitest + Chai)
-npm run test:e2e                   # tests e2e — 17 tests (Playwright + Chromium)
-npm run test:all                   # unit + e2e
+pnpm install                       # installe les devDependencies
+pnpm serve .                       # serveur local → http://localhost:3000
+pnpm test                          # tests unitaires — 417 tests (Vitest + Chai)
+pnpm test:e2e                      # tests e2e — 17 tests (Playwright + Chromium)
+pnpm test:all                      # unit + e2e
 ```
 
 Mode spécial : `?lab` — ouvre le Lab Hub (Dev Panel, Music Lab, Progress Lab). En jeu, active le dev overlay (desktop only).

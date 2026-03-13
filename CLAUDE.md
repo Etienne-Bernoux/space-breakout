@@ -266,20 +266,20 @@ Détails des décisions techniques (domain shapes, power-ups déclaratifs, respo
 
 Serveur local requis (ES modules) :
 ```bash
-npx serve .              # serveur statique → http://localhost:3000
+pnpm serve .             # serveur statique → http://localhost:3000
 ```
 
 Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`, ~417 tests) :
 ```bash
-npm test                          # une passe (vitest run)
-npx vitest                        # mode watch
+pnpm test                         # une passe (vitest run)
+pnpm vitest                       # mode watch
 ```
 
 Tests e2e (Playwright + Gherkin via playwright-bdd, dossier `e2e/`) :
 ```bash
-npm run test:e2e                  # bddgen + playwright test (22 scénarios)
-npx bddgen                       # génère les specs depuis les .feature
-npm run test:all                  # unit + e2e
+pnpm test:e2e                    # bddgen + playwright test (22 scénarios)
+pnpm bddgen                      # génère les specs depuis les .feature
+pnpm test:all                    # unit + e2e
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 Les specs sont générées dans `.features-gen/` (gitignored).

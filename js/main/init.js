@@ -152,10 +152,13 @@ function spawnEntities(ent, levelAsteroids) {
     : levelAsteroids
       ? { ...CONFIG.asteroids, ...levelAsteroids, _autoSize: true }
       : { ...CONFIG.asteroids };
-  // Portrait mode: push asteroid field down to reduce empty gap between asteroids and ship
+  // Portrait : agrandir la zone du champ pour des cellules plus carrées
   if (CONFIG.canvas.height > CONFIG.canvas.baseHeight) {
-    const extraH = CONFIG.canvas.height - CONFIG.canvas.baseHeight;
-    astConfig = { ...astConfig, offsetTop: (astConfig.offsetTop || 45) + Math.round(extraH * 0.25) };
+    const portraitRatio = Math.min(CONFIG.canvas.height / CONFIG.canvas.baseHeight, 1.5);
+    astConfig = {
+      ...astConfig,
+      areaH: Math.round((astConfig.areaH || CONFIG.asteroids.areaH) * portraitRatio),
+    };
   }
   ent.field = new AsteroidField(astConfig);
   ent.capsules = [];

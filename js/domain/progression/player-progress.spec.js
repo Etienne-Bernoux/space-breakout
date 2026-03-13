@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { PlayerProgress } from './player-progress.js';
 
 describe('PlayerProgress', () => {
-  it('starts with z1-1 unlocked by default', () => {
+  it('démarre avec z1-1 déverrouillé par défaut', () => {
     const p = new PlayerProgress();
     expect(p.isUnlocked('z1-1')).toBe(true);
     expect(p.isUnlocked('z1-2')).toBe(false);
   });
 
-  it('restores from serialized data', () => {
+  it('restaure depuis des données sérialisées', () => {
     const p = new PlayerProgress({
       stars: [['z1-1', 3], ['z1-2', 1]],
       unlockedUpTo: 'z1-3',
@@ -19,12 +19,12 @@ describe('PlayerProgress', () => {
     expect(p.isUnlocked('z1-4')).toBe(false);
   });
 
-  it('getStars returns 0 for unplayed level', () => {
+  it('retourne 0 étoiles pour un niveau non joué', () => {
     const p = new PlayerProgress();
     expect(p.getStars('z1-5')).toBe(0);
   });
 
-  it('complete unlocks the next level', () => {
+  it('compléter un niveau déverrouille le suivant', () => {
     const p = new PlayerProgress();
     p.complete('z1-1', 2);
     expect(p.getStars('z1-1')).toBe(2);
@@ -32,27 +32,27 @@ describe('PlayerProgress', () => {
     expect(p.isUnlocked('z1-3')).toBe(false);
   });
 
-  it('complete keeps the best star rating', () => {
+  it('conserve le meilleur score d\'étoiles', () => {
     const p = new PlayerProgress();
     p.complete('z1-1', 3);
     p.complete('z1-1', 1);
     expect(p.getStars('z1-1')).toBe(3);
   });
 
-  it('complete with better score overwrites', () => {
+  it('un meilleur score écrase le précédent', () => {
     const p = new PlayerProgress();
     p.complete('z1-1', 1);
     p.complete('z1-1', 3);
     expect(p.getStars('z1-1')).toBe(3);
   });
 
-  it('complete on last level does not crash', () => {
+  it('compléter le dernier niveau ne plante pas', () => {
     const p = new PlayerProgress({ unlockedUpTo: 'z1-6' });
     p.complete('z1-6', 2);
     expect(p.getStars('z1-6')).toBe(2);
   });
 
-  it('toJSON round-trips correctly', () => {
+  it('sérialise et désérialise correctement', () => {
     const p = new PlayerProgress();
     p.complete('z1-1', 3);
     p.complete('z1-2', 2);

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:e2e": "npx playwright test",
-    "test:all": "vitest run && npx playwright test"
+    "test:e2e": "npx bddgen && npx playwright test",
+    "test:all": "vitest run && npx bddgen && npx playwright test"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,7 @@
     "@playwright/test": "^1.58.2",
     "chai": "^6.2.2",
     "mocha": "^11.3.0",
+    "playwright-bdd": "^8.5.0",
     "serve": "^13.0.4",
     "vitest": "^4.0.18"
   }

@@ -2,22 +2,22 @@ import { describe, it, expect } from 'vitest';
 import { computeStars } from './star-rating.js';
 
 describe('computeStars', () => {
-  it('returns 1 star when lives were lost', () => {
+  it('donne 1 étoile quand des vies ont été perdues', () => {
     expect(computeStars(1, 50, 90)).toBe(1);
     expect(computeStars(2, 30, 90)).toBe(1);
   });
 
-  it('returns 2 stars when no lives lost but over time target', () => {
+  it('donne 2 étoiles sans perte de vie mais temps dépassé', () => {
     expect(computeStars(0, 100, 90)).toBe(2);
     expect(computeStars(0, 91, 90)).toBe(2);
   });
 
-  it('returns 3 stars when no lives lost and under time target', () => {
+  it('donne 3 étoiles sans perte de vie et sous le temps cible', () => {
     expect(computeStars(0, 89, 90)).toBe(3);
     expect(computeStars(0, 50, 90)).toBe(3);
   });
 
-  it('returns 3 stars when exactly at time target', () => {
+  it('donne 3 étoiles quand le temps est exactement au seuil', () => {
     expect(computeStars(0, 90, 90)).toBe(3);
   });
 });

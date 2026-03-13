@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { MINERALS, MINERAL_IDS, getMineral } from './index.js';
 
-describe('Minerals domain', () => {
-  it('exports 4 mineral types', () => {
+describe('Minerais', () => {
+  it('définit 4 types de minerais', () => {
     expect(MINERAL_IDS).toHaveLength(4);
     expect(MINERAL_IDS).toEqual(['copper', 'silver', 'gold', 'platinum']);
   });
 
-  it('each mineral has required properties', () => {
+  it('chaque minerai a les propriétés requises', () => {
     for (const id of MINERAL_IDS) {
       const m = MINERALS[id];
       expect(m).toBeDefined();
@@ -19,13 +19,13 @@ describe('Minerals domain', () => {
     }
   });
 
-  it('rarity increases from copper to platinum', () => {
+  it('la rareté augmente du cuivre au platine', () => {
     expect(MINERALS.copper.rarity).toBeLessThan(MINERALS.silver.rarity);
     expect(MINERALS.silver.rarity).toBeLessThan(MINERALS.gold.rarity);
     expect(MINERALS.gold.rarity).toBeLessThan(MINERALS.platinum.rarity);
   });
 
-  it('getMineral returns mineral by id or null', () => {
+  it('getMineral retourne le minerai par id ou null', () => {
     expect(getMineral('copper').name).toBe('Cuivre');
     expect(getMineral('nonexistent')).toBeNull();
   });

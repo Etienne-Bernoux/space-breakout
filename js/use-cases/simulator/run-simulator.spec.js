@@ -21,7 +21,7 @@ function makeProgress() {
 }
 
 describe('applySimulation', () => {
-  it('victory → completes level with stars and adds minerals', () => {
+  it('victoire → complète le niveau avec étoiles et ajoute les minerais', () => {
     const wallet = makeWallet();
     const progress = makeProgress();
     const saveProgress = vi.fn();
@@ -40,7 +40,7 @@ describe('applySimulation', () => {
     expect(wallet.save).toHaveBeenCalledOnce();
   });
 
-  it('defeat → does NOT complete level but still adds minerals', () => {
+  it('défaite → ne complète pas le niveau mais ajoute les minerais', () => {
     const wallet = makeWallet();
     const progress = makeProgress();
     const saveProgress = vi.fn();
@@ -59,7 +59,7 @@ describe('applySimulation', () => {
     expect(wallet.save).toHaveBeenCalledOnce();
   });
 
-  it('victory with 0 minerals → completes level, wallet unchanged', () => {
+  it('victoire sans minerais → complète le niveau, wallet inchangé', () => {
     const wallet = makeWallet();
     const progress = makeProgress();
     const saveProgress = vi.fn();
@@ -76,7 +76,7 @@ describe('applySimulation', () => {
     expect(wallet.save).toHaveBeenCalledOnce();
   });
 
-  it('multiple simulations accumulate minerals', () => {
+  it('plusieurs simulations accumulent les minerais', () => {
     const wallet = makeWallet();
     const progress = makeProgress();
     const saveProgress = vi.fn();

@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { UPGRADES, UPGRADE_IDS, UPGRADE_CATEGORIES, getUpgrade, getUpgradesByCategory } from './upgrade-catalog.js';
 
-describe('Upgrade catalog', () => {
-  it('exports 7 upgrades', () => {
+describe('Catalogue d\'upgrades', () => {
+  it('définit 7 upgrades', () => {
     expect(UPGRADE_IDS).toHaveLength(7);
   });
 
-  it('each upgrade has required fields', () => {
+  it('chaque upgrade a les champs requis', () => {
     for (const id of UPGRADE_IDS) {
       const u = UPGRADES[id];
       expect(u.id).toBe(id);
@@ -19,7 +19,7 @@ describe('Upgrade catalog', () => {
     }
   });
 
-  it('costs are objects with mineral keys', () => {
+  it('les coûts sont des objets avec des clés minerai', () => {
     for (const id of UPGRADE_IDS) {
       for (const cost of UPGRADES[id].costs) {
         expect(typeof cost).toBe('object');
@@ -30,18 +30,18 @@ describe('Upgrade catalog', () => {
     }
   });
 
-  it('getUpgrade returns by id or null', () => {
+  it('getUpgrade retourne par id ou null', () => {
     expect(getUpgrade('shipSpeed').name).toBe('Propulseurs');
     expect(getUpgrade('nope')).toBeNull();
   });
 
-  it('getUpgradesByCategory filters correctly', () => {
+  it('getUpgradesByCategory filtre correctement', () => {
     const ship = getUpgradesByCategory('ship');
     expect(ship.length).toBeGreaterThanOrEqual(2);
     for (const u of ship) expect(u.category).toBe('ship');
   });
 
-  it('has 4 categories', () => {
+  it('contient 4 catégories', () => {
     expect(Object.keys(UPGRADE_CATEGORIES)).toHaveLength(4);
   });
 });

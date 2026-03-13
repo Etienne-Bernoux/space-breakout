@@ -16,7 +16,7 @@ Le thème spatial influence le gameplay : récolte de minerais, power-ups, upgra
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
 - Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~417 tests)
-- Tests e2e : Playwright (dossier `e2e/`, 17 tests)
+- Tests e2e : Playwright + playwright-bdd (Gherkin, dossier `e2e/`, 20 scénarios)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
 
@@ -192,11 +192,20 @@ js/
     dev-overlay/        → overlay in-game (?lab, desktop only)
       index.js          → panel DOM gauche (boutons power-ups, vie +/-, win, ast -1)
       dev-stats.js      → panel DOM droit (timer, intensité, combo)
-e2e/                    → tests end-to-end (Playwright)
-  smoke.spec.js         → démarrage sans erreur console
-  flow.spec.js          → menu → lancer → pause → resume
-  modes.spec.js         → ?lab (hub, dev, music, progress)
-playwright.config.js    → config Playwright (serve sur :3333)
+e2e/                    → tests end-to-end (Playwright + Gherkin)
+  features/             → scénarios Gherkin (.feature)
+    smoke.feature       → démarrage sans erreur console
+    game-flow.feature   → menu → lancer → pause → resume → win
+    lab-modes.feature   → ?lab (hub, dev, music, progress)
+    desktop-audit.feature → audit visuel desktop (screenshots)
+    mobile-audit.feature  → audit visuel mobile iPhone 13 (screenshots)
+  steps/                → step definitions + fixtures
+    fixtures.js         → custom test (gameHelpers, consoleErrors)
+    common.steps.js     → steps partagés (navigation, clavier, assertions)
+    smoke.steps.js      → assertion erreurs console
+    lab-modes.steps.js  → flags __GAME__, méthodes exposées
+    audit.steps.js      → screenshots, diagnostics, interactions tactiles
+playwright.config.js    → config Playwright BDD (2 projets : desktop + mobile)
 ```
 
 ## Règles de structure
@@ -266,13 +275,14 @@ npm test                          # une passe (vitest run)
 npx vitest                        # mode watch
 ```
 
-Tests e2e (Playwright, dossier `e2e/`) :
+Tests e2e (Playwright + Gherkin via playwright-bdd, dossier `e2e/`) :
 ```bash
-npm run test:e2e                  # lance tous les tests e2e
-npx playwright test e2e/smoke.spec.js   # un fichier spécifique
+npm run test:e2e                  # bddgen + playwright test (20 scénarios)
+npx bddgen                       # génère les specs depuis les .feature
 npm run test:all                  # unit + e2e
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
+Les specs sont générées dans `.features-gen/` (gitignored).
 
 Hook e2e : `window.__GAME__` expose en lecture seule `state`, `lives`, `remaining`, `devPanel`, `musicLab`, `progressLab`, `labHub`, `wallet`, `upgrades`, et `forceWin()` (tue tous les astéroïdes).
 

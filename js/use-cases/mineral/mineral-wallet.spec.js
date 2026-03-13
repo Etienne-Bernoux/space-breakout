@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { MineralWallet } from './mineral-wallet.js';
 
 describe('MineralWallet', () => {
-  it('starts with 0 for all minerals', () => {
+  it('démarre à 0 pour tous les minerais', () => {
     const w = new MineralWallet();
     expect(w.get('copper')).toBe(0);
     expect(w.get('platinum')).toBe(0);
   });
 
-  it('add increases balance', () => {
+  it('ajouter augmente le solde', () => {
     const w = new MineralWallet();
     w.add('copper', 5);
     expect(w.get('copper')).toBe(5);
@@ -16,7 +16,7 @@ describe('MineralWallet', () => {
     expect(w.get('copper')).toBe(8);
   });
 
-  it('canAfford checks multi-mineral cost', () => {
+  it('canAfford vérifie un coût multi-minerai', () => {
     const w = new MineralWallet();
     w.add('copper', 10);
     w.add('silver', 5);
@@ -25,7 +25,7 @@ describe('MineralWallet', () => {
     expect(w.canAfford({ copper: 5, gold: 1 })).toBe(false);
   });
 
-  it('spend deducts minerals and returns true', () => {
+  it('spend déduit les minerais et retourne true', () => {
     const w = new MineralWallet();
     w.add('copper', 20);
     w.add('silver', 10);
@@ -34,14 +34,14 @@ describe('MineralWallet', () => {
     expect(w.get('silver')).toBe(5);
   });
 
-  it('spend returns false if insufficient', () => {
+  it('spend retourne false si solde insuffisant', () => {
     const w = new MineralWallet();
     w.add('copper', 5);
     expect(w.spend({ copper: 10 })).toBe(false);
     expect(w.get('copper')).toBe(5); // unchanged
   });
 
-  it('getAll returns snapshot object', () => {
+  it('getAll retourne un snapshot du solde', () => {
     const w = new MineralWallet();
     w.add('gold', 3);
     const all = w.getAll();
@@ -49,7 +49,7 @@ describe('MineralWallet', () => {
     expect(all.copper).toBe(0);
   });
 
-  it('reset zeros all minerals', () => {
+  it('reset remet tous les minerais à 0', () => {
     const w = new MineralWallet();
     w.add('copper', 99);
     w.add('platinum', 50);
@@ -58,7 +58,7 @@ describe('MineralWallet', () => {
     expect(w.get('platinum')).toBe(0);
   });
 
-  it('serializes and deserializes', () => {
+  it('sérialise et désérialise', () => {
     const w = new MineralWallet();
     w.add('silver', 7);
     w.add('gold', 2);

@@ -2,13 +2,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { MineralDropSystem } from './mineral-drop-system.js';
 
 describe('MineralDropSystem', () => {
-  it('returns null for obsidian (all weights zero)', () => {
+  it('obsidienne ne drop jamais (poids tous à 0)', () => {
     const sys = new MineralDropSystem({ baseRate: 1.0 });
     const result = sys.decideDrop({ materialKey: 'obsidian', sizeName: 'medium' });
     expect(result).toBeNull();
   });
 
-  it('returns a mineral drop with high baseRate on rock', () => {
+  it('drop un minerai avec un baseRate élevé sur rock', () => {
     const sys = new MineralDropSystem({ baseRate: 100 }); // guaranteed drop
     const result = sys.decideDrop({ materialKey: 'rock', sizeName: 'medium' });
     expect(result).not.toBeNull();
@@ -16,7 +16,7 @@ describe('MineralDropSystem', () => {
     expect(result.quantity).toBe(1);
   });
 
-  it('respects size multiplier (large = higher chance)', () => {
+  it('les gros astéroïdes droppent plus souvent', () => {
     const sys = new MineralDropSystem({ baseRate: 0.08 });
     let largeDrops = 0, smallDrops = 0;
     const N = 5000;
@@ -28,14 +28,14 @@ describe('MineralDropSystem', () => {
     expect(largeDrops).toBeGreaterThan(smallDrops);
   });
 
-  it('falls back to rock weights for unknown material', () => {
+  it('retombe sur les poids de rock pour un matériau inconnu', () => {
     const sys = new MineralDropSystem({ baseRate: 100 });
     const result = sys.decideDrop({ materialKey: 'banana', sizeName: 'medium' });
     // getDropWeights falls back to rock → will drop something
     expect(result).not.toBeNull();
   });
 
-  it('alienCore favors platinum over gold', () => {
+  it('noyau alien favorise le platine par rapport à l\'or', () => {
     // Use moderate baseRate so cumul doesn't always cap at first mineral
     const sys = new MineralDropSystem({ baseRate: 0.5 });
     const counts = { copper: 0, silver: 0, gold: 0, platinum: 0 };

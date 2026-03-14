@@ -1,6 +1,8 @@
 // --- AI Lab DOM Update ---
 
 import { formatGenStats, genStatsHeader, genStatsSeparator } from '../../../ai/gen-stats.js';
+import { graphDataCache, drawAndCache, drawElitesGraph, drawGraph } from './graph-draw.js';
+export { drawZoomedGraph } from './graph-draw.js';
 
 /** Met à jour les stats affichées selon le mode (training ou watch). */
 export function updateStats(el, trainer) {
@@ -19,7 +21,6 @@ function updateWatchStats(el, trainer) {
   const pop = trainer.population;
 
   if (!p) {
-    // Entre deux parties (redémarrage)
     el.innerHTML = `
       <div class="ai-stat ai-best">Record <b>${Math.round(pop.bestFitness)}</b></div>
       <div class="ai-stat-muted">Redémarrage…</div>
@@ -53,7 +54,6 @@ function updateTrainingStats(el, trainer) {
   const streak = s.improvementStreak > 0 ? ` ↑${s.improvementStreak}` : '';
   const history = trainer.genHistory;
 
-  // Limiter aux N dernières lignes visibles
   const MAX_LINES = 20;
   const visible = history.slice(-MAX_LINES);
   const lines = visible.map(g => formatGenStats(g)).join('\n');
@@ -66,54 +66,50 @@ function updateTrainingStats(el, trainer) {
   `;
 }
 
-/** Dessine le graphe de fitness par génération (best + moyenne). */
-export function drawGraph(canvas, bestHistory, avgHistory = []) {
-  if (!canvas || bestHistory.length < 2) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width;
-  const H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+const ALL_DETAIL_KEYS = [
+  'ai-graph-catches', 'ai-graph-drops', 'ai-graph-wins',
+  'ai-graph-destroys', 'ai-graph-stars', 'ai-graph-diversity', 'ai-graph-elites',
+];
 
-  const allValues = [...bestHistory, ...avgHistory];
-  const max = Math.max(...allValues, 1);
-  const step = W / (bestHistory.length - 1);
+/**
+ * Dessine tous les mini-graphes.
+ * Accepte un trainer (avec genHistory) ou un objet modelData brut.
+ */
+export function drawAllGraphs(canvases, source) {
+  if (!canvases) return;
 
-  // Fond grille
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 1;
-  for (let y = 0; y < H; y += H / 4) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
+  if (!source) {
+    for (const key of Object.keys(canvases)) {
+      const ctx = canvases[key].getContext('2d');
+      ctx.clearRect(0, 0, canvases[key].width, canvases[key].height);
+    }
+    return;
   }
 
-  // Courbe moyenne (en dessous, plus discrète)
-  if (avgHistory.length >= 2) {
-    drawCurve(ctx, avgHistory, max, step, W, H, 'rgba(255,200,0,0.4)', 1);
-  }
+  const h = source.genHistory || source.stats?.genHistory || [];
 
-  // Courbe best fitness
-  drawCurve(ctx, bestHistory, max, step, W, H, '#0f0', 2);
-
-  // Labels
-  ctx.font = '10px monospace';
-  ctx.fillStyle = '#0f08';
-  ctx.fillText(`best ${Math.round(max)}`, 4, 12);
-  if (avgHistory.length > 0) {
-    ctx.fillStyle = 'rgba(255,200,0,0.5)';
-    ctx.fillText(`avg ${Math.round(avgHistory[avgHistory.length - 1])}`, 4, 24);
+  if (h.length >= 2) {
+    drawAndCache('ai-graph-fitness', canvases,
+      h.map(g => g.bestFitness), h.map(g => g.avg),
+      { color1: '#0f0', color2: 'rgba(255,200,0,0.5)', label1: 'best', label2: 'avg' });
+    drawAndCache('ai-graph-catches', canvases,
+      h.map(g => g.catches), [],
+      { color1: '#0af', label1: 'catches' });
+    drawAndCache('ai-graph-drops', canvases,
+      h.map(g => g.drops), [],
+      { color1: '#f55', label1: 'drops' });
+    drawAndCache('ai-graph-wins', canvases,
+      h.map(g => g.winCount), [],
+      { color1: '#ff0', label1: 'wins' });
+    drawAndCache('ai-graph-destroys', canvases,
+      h.map(g => g.destroys), [],
+      { color1: '#f80', label1: 'destroys' });
+    drawAndCache('ai-graph-stars', canvases,
+      h.map(g => g.stars), [],
+      { color1: '#fa0', label1: 'stars' });
+    drawAndCache('ai-graph-diversity', canvases,
+      h.map(g => g.diversity || 0), [],
+      { color1: '#c6f', label1: 'div' });
+    drawElitesGraph(canvases['ai-graph-elites'], h);
   }
-}
-
-function drawCurve(ctx, data, max, step, W, H, color, width) {
-  ctx.beginPath();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  for (let i = 0; i < data.length; i++) {
-    const x = i * step;
-    const y = H - (data[i] / max) * (H - 10) - 5;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
 }

@@ -854,12 +854,48 @@ body.menu #game {
 .ai-stat-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 3px 0; }
 .ai-log { font: 10px/1.4 monospace; color: #8f8; margin: 0; white-space: pre; overflow-x: auto; max-height: 320px; overflow-y: auto; }
 
+.ai-graph-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.ai-graph-wrap { display: flex; flex-direction: column; gap: 2px; }
+.ai-graph-label { font: 9px monospace; color: #0fa8; text-transform: uppercase; letter-spacing: 0.5px; }
 .ai-graph {
   width: 100%;
-  height: 120px;
+  height: 80px;
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(0,255,100,0.1);
   border-radius: 4px;
+}
+
+/* Modale zoom graphe */
+.ai-graph-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.85);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 30px;
+}
+.ai-graph-modal.active { display: flex; }
+.ai-graph-modal-title {
+  color: #0fa;
+  font: bold 16px monospace;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.ai-graph-modal-canvas {
+  width: min(90vw, 800px);
+  height: min(50vh, 400px);
+  background: rgba(0,20,10,0.6);
+  border: 1px solid rgba(0,255,100,0.2);
+  border-radius: 6px;
 }
 
 /* Mode sidebar : panel à droite pendant l'entraînement */
@@ -877,6 +913,7 @@ body.menu #game {
 }
 #ai-lab.ai-sidebar .ai-select,
 #ai-lab.ai-sidebar .ai-graph { width: 100%; }
+#ai-lab.ai-sidebar .ai-graph-grid { grid-template-columns: 1fr; }
 
 @media (max-width: 600px) {
   #ai-lab { width: auto; }

@@ -31,8 +31,8 @@ function makeGameState(overrides = {}) {
 
 describe('AIPlayer', () => {
   describe('TOPOLOGY', () => {
-    it('a 20 inputs, 16 hidden, 2 outputs', () => {
-      expect(TOPOLOGY).toEqual([20, 16, 2]);
+    it('a 24 inputs, 16 hidden, 2 outputs', () => {
+      expect(TOPOLOGY).toEqual([24, 16, 2]);
     });
   });
 
@@ -253,15 +253,15 @@ describe('AIPlayer', () => {
   });
 
   describe('computeFitness', () => {
-    it('gros bonus pour une victoire (1000 + étoiles)', () => {
+    it('gros bonus pour une victoire (1000 + étoiles + progression)', () => {
       const gs = makeGameState();
       gs.session.state = 'won';
       gs.entities.field.remaining = 0;
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 1800; // 30s → 3★
       const fitness = player.computeFitness();
-      // win(1000) + 3★(600) + progress(100%) = 1700
-      expect(fitness).toBeCloseTo(1700, 0);
+      // win(1000) + 3★(600) + progress(1²×400) = 2000
+      expect(fitness).toBeCloseTo(2000, 0);
     });
 
     it('2 étoiles si victoire sans perte mais temps > 60s', () => {
@@ -271,8 +271,8 @@ describe('AIPlayer', () => {
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 5400; // 90s → 2★
       const fitness = player.computeFitness();
-      // win(1000) + 2★(400) + progress(100%) = 1500
-      expect(fitness).toBeCloseTo(1500, 0);
+      // win(1000) + 2★(400) + progress(400) = 1800
+      expect(fitness).toBeCloseTo(1800, 0);
     });
 
     it('1 étoile si victoire avec pertes de vie', () => {
@@ -283,8 +283,8 @@ describe('AIPlayer', () => {
       player.dropCount = 1;
       player.framesSurvived = 1800;
       const fitness = player.computeFitness();
-      // win(1000) + 1★(200) - drop(200) + progress(100%) = 1100
-      expect(fitness).toBeCloseTo(1100, 0);
+      // win(1000) + 1★(200) - drop(200) + progress(400) = 1400
+      expect(fitness).toBeCloseTo(1400, 0);
     });
 
     it('peut être négatif (drops sans victoire)', () => {
@@ -295,13 +295,13 @@ describe('AIPlayer', () => {
       expect(player.computeFitness()).toBe(-600); // -3×200
     });
 
-    it('récompense la progression (bootstrap)', () => {
+    it('récompense la progression quadratiquement (bootstrap)', () => {
       const gs = makeGameState();
       gs.entities.field.remaining = 5; // 50% détruits
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       const fitness = player.computeFitness();
-      // progress(50%) = 50
-      expect(fitness).toBeCloseTo(50, 0);
+      // progress(0.5²×400) = 100
+      expect(fitness).toBeCloseTo(100, 0);
     });
 
     it('récompense les capsules récupérées (30 par capsule)', () => {
@@ -328,8 +328,8 @@ describe('AIPlayer', () => {
       player.rallyDestroys = 2;
       player.framesSurvived = 1800; // 3★
       const fitness = player.computeFitness();
-      // win(1000) + 3★(600) + progress(100%) + rally(10+5)×2.0 = 1730
-      expect(fitness).toBeCloseTo(1730, 0);
+      // win(1000) + 3★(600) + progress(400) + rally(10+5)×2.0 = 2030
+      expect(fitness).toBeCloseTo(2030, 0);
     });
 
     it('currentFitness inclut le rally en cours sans le clôturer', () => {
@@ -340,6 +340,17 @@ describe('AIPlayer', () => {
       // pendingRally(10+5)×1.0 = 15
       expect(fitness).toBeCloseTo(15, 0);
       expect(player.rallyDestroys).toBe(2);
+    });
+
+    it('pénalise les catches vides (sans destruction)', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.catchCount = 20;
+      player.asteroidsDestroyed = 2;
+      // emptyCatches = 20-2 = 18, excès = 18-5 = 13 → -65
+      // catches = 20×15 = 300, progress = 0
+      const fitness = player.computeFitness();
+      expect(fitness).toBeCloseTo(300 - 65, 0);
     });
 
     it('pénalise les oscillations excessives (>30%)', () => {

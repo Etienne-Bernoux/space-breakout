@@ -33,11 +33,8 @@ export class AITrainer {
     this.active = false;
     this.watchBest = false;
     this.levelId = levelId;
-    /** Historique des stats par génération (même format que CLI). */
+    /** Historique des stats par génération (source unique pour tous les graphes). */
     this.genHistory = [];
-    /** Historiques fitness pour le graphe (best + avg par génération). */
-    this.bestHistory = [];
-    this.avgHistory = [];
     this.stats = {
       gen: 0, agent: 0, best: 0, current: 0,
       improvementStreak: 0,
@@ -133,7 +130,7 @@ export class AITrainer {
   }
 
   #evolve() {
-    const genStats = computeGenStats(this.population.genomes, this.population.generation);
+    const genStats = computeGenStats(this.population.genomes, this.population.generation, this.population);
     this.genHistory.push(genStats);
 
     // Streak d'amélioration
@@ -145,12 +142,8 @@ export class AITrainer {
       this.stats.improvementStreak = 0;
     }
 
-    this.bestHistory.push(Math.round(this.population.bestFitness > -Infinity
-      ? this.population.bestFitness : genStats.bestFitness));
-    this.avgHistory.push(genStats.avg);
-
     this.population.evolve();
-    this.population.saveBest({ bestHistory: this.bestHistory, avgHistory: this.avgHistory });
+    this.population.saveBest({ genHistory: this.genHistory });
 
     if (this.onGenerationEnd) this.onGenerationEnd(this.population.bestFitness, genStats.avg);
   }

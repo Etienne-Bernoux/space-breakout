@@ -147,10 +147,10 @@ function spawnEntities(ent, levelAsteroids) {
   const mobile = isMobile();
   ent.ship = new Ship(CONFIG.ship, CONFIG.canvas.width, CONFIG.canvas.height, mobile);
   ent.drones = [new Drone(CONFIG.drone, ent.ship, mobile, CONFIG.canvas.width, CONFIG.canvas.height)];
-  let astConfig = isLabMode()
-    ? getDevAsteroidConfig()
-    : levelAsteroids
-      ? { ...CONFIG.asteroids, ...levelAsteroids, _autoSize: true }
+  let astConfig = levelAsteroids
+    ? { ...CONFIG.asteroids, ...levelAsteroids, _autoSize: true }
+    : isLabMode()
+      ? getDevAsteroidConfig()
       : { ...CONFIG.asteroids };
   // Portrait : agrandir la zone du champ pour des cellules plus carrées
   if (CONFIG.canvas.height > CONFIG.canvas.baseHeight) {

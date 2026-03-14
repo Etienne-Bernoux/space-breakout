@@ -1,7 +1,7 @@
 // --- Stats par génération (partagé browser + CLI) ---
 
-const HEADER = ['Gen', 'Best', 'Avg', 'Catch', 'Destr', 'Rally', 'Drops', 'Caps', 'Stars', 'Wins'];
-const WIDTHS = [5,     7,      7,     6,       6,       6,       6,       5,      5,       5];
+const HEADER = ['Gen', 'Best', 'Avg', 'Catch', 'Destr', 'Rally', 'Drops', 'Caps', 'Stars', 'Wins', 'Div'];
+const WIDTHS = [5,     7,      7,     6,       6,       6,       6,       5,      5,       5,      5];
 
 export function genStatsHeader() {
   return HEADER.map((h, i) => h.padStart(WIDTHS[i])).join(' ');
@@ -15,12 +15,17 @@ export function genStatsSeparator() {
  * Calcule les stats d'une génération à partir de la population.
  * @param {object[]} genomes - population.genomes (avec _details)
  * @param {number} generation - numéro de génération
+ * @param {object} [population] - instance Population (pour diversité + élites)
  */
-export function computeGenStats(genomes, generation) {
+export function computeGenStats(genomes, generation, population) {
   const total = genomes.reduce((s, g) => s + g.fitness, 0);
   const sorted = [...genomes].sort((a, b) => b.fitness - a.fitness);
   const best = sorted[0];
   const d = best._details || {};
+
+  // Fitness des élites (top 10%)
+  const eliteCount = population?._elites?.length || Math.max(3, Math.ceil(genomes.length * 0.10));
+  const eliteFitnesses = sorted.slice(0, eliteCount).map(g => Math.round(g.fitness));
 
   return {
     gen: generation,
@@ -33,6 +38,8 @@ export function computeGenStats(genomes, generation) {
     capsules: d.capsules || 0,
     stars: d.stars || 0,
     winCount: genomes.filter(g => g._details?.won).length,
+    diversity: Math.round(population?._eliteDiversity || 0),
+    eliteFitnesses,
   };
 }
 
@@ -52,5 +59,6 @@ export function formatGenStats(s) {
     String(s.capsules).padStart(WIDTHS[7]),
     String(s.stars + '★').padStart(WIDTHS[8]),
     String(s.winCount).padStart(WIDTHS[9]),
+    String(s.diversity || 0).padStart(WIDTHS[10]),
   ].join(' ');
 }

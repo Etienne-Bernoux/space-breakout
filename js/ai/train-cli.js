@@ -102,6 +102,7 @@ function startGame(levelId) {
 
 function tick(pointerX) {
   const { ship, drones, field } = entities;
+  if (ui.slowMoTimer > 0) ui.slowMoTimer -= 1;
   field.update(1);
   ship.update(pointerX, 1);
   for (const d of drones) d.update(ship, CONFIG.canvas.width, 1);
@@ -123,12 +124,14 @@ function simulate(genome) {
 // ─── Training loop ─────────────────────────────────
 
 const population = new Population(POP_SIZE, TOPOLOGY);
+const genHistory = [];
 
 // Charger un modèle existant
 if (INPUT_FILE) {
   try {
     const data = JSON.parse(readFileSync(INPUT_FILE, 'utf-8'));
     population.loadModel(data);
+    if (data.stats?.genHistory) genHistory.push(...data.stats.genHistory);
     if (!SILENT) console.log(`Modèle chargé : gen ${data.generation}, fitness ${Math.round(data.fitness)}`);
   } catch (e) {
     console.error(`Erreur chargement ${INPUT_FILE}: ${e.message}`);
@@ -144,17 +147,6 @@ if (!SILENT) {
 }
 
 const t0 = Date.now();
-const bestHistory = [];
-const avgHistory = [];
-
-// Charger les historiques du modèle importé
-if (INPUT_FILE) {
-  try {
-    const data = JSON.parse(readFileSync(INPUT_FILE, 'utf-8'));
-    if (data.stats?.bestHistory) bestHistory.push(...data.stats.bestHistory);
-    if (data.stats?.avgHistory) avgHistory.push(...data.stats.avgHistory);
-  } catch { /* ignore */ }
-}
 
 for (let gen = 0; gen < GENERATIONS; gen++) {
   for (const genome of population.genomes) {
@@ -163,11 +155,8 @@ for (let gen = 0; gen < GENERATIONS; gen++) {
     genome._details = result;
   }
 
-  const genStats = computeGenStats(population.genomes, population.generation);
-
-  const bestFit = population.bestFitness > -Infinity ? population.bestFitness : genStats.bestFitness;
-  bestHistory.push(Math.round(bestFit));
-  avgHistory.push(genStats.avg);
+  const genStats = computeGenStats(population.genomes, population.generation, population);
+  genHistory.push(genStats);
 
   if (!SILENT) console.log(formatGenStats(genStats));
 
@@ -178,12 +167,12 @@ const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
 
 // ─── Sauvegarde ────────────────────────────────────
 
-const model = population.exportModel({ bestHistory, avgHistory });
+const model = population.exportModel({ genHistory });
 if (model) {
   writeFileSync(OUTPUT_FILE, JSON.stringify(model, null, 2));
   console.log(`\n✅ Modèle sauvegardé dans ${OUTPUT_FILE}`);
   console.log(`   Génération: ${model.generation}, Fitness: ${Math.round(model.fitness)}`);
-  console.log(`   Historique: ${bestHistory.length} générations`);
+  console.log(`   Historique: ${genHistory.length} générations`);
   console.log(`   Temps: ${elapsed}s`);
 } else {
   console.log('\n❌ Aucun modèle à sauvegarder');

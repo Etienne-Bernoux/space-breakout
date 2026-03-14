@@ -20,6 +20,8 @@ describe('gen-stats', () => {
       expect(s.capsules).toBe(2);
       expect(s.stars).toBe(1);
       expect(s.winCount).toBe(1);
+      expect(s.diversity).toBe(0); // pas de population → 0
+      expect(s.eliteFitnesses).toEqual([100, 50, -30]); // top 10% de 3 = 3
     });
   });
 
@@ -42,6 +44,7 @@ describe('gen-stats', () => {
       expect(h).toContain('Stars');
       expect(h).toContain('Caps');
       expect(h).toContain('Wins');
+      expect(h).toContain('Div');
     });
 
     it('le séparateur est une ligne de tirets', () => {

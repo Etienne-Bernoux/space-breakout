@@ -3,38 +3,18 @@
 import state, { isAILabActive, isAILabOpen, setAILabActive } from './state.js';
 import { buildAILab } from './build.js';
 import { attachAILabHandlers } from './handlers.js';
-import { updateStats, drawGraph } from './update.js';
+import { updateStats, drawAllGraphs, drawZoomedGraph } from './update.js';
+import {
+  loadCommittedModel, loadModelIndex, loadHistoryIntoTrainer,
+  onModelSelectChange, loadSelectedModel,
+  exportModel, importModel, saveModelToDownload,
+} from './models.js';
 
 export { isAILabActive, isAILabOpen };
 
 let trainer = null;
 let refs = null;
 let rafId = null;
-let _createTrainer = null;
-
-/** Charge le modèle commité (best.json) comme point de départ si pas de localStorage. */
-async function loadCommittedModel() {
-  if (localStorage.getItem('ai-best-genome')) return; // déjà un modèle local
-  try {
-    const resp = await fetch('./js/ai/models/best.json');
-    if (!resp.ok) return;
-    const data = await resp.json();
-    if (!data.weights || data.weights.length === 0) return; // placeholder vide
-    localStorage.setItem('ai-best-genome', JSON.stringify(data));
-  } catch { /* silently ignore */ }
-}
-
-/** Restaure les historiques best/avg depuis le modèle sauvegardé dans le trainer. */
-function loadHistoryIntoTrainer() {
-  try {
-    const raw = localStorage.getItem('ai-best-genome');
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data.stats?.bestHistory) trainer.bestHistory = [...data.stats.bestHistory];
-      if (data.stats?.avgHistory) trainer.avgHistory = [...data.stats.avgHistory];
-    }
-  } catch { /* ignore */ }
-}
 
 /**
  * Initialise le AI Lab. Construit le DOM, attache les handlers.
@@ -45,9 +25,9 @@ export function initAILab({ onBack, levels, createTrainer }) {
   const root = document.getElementById('ai-lab');
   if (!root) return;
 
-  _createTrainer = createTrainer;
   refs = buildAILab(root, levels);
   loadCommittedModel();
+  loadModelIndex(refs.modelSelect);
 
   attachAILabHandlers(root, {
     onBack: () => { stopTraining(); onBack(); },
@@ -57,13 +37,28 @@ export function initAILab({ onBack, levels, createTrainer }) {
       if (trainer) {
         localStorage.removeItem('ai-best-genome');
         stopTraining();
-        drawGraph(refs.graphCanvas, [], []);
+        drawAllGraphs(refs.graphCanvases, null);
         refs.statsDiv.innerHTML = '<div class="ai-stat-muted">Reset — prêt.</div>';
       }
     },
-    onExport: () => exportModel(),
+    onExport: () => exportModel(refs, trainer),
     onImport: () => refs.fileInput.click(),
     onLevelChange: (levelId) => { state.selectedLevel = levelId; },
+    onLoadModel: () => loadSelectedModel(refs, trainer),
+    onSaveModel: () => saveModelToDownload(refs, trainer),
+    onModelSelectChange: (file) => onModelSelectChange(file, refs, trainer),
+    onGraphClick: (graphId) => {
+      const labels = {
+        'ai-graph-fitness': 'Fitness', 'ai-graph-elites': 'Elites',
+        'ai-graph-catches': 'Catches', 'ai-graph-drops': 'Drops',
+        'ai-graph-wins': 'Wins', 'ai-graph-diversity': 'Diversité',
+        'ai-graph-destroys': 'Destroys', 'ai-graph-stars': 'Stars',
+      };
+      refs.modalTitle.textContent = labels[graphId] || '';
+      // Afficher la modale AVANT de dessiner (sinon getBoundingClientRect = 0)
+      refs.modal.classList.add('active');
+      drawZoomedGraph(graphId, refs.modalCanvas);
+    },
   });
 
   // Listener pour import fichier
@@ -72,7 +67,7 @@ export function initAILab({ onBack, levels, createTrainer }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      importModel(reader.result);
+      importModel(reader.result, refs, trainer);
       refs.fileInput.value = '';
     };
     reader.readAsText(file);
@@ -89,11 +84,11 @@ function toggleTraining(createTrainer) {
 
 function startTraining(createTrainer) {
   trainer = createTrainer(state.selectedLevel);
-  loadHistoryIntoTrainer();
-  drawGraph(refs.graphCanvas, trainer.bestHistory, trainer.avgHistory);
+  loadHistoryIntoTrainer(trainer);
+  drawAllGraphs(refs.graphCanvases, trainer);
 
   trainer.onGenerationEnd = () => {
-    drawGraph(refs.graphCanvas, trainer.bestHistory, trainer.avgHistory);
+    drawAllGraphs(refs.graphCanvases, trainer);
   };
   trainer.start();
   state.training = true;
@@ -114,7 +109,6 @@ function stopTraining() {
     refs.watchBtn.classList.remove('ai-btn-active');
     refs.select.disabled = false;
   }
-  // Revenir en mode centré
   const root = document.getElementById('ai-lab');
   if (root) root.classList.remove('ai-sidebar');
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
@@ -123,21 +117,18 @@ function stopTraining() {
 /** Active/désactive le mode watch (sans entraînement). */
 function toggleWatch(createTrainer) {
   if (state.watching) {
-    // Arrêter le watch
     stopTraining();
     return;
   }
   if (state.training) {
-    // Pendant l'entraînement, toggle watch sur le trainer existant
     trainer.watchBest = !trainer.watchBest;
     refs.watchBtn.classList.toggle('ai-btn-active', trainer.watchBest);
-    // Sidebar uniquement en watch (besoin du canvas)
     const root = document.getElementById('ai-lab');
     if (root) root.classList.toggle('ai-sidebar', trainer.watchBest);
     trainer.restartAgent();
     return;
   }
-  // Watch standalone : créer un trainer juste pour le replay
+  // Watch standalone
   trainer = createTrainer(state.selectedLevel);
   trainer.active = true;
   trainer.watchBest = true;
@@ -186,53 +177,4 @@ export function hideAILab() {
   setAILabActive(false);
   const root = document.getElementById('ai-lab');
   if (root) root.classList.remove('active');
-}
-
-// ─── Import / Export ────────────────────────────────
-
-function exportModel() {
-  const stats = trainer
-    ? { bestHistory: trainer.bestHistory, avgHistory: trainer.avgHistory }
-    : undefined;
-  let data = trainer?.population.exportModel(stats);
-  if (!data) {
-    const raw = localStorage.getItem('ai-best-genome');
-    if (!raw) {
-      refs.statsDiv.innerHTML = '<div class="ai-stat-muted">Aucun modèle à exporter.</div>';
-      return;
-    }
-    data = JSON.parse(raw);
-  }
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ai-model-gen${data.generation}-fit${Math.round(data.fitness)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importModel(jsonStr) {
-  try {
-    const data = JSON.parse(jsonStr);
-    if (!data.topology || !data.weights) throw new Error('Format invalide');
-    localStorage.setItem('ai-best-genome', jsonStr);
-    // Si un trainer est actif, recharger le modèle + historiques
-    if (trainer) {
-      trainer.population.loadModel(data);
-      if (data.stats) {
-        trainer.bestHistory = data.stats.bestHistory || [];
-        trainer.avgHistory = data.stats.avgHistory || [];
-      } else {
-        trainer.bestHistory = [];
-        trainer.avgHistory = [];
-      }
-      drawGraph(refs.graphCanvas, trainer.bestHistory, trainer.avgHistory);
-    }
-    const histLen = data.stats?.bestHistory?.length || 0;
-    const statsInfo = histLen > 0 ? `, ${histLen} gen d'historique` : '';
-    refs.statsDiv.innerHTML = `<div class="ai-stat">Modèle importé — gén. <b>${data.generation}</b>, fitness <b>${Math.round(data.fitness)}</b>${statsInfo}</div>`;
-  } catch (e) {
-    refs.statsDiv.innerHTML = `<div class="ai-stat-muted">Erreur import : ${e.message}</div>`;
-  }
 }

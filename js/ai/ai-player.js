@@ -1,9 +1,10 @@
 // --- AI Player ---
 // Observe l'état du jeu, alimente le réseau de neurones, applique les décisions.
-// Inputs (20) : ship, drone (+ position relative), capsule la plus proche, 5 astéroïdes proches.
+// Inputs (24) : ship, drone (+ position relative), capsule proche,
+//   centroïde astéroïdes / ship, densité gauche/droite, 5 astéroïdes proches / drone.
 // Outputs (2) : position cible du vaisseau (tanh → -1..1), lancer le drone (>0 = oui).
 
-const INPUT_COUNT = 20;
+const INPUT_COUNT = 24;
 const OUTPUT_COUNT = 2;
 export const TOPOLOGY = [INPUT_COUNT, 16, OUTPUT_COUNT];
 
@@ -99,6 +100,16 @@ export class AIPlayer {
     inputs[idx++] = nearestCap.dx;
     inputs[idx++] = nearestCap.dy;
 
+    // Centroïde des astéroïdes restants relatif au vaisseau (2) — signal "où viser"
+    const centroid = this.#asteroidCentroid(field, shipCx, ship.y, W, H);
+    inputs[idx++] = centroid.dx;
+    inputs[idx++] = centroid.dy;
+
+    // Densité d'astéroïdes gauche/droite du drone (2) — guide la direction
+    const density = this.#asteroidDensityLR(field, drone);
+    inputs[idx++] = density.left;
+    inputs[idx++] = density.right;
+
     // 5 astéroïdes les plus proches du drone (2 chacun = 10)
     const nearest = this.#nearestAsteroids(drone, field, 5, W, H);
     for (let i = 0; i < 5; i++) {
@@ -185,14 +196,19 @@ export class AIPlayer {
 
     // ── Signal de bootstrap (secondaire, guide vers la victoire) ──
 
-    // Progression : % d'astéroïdes détruits (0–100 pts)
-    fitness += this.#progress() * 100;
+    // Progression : quadratique (0–400 pts) — derniers astéroïdes valent beaucoup plus
+    const p = this.#progress();
+    fitness += p * p * 400;
 
-    // Rattrapages : signal clé entre "suivre le drone" et "ne pas mourir"
-    fitness += this.catchCount * 30;
+    // Rattrapages : bootstrapping (signal secondaire)
+    fitness += this.catchCount * 15;
 
     // Rallies : récompense les destructions entre rattrapages
     fitness += this.rallyScore + extraRally;
+
+    // Pénalité rallies vides : catches sans destruction = perte de temps
+    const emptyCatches = this.catchCount - this.asteroidsDestroyed;
+    if (emptyCatches > 5) fitness -= (emptyCatches - 5) * 5;
 
     // Anti-oscillation : pénalise les vibrations excessives
     if (this.framesSurvived > 0) {
@@ -226,6 +242,35 @@ export class AIPlayer {
       }
     }
     return { dx: bestDx, dy: bestDy };
+  }
+
+  /** Centroïde des astéroïdes restants, relatif au vaisseau (normalisé -1..1). */
+  #asteroidCentroid(field, shipCx, shipY, W, H) {
+    let sumX = 0, sumY = 0, count = 0;
+    for (const a of field.grid) {
+      if (!a.alive) continue;
+      sumX += a.x + a.width / 2;
+      sumY += a.y + a.height / 2;
+      count++;
+    }
+    if (count === 0) return { dx: 0, dy: 0 };
+    return {
+      dx: ((sumX / count) - shipCx) / W * 2,
+      dy: ((sumY / count) - shipY) / H * 2,
+    };
+  }
+
+  /** Densité d'astéroïdes à gauche/droite du drone (normalisé 0..1). */
+  #asteroidDensityLR(field, drone) {
+    let left = 0, right = 0, total = 0;
+    for (const a of field.grid) {
+      if (!a.alive) continue;
+      total++;
+      const cx = a.x + a.width / 2;
+      if (cx < drone.x) left++; else right++;
+    }
+    if (total === 0) return { left: 0, right: 0 };
+    return { left: left / total, right: right / total };
   }
 
   /** Trouve les N astéroïdes vivants les plus proches du drone. */

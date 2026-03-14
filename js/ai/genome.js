@@ -4,6 +4,8 @@
 
 import { NeuralNetwork } from './neural-network.js';
 
+const ELITE_RATIO = 0.10; // top 10% sauvegardés et réutilisés au redémarrage
+
 export class Genome {
   constructor(topology) {
     this.brain = new NeuralNetwork(topology);
@@ -80,9 +82,14 @@ export class Population {
     }
 
     const next = [];
-    // Élitisme : garder les 3 meilleurs sans mutation
-    const eliteCount = Math.min(3, this.size);
-    for (let i = 0; i < eliteCount; i++) next.push(this.genomes[i].clone());
+    // Élitisme : garder les top 10% sans mutation
+    const eliteCount = Math.max(3, Math.ceil(this.size * ELITE_RATIO));
+    this._elites = [];
+    for (let i = 0; i < eliteCount; i++) {
+      const clone = this.genomes[i].clone();
+      next.push(clone);
+      this._elites.push(this.genomes[i].clone());
+    }
 
     // Remplir le reste par crossover + mutation
     while (next.length < this.size) {
@@ -95,33 +102,61 @@ export class Population {
 
     this.genomes = next;
     this.generation++;
+
+    // Calculer les métriques de diversité des élites
+    this._eliteDiversity = this.#computeEliteDiversity();
   }
 
-  /** Sauvegarde le meilleur génome en localStorage. */
+  /** Distance euclidienne moyenne normalisée entre les élites (0–~10). */
+  #computeEliteDiversity() {
+    const elites = this._elites;
+    if (!elites || elites.length < 2) return 0;
+    const encoded = elites.map(g => g.brain.encode());
+    const dim = encoded[0].length || 1;
+    let totalDist = 0;
+    let pairs = 0;
+    for (let i = 0; i < encoded.length; i++) {
+      for (let j = i + 1; j < encoded.length; j++) {
+        let sum = 0;
+        for (let k = 0; k < dim; k++) {
+          const d = encoded[i][k] - encoded[j][k];
+          sum += d * d;
+        }
+        totalDist += Math.sqrt(sum);
+        pairs++;
+      }
+    }
+    // Normaliser par √dim pour ramener dans une plage lisible (~0–10)
+    return pairs > 0 ? totalDist / pairs / Math.sqrt(dim) : 0;
+  }
+
+  /** Sauvegarde les top 10% en localStorage. */
   saveBest(stats) {
     if (!this.bestGenome) return;
     const data = this.exportModel(stats);
     if (data) localStorage.setItem('ai-best-genome', JSON.stringify(data));
   }
 
-  /** Charge le meilleur génome depuis localStorage. */
+  /** Charge le modèle depuis localStorage et seede la population. */
   loadBest() {
     const raw = localStorage.getItem('ai-best-genome');
     if (!raw) return null;
-    return this.#applyModelData(raw);
+    const genome = this.#applyModelData(raw);
+    if (genome) this.#seedPopulation();
+    return genome;
   }
 
-  /** Charge un modèle depuis un objet JSON (import ou fichier commité). */
+  /** Charge un modèle depuis un objet JSON et seede la population. */
   loadModel(json) {
     const raw = typeof json === 'string' ? json : JSON.stringify(json);
-    return this.#applyModelData(raw);
+    const genome = this.#applyModelData(raw);
+    if (genome) this.#seedPopulation();
+    return genome;
   }
 
   /**
-   * Exporte le meilleur modèle sous forme d'objet JSON sérialisable.
-   * @param {object} [stats] - statistiques d'évolution optionnelles
-   * @param {number[]} [stats.bestHistory] - fitness du meilleur par génération
-   * @param {number[]} [stats.avgHistory] - fitness moyenne par génération
+   * Exporte le modèle sous forme d'objet JSON sérialisable.
+   * Inclut les top 10% pour pouvoir reprendre l'entraînement.
    */
   exportModel(stats) {
     if (!this.bestGenome) return null;
@@ -131,8 +166,37 @@ export class Population {
       fitness: this.bestFitness,
       weights: Array.from(this.bestGenome.brain.encode()),
     };
+    // Sauvegarder les élites (top 10%) si disponibles
+    if (this._elites && this._elites.length > 0) {
+      data.elites = this._elites.map(g => Array.from(g.brain.encode()));
+    }
     if (stats) data.stats = stats;
     return data;
+  }
+
+  /**
+   * Seede la population à partir des élites sauvegardées.
+   * Les élites sont injectées telles quelles, le reste est engendré
+   * par crossover + mutation des élites.
+   */
+  #seedPopulation() {
+    const elites = this._elites || (this.bestGenome ? [this.bestGenome] : []);
+    if (elites.length === 0) return;
+
+    let idx = 0;
+    // Injecter les élites telles quelles
+    for (const elite of elites) {
+      if (idx >= this.size) break;
+      this.genomes[idx++] = elite.clone();
+    }
+    // Remplir le reste par crossover + mutation des élites
+    while (idx < this.size) {
+      const a = elites[Math.floor(Math.random() * elites.length)];
+      const b = elites[Math.floor(Math.random() * elites.length)];
+      const child = this.crossover(a, b);
+      this.mutate(child, 0.25, 0.4);
+      this.genomes[idx++] = child;
+    }
   }
 
   /** Charge un modèle depuis des données JSON brutes. */
@@ -147,6 +211,19 @@ export class Population {
       this.bestFitness = data.fitness;
       this.bestGenome = genome;
       this.generation = data.generation || 0;
+
+      // Restaurer les élites si présentes
+      if (data.elites && data.elites.length > 0) {
+        this._elites = data.elites.map(weights => {
+          const g = new Genome(data.topology);
+          g.brain.decode(new Float32Array(weights));
+          return g;
+        });
+      } else {
+        // Rétro-compatibilité : seulement le best
+        this._elites = [genome];
+      }
+
       return genome;
     } catch { return null; }
   }

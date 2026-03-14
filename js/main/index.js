@@ -70,6 +70,7 @@ initAILab({
       /** Tick physique pur (sans rendu). Le ship reçoit pointerX directement. */
       tick: (pointerX) => {
         const { ship, drones, field } = G.entities;
+        if (G.ui.slowMoTimer > 0) G.ui.slowMoTimer -= 1;
         field.update(1);
         ship.update(pointerX, 1);
         for (const d of drones) d.update(ship, CONFIG.canvas.width, 1);

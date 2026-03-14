@@ -65,9 +65,34 @@ export function buildAILab(root, levels) {
   ctrlSection.appendChild(resetBtn);
   left.appendChild(ctrlSection);
 
-  // Boutons import/export modèle
+  // Modèles sauvegardés
+  const modelSection = el('div', 'ai-section');
+  modelSection.appendChild(txt('div', 'ai-label', 'Modèle'));
+
+  const modelSelect = document.createElement('select');
+  modelSelect.className = 'ai-select';
+  modelSelect.id = 'ai-model-select';
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.textContent = '— localStorage (actuel) —';
+  modelSelect.appendChild(defaultOpt);
+  modelSection.appendChild(modelSelect);
+
+  const loadModelBtn = el('button', 'ai-btn');
+  loadModelBtn.id = 'ai-load-model-btn';
+  loadModelBtn.textContent = 'Charger ce modèle';
+  loadModelBtn.setAttribute('data-action', 'load-model');
+  modelSection.appendChild(loadModelBtn);
+
+  const modelInfo = el('div', 'ai-stat-muted');
+  modelInfo.id = 'ai-model-info';
+  modelSection.appendChild(modelInfo);
+
+  left.appendChild(modelSection);
+
+  // Import/export fichier
   const ioSection = el('div', 'ai-section');
-  ioSection.appendChild(txt('div', 'ai-label', 'Modèle'));
+  ioSection.appendChild(txt('div', 'ai-label', 'Import / Export'));
 
   const exportBtn = el('button', 'ai-btn');
   exportBtn.id = 'ai-export-btn';
@@ -77,9 +102,15 @@ export function buildAILab(root, levels) {
 
   const importBtn = el('button', 'ai-btn');
   importBtn.id = 'ai-import-btn';
-  importBtn.textContent = 'Importer modèle';
+  importBtn.textContent = 'Importer fichier';
   importBtn.setAttribute('data-action', 'import');
   ioSection.appendChild(importBtn);
+
+  const saveModelBtn = el('button', 'ai-btn');
+  saveModelBtn.id = 'ai-save-model-btn';
+  saveModelBtn.textContent = 'Sauvegarder dans models/';
+  saveModelBtn.setAttribute('data-action', 'save-model');
+  ioSection.appendChild(saveModelBtn);
 
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
@@ -102,19 +133,54 @@ export function buildAILab(root, levels) {
   statsSection.appendChild(statsDiv);
   right.appendChild(statsSection);
 
-  // Graphe fitness
+  // Graphes d'évolution (grille de mini-graphes)
   const graphSection = el('div', 'ai-section');
-  graphSection.appendChild(txt('div', 'ai-label', 'Évolution fitness'));
-  const graphCanvas = document.createElement('canvas');
-  graphCanvas.id = 'ai-graph';
-  graphCanvas.width = 280;
-  graphCanvas.height = 120;
-  graphCanvas.className = 'ai-graph';
-  graphSection.appendChild(graphCanvas);
+  graphSection.appendChild(txt('div', 'ai-label', 'Évolution'));
+  const graphGrid = el('div', 'ai-graph-grid');
+
+  const graphDefs = [
+    { id: 'ai-graph-fitness', label: 'Fitness' },
+    { id: 'ai-graph-elites', label: 'Elites' },
+    { id: 'ai-graph-catches', label: 'Catches' },
+    { id: 'ai-graph-drops', label: 'Drops' },
+    { id: 'ai-graph-wins', label: 'Wins' },
+    { id: 'ai-graph-diversity', label: 'Diversité' },
+    { id: 'ai-graph-destroys', label: 'Destroys' },
+    { id: 'ai-graph-stars', label: 'Stars' },
+  ];
+
+  const graphCanvases = {};
+  for (const def of graphDefs) {
+    const wrap = el('div', 'ai-graph-wrap');
+    wrap.appendChild(txt('div', 'ai-graph-label', def.label));
+    const c = document.createElement('canvas');
+    c.id = def.id;
+    c.width = 200;
+    c.height = 80;
+    c.className = 'ai-graph';
+    c.dataset.graphId = def.id;
+    c.style.cursor = 'pointer';
+    wrap.appendChild(c);
+    graphGrid.appendChild(wrap);
+    graphCanvases[def.id] = c;
+  }
+
+  graphSection.appendChild(graphGrid);
   right.appendChild(graphSection);
 
   body.appendChild(right);
   root.appendChild(body);
 
-  return { select, startBtn, watchBtn, resetBtn, exportBtn, importBtn, fileInput, statsDiv, graphCanvas };
+  // Modale zoom graphe
+  const modal = el('div', 'ai-graph-modal');
+  modal.id = 'ai-graph-modal';
+  const modalTitle = txt('div', 'ai-graph-modal-title', '');
+  modal.appendChild(modalTitle);
+  const modalCanvas = document.createElement('canvas');
+  modalCanvas.id = 'ai-graph-modal-canvas';
+  modalCanvas.className = 'ai-graph-modal-canvas';
+  modal.appendChild(modalCanvas);
+  root.appendChild(modal);
+
+  return { select, startBtn, watchBtn, resetBtn, exportBtn, importBtn, saveModelBtn, fileInput, statsDiv, graphCanvases, modelSelect, loadModelBtn, modelInfo, modal, modalCanvas, modalTitle };
 }

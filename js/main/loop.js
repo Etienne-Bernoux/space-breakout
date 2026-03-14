@@ -278,11 +278,12 @@ export class GameLoop {
   /** Boucle playing allégée pour l'IA : physique + rendu minimal (pas d'effets). */
   #loopPlayingAI(ctx, dt) {
     this.#tickPlaying(dt);
-    const { ship, drones, field, capsules, mineralCapsules } = this.entities;
+    const { ship, drones, field, capsules, mineralCapsules, projectiles } = this.entities;
     const infra = this.infra;
     infra.drawField(ctx, field);
     for (const c of capsules) infra.drawCapsule(ctx, c);
     for (const mc of mineralCapsules) infra.drawMineralCapsule(ctx, mc);
+    for (const p of projectiles) infra.drawProjectile(ctx, p);
     infra.drawShip(ctx, ship);
     for (const d of drones) infra.drawDrone(ctx, d);
     this.hud.drawHUD(null);

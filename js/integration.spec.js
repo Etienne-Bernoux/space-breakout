@@ -23,7 +23,7 @@ import { AsteroidField } from './domain/asteroid/index.js';
 import { GameSession } from './use-cases/game-logic/game-session.js';
 import { DropSystem } from './use-cases/drop/drop-system.js';
 import { PowerUpManager } from './use-cases/power-up/power-up-manager.js';
-import { GameIntensityDirector } from './use-cases/intensity/game-intensity-director.js';
+import { GameIntensityDirector } from './audio/use-cases/intensity/game-intensity-director.js';
 import { CollisionHandler } from './use-cases/collision/collision-handler.js';
 import { DroneManager } from './use-cases/drone/drone-manager.js';
 

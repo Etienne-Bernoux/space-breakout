@@ -1,6 +1,6 @@
 // --- Rendu des capsules minerai et HUD minerais ---
 
-import { getMineral, MINERAL_IDS } from '../../domain/mineral/index.js';
+import { getMineral, MINERAL_IDS } from '../domain/index.js';
 import { gameScale } from '../../shared/responsive.js';
 import { isPortrait } from '../../shared/platform.js';
 

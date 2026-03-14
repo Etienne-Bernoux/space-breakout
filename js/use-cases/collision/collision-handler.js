@@ -1,6 +1,6 @@
 import { Capsule } from '../../domain/capsule/capsule.js';
-import { MineralCapsule } from '../../domain/mineral/index.js';
-import { getMineral } from '../../domain/mineral/index.js';
+import { MineralCapsule } from '../../mineral/domain/index.js';
+import { getMineral } from '../../mineral/domain/index.js';
 import { getPowerUp } from '../../domain/power-ups.js';
 
 

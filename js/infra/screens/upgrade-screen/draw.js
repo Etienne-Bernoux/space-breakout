@@ -1,7 +1,7 @@
 // --- Rendu de l'écran upgrade ---
 
 import { gameScale } from '../../../shared/responsive.js';
-import { getMineral, MINERAL_IDS } from '../../../domain/mineral/index.js';
+import { getMineral, MINERAL_IDS } from '../../../mineral/domain/index.js';
 import state, { getSelectedCategoryKey, getVisibleUpgrades, CATEGORY_KEYS, UPGRADE_CATEGORIES } from './state.js';
 
 /**

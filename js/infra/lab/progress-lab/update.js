@@ -1,6 +1,6 @@
 // --- Sync DOM ← state pour le progress lab ---
 
-import { MINERAL_IDS } from '../../../domain/mineral/index.js';
+import { MINERAL_IDS } from '../../../mineral/domain/index.js';
 import { UPGRADE_IDS, getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
 import state from './state.js';
 

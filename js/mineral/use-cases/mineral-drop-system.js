@@ -2,8 +2,8 @@
 // Décide quel minerai tombe quand un astéroïde est détruit.
 // Même pattern que DropSystem : probabilité cumulative.
 
-import { MINERAL_IDS } from '../../domain/mineral/index.js';
-import { getDropWeights } from '../../domain/mineral/index.js';
+import { MINERAL_IDS } from '../domain/index.js';
+import { getDropWeights } from '../domain/index.js';
 
 const DEFAULT_SIZE_MULT = { large: 1.6, medium: 1.0, small: 0.5 };
 

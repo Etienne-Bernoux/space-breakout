@@ -11,7 +11,7 @@ import { updateStars } from '../infra/effects/stars.js';
 import { setupPointer, getPointerX, setAIPointerX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos, setGameState } from '../infra/input/pointer.js';
 import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/power-up-render.js';
-import { drawMineralCapsule, drawMineralHUD, resetMineralSessionGains, addMineralSessionGain } from '../infra/renderers/mineral-render.js';
+import { drawMineralCapsule, drawMineralHUD, resetMineralSessionGains, addMineralSessionGain } from '../mineral/infra/mineral-render.js';
 import { isMusicLabActive } from '../infra/lab/music-lab/index.js';
 import { isAILabActive } from '../infra/lab/ai-lab/index.js';
 import { isProgressLabActive, isSimulatorOpen, showSimulatorModal, hideSimulatorModal, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';

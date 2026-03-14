@@ -81,7 +81,7 @@ export function saveModelToDownload(refs, trainer) {
     return;
   }
   downloadJson(data, 'best.json');
-  refs.statsDiv.innerHTML = '<div class="ai-stat">Modèle téléchargé — placer dans <b>js/ai/models/</b> et mettre à jour <b>index.json</b></div>';
+  refs.statsDiv.innerHTML = '<div class="ai-stat">Modèle téléchargé — placer dans <b>js/contexts/ai/models/</b> et mettre à jour <b>index.json</b></div>';
 }
 
 /** Importe un modèle depuis une chaîne JSON. */

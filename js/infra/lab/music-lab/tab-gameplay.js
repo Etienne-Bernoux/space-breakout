@@ -1,7 +1,7 @@
 // Gameplay tab - Logic (simRecalcIntensity, simApply)
 // Draw function removed (DOM version).
 
-import { setLayerVolume, getCurrentSection, requestNextSection } from '../../../audio/infra/music/index.js';
+import { setLayerVolume, getCurrentSection, requestNextSection } from '../../../contexts/audio/infra/music/index.js';
 
 // Constants for intensity mapping
 const INTENSITY_LAYERS = [

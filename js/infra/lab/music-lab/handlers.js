@@ -7,7 +7,7 @@ import {
   playSectionByName, playInstrumentDemo,
   setLayerVolume, getLayerVolumes, resetAudio,
   setTrack, getTrack, enableAdaptiveMode,
-} from '../../../audio/infra/music/index.js';
+} from '../../../contexts/audio/infra/music/index.js';
 import {
   isActive, setCurrentTab, setActivity, setMuffled, isMuffled,
   getSim, setLoopStartTime, getCurrentTab,

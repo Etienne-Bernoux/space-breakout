@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // --- Entraînement IA en ligne de commande ---
-// Usage : node js/ai/train-cli.js [options]
+// Usage : node js/contexts/ai/infra/train-cli.js [options]
 //   --generations N   nombre de générations (défaut: 100)
 //   --population N    taille de la population (défaut: 50)
 //   --level ID        niveau d'entraînement (défaut: z1-1)
 //   --mutation-rate N taux de mutation (défaut: 0.20)
 //   --mutation-power N puissance de mutation (défaut: 0.4)
-//   --output FILE     fichier de sortie du modèle (défaut: js/ai/models/best.json)
+//   --output FILE     fichier de sortie du modèle (défaut: js/contexts/ai/models/best.json)
 //   --input FILE      fichier modèle à charger comme point de départ
 //   --silent          pas de sortie par génération (juste le résultat final)
 
@@ -31,7 +31,7 @@ const POP_SIZE       = parseInt(arg('population', '50'));
 const LEVEL_ID       = arg('level', 'z1-1');
 const MUTATION_RATE  = parseFloat(arg('mutation-rate', '0.20'));
 const MUTATION_POWER = parseFloat(arg('mutation-power', '0.4'));
-const OUTPUT_FILE    = arg('output', 'js/ai/models/best.json');
+const OUTPUT_FILE    = arg('output', 'js/contexts/ai/models/best.json');
 const INPUT_FILE     = arg('input', '');
 const SILENT         = flag('silent');
 

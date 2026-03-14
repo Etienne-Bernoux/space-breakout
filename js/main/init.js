@@ -9,14 +9,14 @@ import { loadProgress, saveProgress } from '../infra/persistence/progress-storag
 import { GameSession } from '../use-cases/game-logic/game-session.js';
 import { DropSystem } from '../use-cases/drop/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up/power-up-manager.js';
-import { MineralDropSystem } from '../mineral/use-cases/mineral-drop-system.js';
-import { MineralWallet } from '../mineral/use-cases/mineral-wallet.js';
+import { MineralDropSystem } from '../contexts/mineral/use-cases/mineral-drop-system.js';
+import { MineralWallet } from '../contexts/mineral/use-cases/mineral-wallet.js';
 import { UpgradeManager } from '../use-cases/upgrade/upgrade-manager.js';
-import { GameIntensityDirector } from '../audio/use-cases/intensity/game-intensity-director.js';
-import { MusicDirector } from '../audio/infra/orchestrators/music-director.js';
-import { EffectDirector } from '../audio/infra/orchestrators/effect-director.js';
+import { GameIntensityDirector } from '../contexts/audio/use-cases/intensity/game-intensity-director.js';
+import { MusicDirector } from '../contexts/audio/infra/orchestrators/music-director.js';
+import { EffectDirector } from '../contexts/audio/infra/orchestrators/effect-director.js';
 import { setupResize } from '../infra/input/resize.js';
-import { playAlienShoot } from '../audio/infra/sfx/audio.js';
+import { playAlienShoot } from '../contexts/audio/infra/sfx/audio.js';
 import { getDevAsteroidConfig } from '../infra/lab/dev-panel/index.js';
 import { isLabMode } from '../infra/lab/hub/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
@@ -28,7 +28,7 @@ import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input/input-handler/index.js';
 import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains } from './adapters.js';
-import { initMineralHUD } from '../mineral/infra/mineral-render.js';
+import { initMineralHUD } from '../contexts/mineral/infra/mineral-render.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');

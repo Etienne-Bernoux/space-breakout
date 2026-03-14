@@ -2,7 +2,7 @@
 // 2 onglets : "Sons & Gameplay" (2 colonnes) et "Stingers".
 
 import { TRACKS, getSections, getStingerGroups, INSTRUMENTS_MAIN, INSTRUMENTS_DARK } from './tab-sons.js';
-import { LAYER_NAMES } from '../../../audio/infra/music/index.js';
+import { LAYER_NAMES } from '../../../contexts/audio/infra/music/index.js';
 
 function el(tag, cls, attrs = {}) {
   const e = document.createElement(tag);

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { UpgradeManager } from './upgrade-manager.js';
-import { MineralWallet } from '../../mineral/use-cases/mineral-wallet.js';
+import { MineralWallet } from '../../contexts/mineral/use-cases/mineral-wallet.js';
 import { UPGRADE_IDS } from './upgrade-catalog.js';
 
 describe('UpgradeManager', () => {

@@ -11,7 +11,7 @@ const modelCache = {};
 export async function loadCommittedModel() {
   if (localStorage.getItem(STORAGE_KEY)) return;
   try {
-    const resp = await fetch('./js/ai/models/best.json');
+    const resp = await fetch('./js/contexts/ai/models/best.json');
     if (!resp.ok) return;
     const data = await resp.json();
     if (!data.weights || data.weights.length === 0) return;
@@ -22,7 +22,7 @@ export async function loadCommittedModel() {
 /** Charge l'index des modèles depuis models/index.json. */
 export async function fetchModelIndex() {
   try {
-    const resp = await fetch('./js/ai/models/index.json');
+    const resp = await fetch('./js/contexts/ai/models/index.json');
     if (!resp.ok) return [];
     return await resp.json();
   } catch { return []; }
@@ -31,7 +31,7 @@ export async function fetchModelIndex() {
 /** Fetch et cache un modèle depuis models/. */
 export async function fetchModel(file) {
   if (modelCache[file]) return modelCache[file];
-  const resp = await fetch(`./js/ai/models/${file}`);
+  const resp = await fetch(`./js/contexts/ai/models/${file}`);
   if (!resp.ok) throw new Error(`Modèle introuvable : ${file}`);
   const data = await resp.json();
   modelCache[file] = data;

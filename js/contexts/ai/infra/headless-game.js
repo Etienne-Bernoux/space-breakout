@@ -1,17 +1,17 @@
 // --- Setup jeu headless (sans rendu) ---
 // Partagé entre train-cli.js (Node) et potentiellement d'autres outils.
 
-import { CONFIG } from '../../config.js';
-import { Ship } from '../../domain/ship/ship.js';
-import { Drone } from '../../domain/drone/drone.js';
-import { AsteroidField } from '../../domain/asteroid/index.js';
-import { GameSession } from '../../use-cases/game-logic/game-session.js';
-import { CollisionHandler } from '../../use-cases/collision/collision-handler.js';
-import { DropSystem } from '../../use-cases/drop/drop-system.js';
-import { PowerUpManager } from '../../use-cases/power-up/power-up-manager.js';
+import { CONFIG } from '../../../config.js';
+import { Ship } from '../../../domain/ship/ship.js';
+import { Drone } from '../../../domain/drone/drone.js';
+import { AsteroidField } from '../../../domain/asteroid/index.js';
+import { GameSession } from '../../../use-cases/game-logic/game-session.js';
+import { CollisionHandler } from '../../../use-cases/collision/collision-handler.js';
+import { DropSystem } from '../../../use-cases/drop/drop-system.js';
+import { PowerUpManager } from '../../../use-cases/power-up/power-up-manager.js';
 import { MineralDropSystem } from '../../mineral/use-cases/mineral-drop-system.js';
-import { DroneManager } from '../../use-cases/drone/drone-manager.js';
-import { getLevel } from '../../domain/progression/level-catalog.js';
+import { DroneManager } from '../../../use-cases/drone/drone-manager.js';
+import { getLevel } from '../../../domain/progression/level-catalog.js';
 
 const noop = () => {};
 const noopEffects = {

@@ -27,21 +27,20 @@ function updateWatchStats(el, trainer) {
     return;
   }
 
-  const tracking = p.trackingFrames > 0
-    ? Math.round(p.trackingScore / p.trackingFrames * 100) : 0;
   const state = trainer.gameState.session.state;
   const stateLabel = state === 'won' ? ' ✓' : state === 'gameOver' ? ' ✗' : '';
+  const progress = p.asteroidsDestroyed > 0
+    ? Math.round(p.asteroidsDestroyed / (trainer.gameState.entities.totalAsteroids || 1) * 100) : 0;
 
   el.innerHTML = `
     <div class="ai-stat ai-best">Record <b>${Math.round(pop.bestFitness)}</b></div>
     <div class="ai-stat-sep"></div>
     <div class="ai-stat">Fitness <b>${trainer.stats.current}</b>${stateLabel}</div>
-    <div class="ai-stat">Rattrapages <b>${p.catchCount}</b></div>
+    <div class="ai-stat">Progression <b>${progress}%</b></div>
     <div class="ai-stat">Pertes drone <b>${p.dropCount}</b></div>
-    <div class="ai-stat">Tracking <b>${tracking}%</b></div>
-    <div class="ai-stat">Destructions <b>${p.asteroidsDestroyed}</b></div>
-    <div class="ai-stat">Rally <b>${Math.round(p.rallyScore)}</b></div>
     <div class="ai-stat">Capsules <b>${p.capsulesCaught}</b></div>
+    <div class="ai-stat">Rattrapages <b>${p.catchCount}</b></div>
+    <div class="ai-stat">Rally <b>${Math.round(p.rallyScore)}</b></div>
     <div class="ai-stat-sep"></div>
     <div class="ai-stat-muted">frame ${trainer.frameCount}</div>
   `;

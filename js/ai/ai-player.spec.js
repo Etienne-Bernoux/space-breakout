@@ -252,115 +252,113 @@ describe('AIPlayer', () => {
     });
   });
 
-  describe('anti-oscillation', () => {
-    it('compte les changements de direction', () => {
-      const gs = makeGameState();
-      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-
-      // Forcer des changements de direction en manipulant les outputs
-      player.decide(); // init prevPointerX
-      // Les changements dépendent du réseau, mais au moins pas d'erreur
-      expect(player.directionChanges).toBeGreaterThanOrEqual(0);
-    });
-
-    it('pénalise un taux d\'oscillation > 0.3', () => {
-      const gs = makeGameState();
-      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.framesSurvived = 100;
-      player.directionChanges = 50; // taux = 0.5 > 0.3
-      const fitness = player.computeFitness();
-      // Pénalité = (0.5 - 0.3) * 100 = 20
-      expect(fitness).toBeLessThan(0); // -20 sans autre bonus
-    });
-
-    it('ne pénalise pas un taux normal (< 0.3)', () => {
-      const gs = makeGameState();
-      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.framesSurvived = 100;
-      player.directionChanges = 20; // taux = 0.2 < 0.3
-      const fitnessWithOsc = player.computeFitness();
-      // Pas de pénalité oscillation → fitness = 0
-      expect(fitnessWithOsc).toBe(0);
-    });
-  });
-
   describe('computeFitness', () => {
-    it('peut être négatif (drops > catches)', () => {
+    it('gros bonus pour une victoire (1000 + étoiles)', () => {
+      const gs = makeGameState();
+      gs.session.state = 'won';
+      gs.entities.field.remaining = 0;
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.framesSurvived = 1800; // 30s → 3★
+      const fitness = player.computeFitness();
+      // win(1000) + 3★(600) + progress(100%) = 1700
+      expect(fitness).toBeCloseTo(1700, 0);
+    });
+
+    it('2 étoiles si victoire sans perte mais temps > 60s', () => {
+      const gs = makeGameState();
+      gs.session.state = 'won';
+      gs.entities.field.remaining = 0;
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.framesSurvived = 5400; // 90s → 2★
+      const fitness = player.computeFitness();
+      // win(1000) + 2★(400) + progress(100%) = 1500
+      expect(fitness).toBeCloseTo(1500, 0);
+    });
+
+    it('1 étoile si victoire avec pertes de vie', () => {
+      const gs = makeGameState();
+      gs.session.state = 'won';
+      gs.entities.field.remaining = 0;
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.dropCount = 1;
+      player.framesSurvived = 1800;
+      const fitness = player.computeFitness();
+      // win(1000) + 1★(200) - drop(200) + progress(100%) = 1100
+      expect(fitness).toBeCloseTo(1100, 0);
+    });
+
+    it('peut être négatif (drops sans victoire)', () => {
       const gs = makeGameState();
       gs.session.state = 'gameOver';
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.catchCount = 1;  // +50
-      player.dropCount = 3;   // -300
-      expect(player.computeFitness()).toBe(-250);
+      player.dropCount = 3;
+      expect(player.computeFitness()).toBe(-600); // -3×200
     });
 
-    it('récompense les rattrapages (50 par catch)', () => {
+    it('récompense la progression (bootstrap)', () => {
       const gs = makeGameState();
+      gs.entities.field.remaining = 5; // 50% détruits
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.catchCount = 5;
       const fitness = player.computeFitness();
-      expect(fitness).toBeGreaterThanOrEqual(250); // 5×50
+      // progress(50%) = 50
+      expect(fitness).toBeCloseTo(50, 0);
     });
 
-    it('ajoute un bonus de victoire', () => {
-      const gs = makeGameState();
-      gs.session.state = 'won';
-      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.catchCount = 0;
-      player.framesSurvived = 5400; // 50% du temps (10800 max)
-      const fitness = player.computeFitness();
-      // tracking(0) + 500 + timeBonus(0.5) * 300 = 650
-      expect(fitness).toBeCloseTo(650, 0);
-    });
-
-    it('inclut le tracking score (alignement moyen × 30)', () => {
-      const gs = makeGameState();
-      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.trackingScore = 80;  // somme alignement
-      player.trackingFrames = 100; // 80% aligné en moyenne
-      const fitness = player.computeFitness();
-      // tracking: 0.8 * 30 = 24
-      expect(fitness).toBeCloseTo(24, 0);
-    });
-
-    it('récompense les capsules récupérées (20 par capsule)', () => {
+    it('récompense les capsules récupérées (30 par capsule)', () => {
       const gs = makeGameState();
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.capsulesCaught = 3;
       const fitness = player.computeFitness();
-      expect(fitness).toBe(60); // 3 × 20
+      expect(fitness).toBe(90); // 3 × 30
     });
 
-    it('pénalise les drops (-100 par drop)', () => {
+    it('pénalise les drops (-200 par drop)', () => {
       const gs = makeGameState();
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.catchCount = 3; // +150
-      player.dropCount = 2;  // -200
+      player.dropCount = 2;
       const fitness = player.computeFitness();
-      expect(fitness).toBe(-50);
+      expect(fitness).toBe(-400); // -2×200
     });
 
     it('clôture le rally en cours avant le calcul', () => {
       const gs = makeGameState();
       gs.session.state = 'won';
+      gs.entities.field.remaining = 0;
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.rallyDestroys = 2; // rally non clôturé
-      player.framesSurvived = 0;
+      player.rallyDestroys = 2;
+      player.framesSurvived = 1800; // 3★
       const fitness = player.computeFitness();
-      // rallyScore = 10 + 5 = 15, + victoire(500+300) = 815
-      expect(fitness).toBeCloseTo(815, 0);
+      // win(1000) + 3★(600) + progress(100%) + rally(10+5)×2.0 = 1730
+      expect(fitness).toBeCloseTo(1730, 0);
     });
 
     it('currentFitness inclut le rally en cours sans le clôturer', () => {
       const gs = makeGameState();
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.catchCount = 1; // +50
-      player.rallyDestroys = 2; // rally en cours (non clôturé)
+      player.rallyDestroys = 2;
       const fitness = player.currentFitness();
-      // 50 + pendingRally(10+5) = 65 + tracking(0)
-      expect(fitness).toBeCloseTo(65, 0);
-      // Le rally n'est pas clôturé
+      // pendingRally(10+5)×1.0 = 15
+      expect(fitness).toBeCloseTo(15, 0);
       expect(player.rallyDestroys).toBe(2);
+    });
+
+    it('pénalise les oscillations excessives (>30%)', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.framesSurvived = 100;
+      player.directionChanges = 50; // 50% > 30%
+      const fitness = player.computeFitness();
+      // penalty = (0.5 - 0.3) × 100 = 20
+      expect(fitness).toBeCloseTo(-20, 0);
+    });
+
+    it('pas de pénalité si oscillation <= 30%', () => {
+      const gs = makeGameState();
+      const player = new AIPlayer(new Genome(TOPOLOGY), gs);
+      player.framesSurvived = 100;
+      player.directionChanges = 20; // 20% < 30%
+      const fitness = player.computeFitness();
+      expect(fitness).toBe(0);
     });
   });
 });

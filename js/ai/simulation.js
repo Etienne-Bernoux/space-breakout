@@ -33,8 +33,12 @@ export function simulateAgent(genome, gameState, startGame, tick, levelId) {
     tick(decision.pointerX);
   }
 
-  const avgTracking = player.trackingFrames > 0
-    ? Math.round(player.trackingScore / player.trackingFrames * 100) : 0;
+  const won = gameState.session.state === 'won';
+  const timeSec = player.framesSurvived / 60;
+  const stars = !won ? 0
+    : player.dropCount > 0 ? 1
+    : timeSec <= 60 ? 3
+    : 2;
 
   return {
     fitness: player.computeFitness(),
@@ -42,8 +46,8 @@ export function simulateAgent(genome, gameState, startGame, tick, levelId) {
     destroys: player.asteroidsDestroyed,
     drops: player.dropCount,
     rallyScore: Math.round(player.rallyScore),
-    tracking: avgTracking, // % alignement moyen sous le drone
     capsules: player.capsulesCaught,
-    won: gameState.session.state === 'won',
+    stars,
+    won,
   };
 }

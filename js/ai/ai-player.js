@@ -20,8 +20,6 @@ export class AIPlayer {
     this.dropCount = 0;      // nombre de fois où le drone tombe (vie perdue)
     this.rallyDestroys = 0;  // destructions dans le rally courant (entre 2 rattrapages)
     this.rallyScore = 0;     // score cumulé des rallies (log décroissant)
-    this.trackingScore = 0;  // bonus continu d'alignement X quand le drone descend
-    this.trackingFrames = 0; // frames où le tracking est mesuré
     this.capsulesCaught = 0; // capsules (power-up + minerai) récupérées
     this.prevPointerX = null; // pour détecter les changements de direction
     this.directionChanges = 0; // nombre de changements de direction
@@ -60,13 +58,6 @@ export class AIPlayer {
       }
     }
     this.prevDroneDy = drone.launched ? drone.dy : 0;
-
-    // Tracking continu : bonus quand le ship est aligné sous le drone (drone descend)
-    if (drone.launched && drone.dy > 0) {
-      const dist = Math.abs(drone.x - shipCx) / W;
-      this.trackingScore += 1 - dist;
-      this.trackingFrames++;
-    }
 
     // Détecter les pertes de vie (drone tombé)
     if (this.prevLives < 0) this.prevLives = session.lives;
@@ -171,31 +162,46 @@ export class AIPlayer {
     const won = this.gs.session.state === 'won';
 
     let fitness = 0;
-    // Tracking : alignement moyen sous le drone (0–30 pts)
-    if (this.trackingFrames > 0) {
-      fitness += (this.trackingScore / this.trackingFrames) * 30;
-    }
-    // Rattrapage du drone (signal principal)
-    fitness += this.catchCount * 50;
-    // Rallies : destructions entre rattrapages (log décroissant)
-    fitness += this.rallyScore + extraRally;
-    // Capsules récupérées (power-ups + minerais)
-    fitness += this.capsulesCaught * 20;
-    // Victoire + bonus temps
+
+    // ── Objectifs principaux (résultats) ──
+
+    // 1. Gagner (objectif majeur)
+    if (won) fitness += 1000;
+
+    // 2. Ne pas perdre de vie
+    fitness -= this.dropCount * 200;
+
+    // 3. Capsules récupérées (minerais + power-ups)
+    fitness += this.capsulesCaught * 30;
+
+    // 4. Étoiles (temps + vies) — bonus progressif
     if (won) {
-      const timeBonus = Math.max(0, 1 - this.framesSurvived / 10800);
-      fitness += 500 + timeBonus * 300;
+      const timeSec = this.framesSurvived / 60;
+      const stars = this.dropCount > 0 ? 1
+        : timeSec <= 60 ? 3
+        : 2;
+      fitness += stars * 200; // 1★=200, 2★=400, 3★=600
     }
-    // Pénalité pertes de vie
-    fitness -= this.dropCount * 100;
-    // Pénalité oscillation (changements de direction excessifs)
+
+    // ── Signal de bootstrap (secondaire, guide vers la victoire) ──
+
+    // Progression : % d'astéroïdes détruits (0–100 pts)
+    fitness += this.#progress() * 100;
+
+    // Rattrapages : signal clé entre "suivre le drone" et "ne pas mourir"
+    fitness += this.catchCount * 30;
+
+    // Rallies : récompense les destructions entre rattrapages
+    fitness += this.rallyScore + extraRally;
+
+    // Anti-oscillation : pénalise les vibrations excessives
     if (this.framesSurvived > 0) {
       const oscillationRate = this.directionChanges / this.framesSurvived;
-      // Taux normal ~0.1–0.3, au-delà c'est de la vibration
       if (oscillationRate > 0.3) {
         fitness -= (oscillationRate - 0.3) * 100;
       }
     }
+
     return fitness;
   }
 

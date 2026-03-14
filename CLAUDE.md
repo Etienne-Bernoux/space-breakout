@@ -16,7 +16,7 @@ Le thème spatial influence le gameplay : récolte de minerais, power-ups, upgra
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
 - Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~512 tests)
-- Tests e2e : Playwright + playwright-bdd (Gherkin, dossier `e2e/`, 20 scénarios)
+- Tests e2e : Playwright + playwright-bdd (Gherkin, dossier `e2e/`, 26 scénarios)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
 
@@ -41,11 +41,6 @@ js/
     ship/ship.js        → vaisseau (raquette)
     drone/drone.js      → drone de minage (balle)
     capsule/capsule.js  → capsule de power-up
-    mineral/            → système de minerais
-      minerals.js       → 4 minerais (cuivre, argent, or, platine)
-      mineral-drop-table.js → matrice matériau×minerai (poids de drop)
-      mineral-capsule.js → entité capsule minerai (chute, bob, rotation)
-      index.js          → façade re-export
     progression/        → système de progression multi-zones
       zone-catalog.js   → 6 zones (ceinture, lune, station, planète, nébuleuse, noyau alien)
       level-catalog.js  → catalogue niveaux par zone (getLevelsForZone, ALL_LEVELS_FLAT)
@@ -67,22 +62,45 @@ js/
     projectile/           → projectiles alien
       alien-projectile.js → AlienProjectile (balle guidée)
       index.js            → re-export
-  ai/                   → IA auto-apprenante (neuroévolution, Clean Architecture interne)
-    index.js            → façade re-export
-    domain/             → entités pures (0 dépendance externe)
-      neural-network.js → réseau feedforward (tanh, Xavier init, encode/decode)
-      genome.js         → génome + population (sélection tournoi, crossover, mutation, élitisme)
-      ai-fitness.js     → calcul fitness composite (rallies, progression, anti-oscillation)
-    use-cases/          → orchestration (observation, simulation, entraînement)
-      ai-player.js      → observation jeu (24 inputs) → 2 outputs (position vaisseau, lancer drone)
-      ai-trainer.js     → boucle d'entraînement (50 agents/gén, DI schedule/storage)
-      simulation.js     → simulation headless d'un agent (partagé browser + CLI)
-      gen-stats.js      → stats par génération (calcul + formatage, partagé browser + CLI)
-    infra/              → adapters (persistence, setup jeu, CLI)
-      population-storage.js → adapters persistence (localStorage, null) injectables dans Population
-      headless-game.js  → setup jeu headless complet (entités, collision, tick)
-      train-cli.js      → entraînement CLI headless (node js/ai/infra/train-cli.js --help)
-    models/best.json    → meilleur modèle commité (chargé par défaut si pas de localStorage)
+  contexts/             → bounded contexts isolés (Clean Architecture interne)
+    ai/                 → IA auto-apprenante (neuroévolution)
+      index.js          → façade re-export
+      domain/           → entités pures (0 dépendance externe)
+        neural-network.js → réseau feedforward (tanh, Xavier init, encode/decode)
+        genome.js       → génome + population (sélection tournoi, crossover, mutation, élitisme)
+        ai-fitness.js   → calcul fitness composite (rallies, progression, anti-oscillation)
+      use-cases/        → orchestration (observation, simulation, entraînement)
+        ai-player.js    → observation jeu (24 inputs) → 2 outputs (position vaisseau, lancer drone)
+        ai-trainer.js   → boucle d'entraînement (50 agents/gén, DI schedule/storage)
+        simulation.js   → simulation headless d'un agent (partagé browser + CLI)
+        gen-stats.js    → stats par génération (calcul + formatage, partagé browser + CLI)
+      infra/            → adapters (persistence, setup jeu, CLI)
+        population-storage.js → adapters persistence (localStorage, null) injectables dans Population
+        headless-game.js → setup jeu headless complet (entités, collision, tick)
+        train-cli.js    → entraînement CLI headless (node js/contexts/ai/infra/train-cli.js --help)
+      models/best.json  → meilleur modèle commité (chargé par défaut si pas de localStorage)
+    mineral/            → système de minerais
+      index.js          → façade re-export
+      domain/           → entités pures (minerais, drop table, capsule)
+        minerals.js     → 4 minerais (cuivre, argent, or, platine)
+        mineral-drop-table.js → matrice matériau×minerai (poids de drop)
+        mineral-capsule.js → entité capsule minerai (chute, bob, rotation)
+        index.js        → façade re-export
+      use-cases/        → logique métier
+        mineral-drop-system.js → décision drop minerai (proba cumulative)
+        mineral-wallet.js → portefeuille persistant (add/spend/canAfford)
+      infra/            → rendu
+        mineral-render.js → rendu capsules minerais (pépite/cristal) + HUD minerais
+    audio/              → audio + effets visuels liés à l'intensité
+      index.js          → façade re-export
+      use-cases/        → logique métier
+        intensity/
+          game-intensity-director.js → chef d'orchestre (intensité 0-4 → music + effects, DI)
+      infra/            → implémentations concrètes
+        orchestrators/  → music-director.js, effect-director.js
+        music/          → musique procédurale (Web Audio, 13 fichiers)
+        sfx/            → SFX procéduraux (audio.js, sfxr-synth.js)
+        effects/        → particules, screenshake, étoiles, corps célestes
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic/
       game-session.js   → GameSession : état, score, vies (~72 lignes)
@@ -93,36 +111,20 @@ js/
       power-up-manager.js → strategy pattern apply/revert/cumul
     drone/
       drone-manager.js  → lifecycle drone centralisé (spawn, remove, reset)
-    intensity/
-      game-intensity-director.js → chef d'orchestre (intensité 0-4 → music + effects, DI)
     alien-combat/
       alien-combat-manager.js → tir alien, firePulse decay, projectiles (DI)
     drop/
       drop-system.js    → probabilité de drop
-    mineral/
-      mineral-drop-system.js → décision drop minerai (proba cumulative)
-      mineral-wallet.js → portefeuille persistant (add/spend/canAfford, localStorage)
     upgrade/
       upgrade-catalog.js → catalogue déclaratif (7 upgrades, 4 catégories, coûts par palier)
       upgrade-manager.js → achat/application upgrades (niveaux, effets, persistence)
     simulator/
       run-simulator.js  → applique un résultat simulé (victoire/défaite, étoiles, minerais)
-  infra/                → DOM, Canvas, Audio, Input
-    orchestrators/
-      music-director.js → gère TOUS les sons/musique (reçoit events du GID)
-      effect-director.js → effets visuels par intensité (lerp entre presets)
+  infra/                → DOM, Canvas, Input
     input/              → interaction utilisateur + viewport
       input-handler/    → handlers clavier/pause (dossier-module, DI groupée)
       pointer.js        → contrôles tactiles + souris unifiés
       resize.js         → canvas responsive
-    effects/            → effets visuels et fond
-      particles.js      → explosions + traînée
-      screenshake.js    → tremblement caméra
-      stars.js          → fond étoilé parallaxe (étoiles uniquement)
-      celestial-bodies.js → planètes et nébuleuses en fond
-    sfx/                → sons procéduraux
-      audio.js          → SFX procéduraux (Web Audio)
-      sfxr-synth.js     → synthèse SFXR
     renderers/
       hud-render.js     → HUD, combo, pause screen, end screen
       ship-render.js    → rendu vaisseau (sci-fi)
@@ -131,7 +133,6 @@ js/
       field-render.js   → rendu champ d'astéroïdes
       power-up-render.js → rendu capsules + HUD power-ups actifs
       power-up-icons.js → icônes canvas power-ups (12 icônes)
-      mineral-render.js → rendu capsules minerais (pépite/cristal) + HUD minerais
       asteroid-render.js → rendu par matériau (6 styles minéraux)
       asteroid-render-helpers.js → helpers partagés (couleurs, cratères, veines, rim)
       projectile-render.js → rendu projectiles alien
@@ -142,20 +143,6 @@ js/
         core-draw.js      → noyau (métal parasité, mousse, veines, œil central)
         bridge-draw.js    → ponts organiques corps↔tentacules
         utils.js          → isAdjacent, partsBBox
-    music/              → musique procédurale (Web Audio)
-      audio-core.js     → contexte audio, master gain/filter, layers
-      instruments-main.js → instruments piste Space Synth
-      instruments-dark.js → instruments piste Dark Orchestral (+ chœur SATB)
-      instruments-cantina.js → instruments piste Cantina (funk/jazz)
-      sections-main.js  → 7 configs sections Mi mineur
-      sections-dark.js  → 7 configs sections Ré mineur (LOTR style)
-      sections-cantina.js → configs sections Cantina
-      section-engine.js → registre instruments + dispatch data-driven
-      scheduler.js      → boucle sections, mode adaptatif, contrôle lecture
-      fills.js          → fills de transition (snare roll, arp rise)
-      stingers.js       → motifs courts (win, game over, power-up, combo)
-      demos.js          → démos instruments (music lab)
-      index.js          → façade publique
     lab/                → labs de test (?lab)
       hub/              → hub de sélection des labs
         state.js        → état (active, currentLab)

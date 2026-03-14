@@ -4,6 +4,8 @@
 //   centroïde astéroïdes / ship, densité gauche/droite, 5 astéroïdes proches / drone.
 // Outputs (2) : position cible du vaisseau (tanh → -1..1), lancer le drone (>0 = oui).
 
+import { computeRallyScore, calcFitness } from '../domain/ai-fitness.js';
+
 const INPUT_COUNT = 24;
 const OUTPUT_COUNT = 2;
 export const TOPOLOGY = [INPUT_COUNT, 16, OUTPUT_COUNT];
@@ -142,25 +144,19 @@ export class AIPlayer {
   }
 
   #closeRally(progress = 0) {
-    // Pondération : 1× au début du niveau, 2× quand il ne reste presque rien
-    const weight = 1 + progress;
-    for (let n = 1; n <= this.rallyDestroys; n++) {
-      this.rallyScore += (10 / n) * weight;
-    }
+    this.rallyScore += computeRallyScore(this.rallyDestroys, progress);
     this.rallyDestroys = 0;
   }
 
   computeFitness() {
     const progress = this.#progress();
     this.#closeRally(progress);
-    return this.#calcFitness();
+    return this.#buildFitness();
   }
 
   currentFitness() {
-    const weight = 1 + this.#progress();
-    let pendingRally = 0;
-    for (let n = 1; n <= this.rallyDestroys; n++) pendingRally += (10 / n) * weight;
-    return this.#calcFitness(pendingRally);
+    const extra = computeRallyScore(this.rallyDestroys, this.#progress());
+    return this.#buildFitness(extra);
   }
 
   #progress() {
@@ -169,56 +165,19 @@ export class AIPlayer {
     return field ? 1 - field.remaining / total : 0;
   }
 
-  #calcFitness(extraRally = 0) {
-    const won = this.gs.session.state === 'won';
-
-    let fitness = 0;
-
-    // ── Objectifs principaux (résultats) ──
-
-    // 1. Gagner (objectif majeur)
-    if (won) fitness += 1000;
-
-    // 2. Ne pas perdre de vie
-    fitness -= this.dropCount * 200;
-
-    // 3. Capsules récupérées (minerais + power-ups)
-    fitness += this.capsulesCaught * 30;
-
-    // 4. Étoiles (temps + vies) — bonus progressif
-    if (won) {
-      const timeSec = this.framesSurvived / 60;
-      const stars = this.dropCount > 0 ? 1
-        : timeSec <= 60 ? 3
-        : 2;
-      fitness += stars * 200; // 1★=200, 2★=400, 3★=600
-    }
-
-    // ── Signal de bootstrap (secondaire, guide vers la victoire) ──
-
-    // Progression : quadratique (0–400 pts) — derniers astéroïdes valent beaucoup plus
-    const p = this.#progress();
-    fitness += p * p * 400;
-
-    // Rattrapages : bootstrapping (signal secondaire)
-    fitness += this.catchCount * 15;
-
-    // Rallies : récompense les destructions entre rattrapages
-    fitness += this.rallyScore + extraRally;
-
-    // Pénalité rallies vides : catches sans destruction = perte de temps
-    const emptyCatches = this.catchCount - this.asteroidsDestroyed;
-    if (emptyCatches > 5) fitness -= (emptyCatches - 5) * 5;
-
-    // Anti-oscillation : pénalise les vibrations excessives
-    if (this.framesSurvived > 0) {
-      const oscillationRate = this.directionChanges / this.framesSurvived;
-      if (oscillationRate > 0.3) {
-        fitness -= (oscillationRate - 0.3) * 100;
-      }
-    }
-
-    return fitness;
+  #buildFitness(extraRally = 0) {
+    return calcFitness({
+      sessionState: this.gs.session.state,
+      dropCount: this.dropCount,
+      capsulesCaught: this.capsulesCaught,
+      framesSurvived: this.framesSurvived,
+      progress: this.#progress(),
+      catchCount: this.catchCount,
+      rallyScore: this.rallyScore,
+      asteroidsDestroyed: this.asteroidsDestroyed,
+      directionChanges: this.directionChanges,
+      extraRally,
+    });
   }
 
   /** Trouve la capsule (power-up ou minerai) la plus proche du ship. */

@@ -1,6 +1,6 @@
 // --- AI Lab DOM Update ---
 
-import { formatGenStats, genStatsHeader, genStatsSeparator } from '../../../ai/gen-stats.js';
+import { formatGenStats, genStatsHeader, genStatsSeparator } from '../../../ai/use-cases/gen-stats.js';
 import { graphDataCache, drawAndCache, drawElitesGraph, drawGraph } from './graph-draw.js';
 export { drawZoomedGraph } from './graph-draw.js';
 

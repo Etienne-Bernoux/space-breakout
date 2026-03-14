@@ -5,7 +5,7 @@ import { buildAILab } from './build.js';
 import { attachAILabHandlers } from './handlers.js';
 import { updateStats, drawAllGraphs, drawZoomedGraph } from './update.js';
 import {
-  loadCommittedModel, loadModelIndex, loadHistoryIntoTrainer,
+  loadCommittedModel, loadModelIndex, loadHistoryIntoTrainer, clearStorage,
   onModelSelectChange, loadSelectedModel,
   exportModel, importModel, saveModelToDownload,
 } from './models.js';
@@ -35,7 +35,7 @@ export function initAILab({ onBack, levels, createTrainer }) {
     onWatch: () => toggleWatch(createTrainer),
     onReset: () => {
       if (trainer) {
-        localStorage.removeItem('ai-best-genome');
+        clearStorage();
         stopTraining();
         drawAllGraphs(refs.graphCanvases, null);
         refs.statsDiv.innerHTML = '<div class="ai-stat-muted">Reset — prêt.</div>';

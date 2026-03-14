@@ -1,49 +1,29 @@
-// --- AI Lab Model Management ---
-// Browsing, import, export et sauvegarde de modèles IA.
+// --- AI Lab Model UI ---
+// Coordination UI pour le browsing, import, export de modèles IA.
+// L'I/O est déléguée à model-storage.js.
 
 import state from './state.js';
 import { drawAllGraphs } from './update.js';
+import {
+  loadCommittedModel, fetchModelIndex, fetchModel,
+  loadFromStorage, saveToStorage, clearStorage,
+  loadHistoryIntoTrainer, getModelData, parseModelJson, downloadJson,
+} from './model-storage.js';
 
-/** Cache des modèles déjà fetchés (file → data). */
-const modelCache = {};
+export { loadCommittedModel, loadHistoryIntoTrainer, clearStorage };
+
 /** Modèle actuellement sélectionné dans le select. */
 let selectedModelFile = '';
 
-/** Charge le modèle commité (best.json) comme point de départ si pas de localStorage. */
-export async function loadCommittedModel() {
-  if (localStorage.getItem('ai-best-genome')) return;
-  try {
-    const resp = await fetch('./js/ai/models/best.json');
-    if (!resp.ok) return;
-    const data = await resp.json();
-    if (!data.weights || data.weights.length === 0) return;
-    localStorage.setItem('ai-best-genome', JSON.stringify(data));
-  } catch { /* silently ignore */ }
-}
-
 /** Charge l'index des modèles et peuple le select. */
 export async function loadModelIndex(selectEl) {
-  try {
-    const resp = await fetch('./js/ai/models/index.json');
-    if (!resp.ok) return;
-    const models = await resp.json();
-    for (const m of models) {
-      const opt = document.createElement('option');
-      opt.value = m.file;
-      opt.textContent = `${m.name} — gen ${m.generation}, fit ${m.fitness}`;
-      selectEl.appendChild(opt);
-    }
-  } catch { /* silently ignore */ }
-}
-
-/** Fetch et cache un modèle depuis models/. */
-async function fetchModel(file) {
-  if (modelCache[file]) return modelCache[file];
-  const resp = await fetch(`./js/ai/models/${file}`);
-  if (!resp.ok) throw new Error(`Modèle introuvable : ${file}`);
-  const data = await resp.json();
-  modelCache[file] = data;
-  return data;
+  const models = await fetchModelIndex();
+  for (const m of models) {
+    const opt = document.createElement('option');
+    opt.value = m.file;
+    opt.textContent = `${m.name} — gen ${m.generation}, fit ${m.fitness}`;
+    selectEl.appendChild(opt);
+  }
 }
 
 /** Met à jour l'info et les graphes du modèle sélectionné (preview). */
@@ -54,11 +34,8 @@ export async function onModelSelectChange(file, refs, trainer) {
     if (trainer) {
       drawAllGraphs(refs.graphCanvases, trainer);
     } else {
-      try {
-        const raw = localStorage.getItem('ai-best-genome');
-        if (raw) drawAllGraphs(refs.graphCanvases, JSON.parse(raw));
-        else drawAllGraphs(refs.graphCanvases, null);
-      } catch { drawAllGraphs(refs.graphCanvases, null); }
+      const data = loadFromStorage();
+      drawAllGraphs(refs.graphCanvases, data);
     }
     return;
   }
@@ -86,34 +63,6 @@ export async function loadSelectedModel(refs, trainer) {
   }
 }
 
-/** Restaure l'historique depuis le modèle sauvegardé dans le trainer. */
-export function loadHistoryIntoTrainer(trainer) {
-  try {
-    const raw = localStorage.getItem('ai-best-genome');
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data.stats?.genHistory) trainer.genHistory = [...data.stats.genHistory];
-    }
-  } catch { /* ignore */ }
-}
-
-/** Récupère les stats courantes du trainer pour l'export. */
-function getTrainerStats(trainer) {
-  if (!trainer) return undefined;
-  return { genHistory: trainer.genHistory };
-}
-
-/** Obtient les données du modèle (depuis trainer ou localStorage). */
-function getModelData(trainer) {
-  let data = trainer?.population.exportModel(getTrainerStats(trainer));
-  if (!data) {
-    const raw = localStorage.getItem('ai-best-genome');
-    if (!raw) return null;
-    data = JSON.parse(raw);
-  }
-  return data;
-}
-
 /** Exporte le modèle courant (téléchargement). */
 export function exportModel(refs, trainer) {
   const data = getModelData(trainer);
@@ -138,9 +87,8 @@ export function saveModelToDownload(refs, trainer) {
 /** Importe un modèle depuis une chaîne JSON. */
 export function importModel(jsonStr, refs, trainer) {
   try {
-    const data = JSON.parse(jsonStr);
-    if (!data.topology || !data.weights) throw new Error('Format invalide');
-    localStorage.setItem('ai-best-genome', jsonStr);
+    const data = parseModelJson(jsonStr);
+    saveToStorage(jsonStr);
     if (trainer) {
       trainer.population.loadModel(data);
       trainer.genHistory = data.stats?.genHistory || [];
@@ -154,14 +102,4 @@ export function importModel(jsonStr, refs, trainer) {
   } catch (e) {
     refs.statsDiv.innerHTML = `<div class="ai-stat-muted">Erreur import : ${e.message}</div>`;
   }
-}
-
-function downloadJson(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }

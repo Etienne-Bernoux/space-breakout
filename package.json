@@ -7,7 +7,7 @@
     "test": "vitest run",
     "test:e2e": "bddgen && playwright test",
     "test:all": "vitest run && bddgen && playwright test",
-    "train": "node js/ai/train-cli.js"
+    "train": "node js/ai/infra/train-cli.js"
   },
   "repository": {
     "type": "git",

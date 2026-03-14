@@ -15,7 +15,7 @@ Le thème spatial influence le gameplay : récolte de minerais, power-ups, upgra
 
 - Vanilla JS (ES modules) + Canvas API
 - Web Audio API (sons procéduraux + musique)
-- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~417 tests)
+- Tests unitaires : Vitest + Chai (specs co-localisées `js/**/*.spec.js`, ~512 tests)
 - Tests e2e : Playwright + playwright-bdd (Gherkin, dossier `e2e/`, 20 scénarios)
 - Zéro dépendance runtime
 - Hébergé sur GitHub Pages : https://etienne-bernoux.github.io/space-breakout/
@@ -67,14 +67,22 @@ js/
     projectile/           → projectiles alien
       alien-projectile.js → AlienProjectile (balle guidée)
       index.js            → re-export
-  ai/                   → IA auto-apprenante (neuroévolution)
-    neural-network.js   → réseau feedforward (tanh, Xavier init, encode/decode)
-    genome.js           → génome + population (sélection tournoi, crossover, mutation, élitisme, export/import)
-    ai-player.js        → observation jeu (18 inputs) → 2 outputs (position vaisseau, lancer drone)
-    ai-trainer.js       → boucle d'entraînement (50 agents/génération, fitness rally, évolution)
-    train-cli.js        → entraînement CLI headless (node js/ai/train-cli.js --help)
-    models/best.json    → meilleur modèle commité (chargé par défaut si pas de localStorage)
+  ai/                   → IA auto-apprenante (neuroévolution, Clean Architecture interne)
     index.js            → façade re-export
+    domain/             → entités pures (0 dépendance externe)
+      neural-network.js → réseau feedforward (tanh, Xavier init, encode/decode)
+      genome.js         → génome + population (sélection tournoi, crossover, mutation, élitisme)
+      ai-fitness.js     → calcul fitness composite (rallies, progression, anti-oscillation)
+    use-cases/          → orchestration (observation, simulation, entraînement)
+      ai-player.js      → observation jeu (24 inputs) → 2 outputs (position vaisseau, lancer drone)
+      ai-trainer.js     → boucle d'entraînement (50 agents/gén, DI schedule/storage)
+      simulation.js     → simulation headless d'un agent (partagé browser + CLI)
+      gen-stats.js      → stats par génération (calcul + formatage, partagé browser + CLI)
+    infra/              → adapters (persistence, setup jeu, CLI)
+      population-storage.js → adapters persistence (localStorage, null) injectables dans Population
+      headless-game.js  → setup jeu headless complet (entités, collision, tick)
+      train-cli.js      → entraînement CLI headless (node js/ai/infra/train-cli.js --help)
+    models/best.json    → meilleur modèle commité (chargé par défaut si pas de localStorage)
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic/
       game-session.js   → GameSession : état, score, vies (~72 lignes)
@@ -178,8 +186,11 @@ js/
         state.js        → état UI (active, selectedLevel)
         build.js        → construction DOM (sélecteur niveau, boutons, stats, graphe, import/export)
         update.js       → sync DOM ← trainer (stats temps réel, graphe fitness)
+        graph-draw.js   → rendu canvas des graphes (fitness, élites, métriques)
+        model-storage.js → I/O modèles (fetch, cache, localStorage, download)
+        models.js       → coordination UI modèles (browse, import, export, preview)
         handlers.js     → event delegation (start/stop, watch, reset, export, import, level)
-        index.js        → façade publique (init, show/hide, export/import modèle, chargement modèle commité)
+        index.js        → façade publique (init, show/hide, lifecycle trainer)
     menu/               → menu principal
       state.js          → état + persistence volumes
       draw-menu.js      → écran menu principal
@@ -283,7 +294,7 @@ Serveur local requis (ES modules) :
 pnpm serve .             # serveur statique → http://localhost:3000
 ```
 
-Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`, ~417 tests) :
+Tests unitaires (Vitest + Chai, co-localisés `js/**/*.spec.js`, ~512 tests) :
 ```bash
 pnpm test                         # une passe (vitest run)
 pnpm vitest                       # mode watch

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AIPlayer, TOPOLOGY } from './ai-player.js';
-import { Genome } from './genome.js';
+import { Genome } from '../domain/genome.js';
 
 /** Crée un gameState minimal pour les tests. */
 function makeGameState(overrides = {}) {

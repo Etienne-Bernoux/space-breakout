@@ -3,7 +3,8 @@
 // puis affiche le meilleur en mode "watch" avec rendu.
 // L'UI est gérée par le AI Lab (js/infra/lab/ai-lab/).
 
-import { Population } from './genome.js';
+import { Population } from '../domain/genome.js';
+import { localStorageAdapter } from '../infra/population-storage.js';
 import { AIPlayer, TOPOLOGY } from './ai-player.js';
 import { simulateAgent } from './simulation.js';
 import { computeGenStats } from './gen-stats.js';
@@ -21,12 +22,19 @@ export class AITrainer {
    * @param {object} deps.session  - G.session
    * @param {object} deps.canvas   - CONFIG.canvas
    * @param {string} deps.levelId  - niveau d'entraînement
+   * @param {Function} [deps.schedule]   - requestAnimationFrame-like (cb → id)
+   * @param {Function} [deps.unschedule] - cancelAnimationFrame-like (id → void)
+   * @param {Function} [deps.delay]      - setTimeout-like (cb, ms → id)
    */
-  constructor({ startGame, tick, entities, session, canvas, levelId = 'z1-1' }) {
+  constructor({ startGame, tick, entities, session, canvas, levelId = 'z1-1',
+    schedule = requestAnimationFrame, unschedule = cancelAnimationFrame, delay = setTimeout }) {
     this.startGame = startGame;
     this.tick = tick;
     this.gameState = { entities, session, canvas };
-    this.population = new Population(POPULATION_SIZE, TOPOLOGY);
+    this._schedule = schedule;
+    this._unschedule = unschedule;
+    this._delay = delay;
+    this.population = new Population(POPULATION_SIZE, TOPOLOGY, localStorageAdapter);
     this.currentIdx = 0;
     this.currentPlayer = null;
     this.frameCount = 0;
@@ -57,7 +65,7 @@ export class AITrainer {
   stop() {
     this.active = false;
     this.currentPlayer = null;
-    if (this._batchTimer) { cancelAnimationFrame(this._batchTimer); this._batchTimer = null; }
+    if (this._batchTimer) { this._unschedule(this._batchTimer); this._batchTimer = null; }
   }
 
   /** Relance l'agent courant (utilisé par le lab pour watch/reset). */
@@ -74,7 +82,7 @@ export class AITrainer {
 
     if (state === 'won' || state === 'gameOver' || this.frameCount >= MAX_FRAMES_PER_GAME) {
       this.stats.current = Math.round(this.currentPlayer.computeFitness());
-      setTimeout(() => { if (this.active && this.watchBest) this.#startWatchAgent(); }, 1500);
+      this._delay(() => { if (this.active && this.watchBest) this.#startWatchAgent(); }, 1500);
       this.currentPlayer = null;
       return null;
     }
@@ -125,7 +133,7 @@ export class AITrainer {
 
     // Continuer au prochain rAF
     if (this.active && !this.watchBest) {
-      this._batchTimer = requestAnimationFrame(() => this.#runBatch());
+      this._batchTimer = this._schedule(() => this.#runBatch());
     }
   }
 

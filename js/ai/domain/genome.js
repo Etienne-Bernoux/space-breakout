@@ -3,6 +3,7 @@
 // Sélection par tournoi, crossover uniforme, mutation gaussienne.
 
 import { NeuralNetwork } from './neural-network.js';
+import { nullStorageAdapter } from '../infra/population-storage.js';
 
 const ELITE_RATIO = 0.10; // top 10% sauvegardés et réutilisés au redémarrage
 
@@ -24,14 +25,16 @@ export class Population {
   /**
    * @param {number} size - taille de la population
    * @param {number[]} topology - topologie du réseau [inputs, hidden, outputs]
+   * @param {object} [storage] - adapter { save(data), load() → data|null }
    */
-  constructor(size, topology) {
+  constructor(size, topology, storage = nullStorageAdapter) {
     this.size = size;
     this.topology = topology;
     this.generation = 0;
     this.genomes = [];
     this.bestFitness = -Infinity;
     this.bestGenome = null;
+    this._storage = storage;
     for (let i = 0; i < size; i++) this.genomes.push(new Genome(topology));
   }
 
@@ -130,18 +133,18 @@ export class Population {
     return pairs > 0 ? totalDist / pairs / Math.sqrt(dim) : 0;
   }
 
-  /** Sauvegarde les top 10% en localStorage. */
+  /** Sauvegarde les top 10% via le storage adapter injecté. */
   saveBest(stats) {
     if (!this.bestGenome) return;
     const data = this.exportModel(stats);
-    if (data) localStorage.setItem('ai-best-genome', JSON.stringify(data));
+    if (data) this._storage.save(data);
   }
 
-  /** Charge le modèle depuis localStorage et seede la population. */
+  /** Charge le modèle depuis le storage adapter et seede la population. */
   loadBest() {
-    const raw = localStorage.getItem('ai-best-genome');
-    if (!raw) return null;
-    const genome = this.#applyModelData(raw);
+    const data = this._storage.load();
+    if (!data) return null;
+    const genome = this.#applyModelData(data);
     if (genome) this.#seedPopulation();
     return genome;
   }
@@ -199,7 +202,7 @@ export class Population {
     }
   }
 
-  /** Charge un modèle depuis des données JSON brutes. */
+  /** Charge un modèle depuis des données (objet ou string JSON). */
   #applyModelData(raw) {
     try {
       const data = typeof raw === 'string' ? JSON.parse(raw) : raw;

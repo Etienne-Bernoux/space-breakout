@@ -60,6 +60,25 @@ export class HudRenderer {
     ctx.restore();
   }
 
+  drawAIBadge() {
+    const ctx = this.render.ctx;
+    const s = this.gameScale();
+    const fontSize = Math.round(14 * s);
+    const cx = this.canvas.width / 2;
+    const y = Math.round(18 * s);
+    const t = Date.now() * 0.003;
+    const pulse = 6 + Math.sin(t) * 3;
+    ctx.save();
+    ctx.font = `bold ${fontSize}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = pulse;
+    ctx.fillStyle = '#00d4ff';
+    ctx.fillText('AI', cx, y);
+    ctx.restore();
+  }
+
   drawCombo(dt = 1) {
     if (this.ui.comboFadeTimer <= 0) return;
     this.ui.comboFadeTimer -= dt;

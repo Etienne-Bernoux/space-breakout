@@ -293,6 +293,14 @@ export class GameLoop {
     const { ship, drones, field } = this.entities;
     const infra = this.infra;
 
+    // Dev AI : l'IA décide à la place du joueur
+    if (this._devAIPlayer) {
+      const decision = this._devAIPlayer.decide();
+      if (decision.pointerX !== null) infra.setAIPointerX(decision.pointerX);
+      const drone = drones[0];
+      if (drone && !drone.launched && decision.shouldLaunch) drone.launch(ship);
+    }
+
     // Slow-motion : ralentit le dt au lieu de skip des frames
     let dtEff = dt;
     if (this.ui.slowMoTimer > 0) {
@@ -407,6 +415,12 @@ export class GameLoop {
       this._fadeAlpha = Math.max(0, this._fadeAlpha - dt * 0.04);
     }
 
+    // Nettoyer l'IA dev quand on quitte playing
+    if (this._devAIPlayer && this.session.state !== 'playing') {
+      this.infra.setAIPointerX(null);
+      this._devAIPlayer = null;
+    }
+
     this.infra.updateDevOverlay();
     requestAnimationFrame(this.loop);
   }
@@ -434,6 +448,7 @@ export class GameLoop {
     infra.drawPowerUpHUD(ctx, this.systems.powerUp.getActive(), this.canvas.width);
     if (infra.drawMineralHUD) infra.drawMineralHUD(ctx, this.canvas.width, this.canvas.height);
     this.hud.drawPauseButton();
+    if (this._devAIPlayer) this.hud.drawAIBadge();
     if (this.ui.comboFadeTimer > 0) this.hud.drawCombo(dt);
   }
 

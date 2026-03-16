@@ -19,6 +19,11 @@ export function attachDevHandlers(root, refs, { onLaunch, onBack }) {
 
     if (action === 'back') { if (onBack) onBack(); return; }
     if (action === 'launch') { saveDevConfig(); onLaunch(); return; }
+    if (action === 'ai-toggle') {
+      state.devConfig.aiPlay = btn.checked;
+      saveDevConfig();
+      return;
+    }
 
     if (action === 'reset') {
       state.devConfig.density = CONFIG.asteroids.density;

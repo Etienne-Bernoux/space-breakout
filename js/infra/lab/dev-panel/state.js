@@ -28,6 +28,7 @@ const state = {
     materials: { rock: 1.0, ice: 0, lava: 0, metal: 0, crystal: 0, obsidian: 0 },
     patternKey: 'random',
     gridKey: 'small', // taille grille pour mode aléatoire
+    aiPlay: false,    // l'IA joue à la place du joueur
   },
   active: false,
 };
@@ -41,6 +42,7 @@ export function loadDevConfig() {
       if (data.materials) state.devConfig.materials = { ...state.devConfig.materials, ...data.materials };
       if (data.patternKey) state.devConfig.patternKey = data.patternKey;
       if (data.gridKey) state.devConfig.gridKey = data.gridKey;
+      if (data.aiPlay !== undefined) state.devConfig.aiPlay = data.aiPlay;
     }
   } catch (_) {}
 }

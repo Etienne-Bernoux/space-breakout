@@ -139,8 +139,16 @@ export function buildDevPanel(root) {
   body.appendChild(colRight);
   root.appendChild(body);
 
-  // --- Footer: Launch + Reset ---
+  // --- Footer: AI toggle + Launch + Reset ---
   const footer = el('div', 'dp-footer');
+
+  const aiRow = el('label', 'dp-ai-toggle');
+  const aiCheckbox = el('input', '', { type: 'checkbox', 'data-action': 'ai-toggle' });
+  aiRow.appendChild(aiCheckbox);
+  aiRow.appendChild(document.createTextNode(' IA JOUE'));
+  refs.aiCheckbox = aiCheckbox;
+  footer.appendChild(aiRow);
+
   const launch = txt('button', 'dp-btn-primary', '▸ LANCER');
   launch.setAttribute('data-action', 'launch');
   footer.appendChild(launch);

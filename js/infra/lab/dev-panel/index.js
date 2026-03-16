@@ -6,6 +6,7 @@ import state, { SLIDER_MAT_KEYS, loadDevConfig, saveDevConfig } from './state.js
 import { buildDevPanel } from './build.js';
 import { updateDevPanel } from './update.js';
 import { attachDevHandlers } from './handlers.js';
+import { loadCommittedModel } from '../ai-lab/model-storage.js';
 
 let refs = null;
 let onLaunchCb = null;
@@ -30,6 +31,11 @@ export function hideDevPanel() {
 
 // --- Public API: Config ---
 export { loadDevConfig, saveDevConfig };
+
+/** L'IA doit-elle jouer à la place du joueur ? */
+export function isAIPlayEnabled() {
+  return state.devConfig.aiPlay;
+}
 
 /** Retourne la config astéroïdes enrichie du dev panel */
 export function getDevAsteroidConfig() {
@@ -72,6 +78,7 @@ export function getDevAsteroidConfig() {
  */
 export function initDevPanel({ onLaunch, onBack }) {
   onLaunchCb = onLaunch;
+  loadCommittedModel(); // preload best.json → localStorage (fire-and-forget)
   const root = document.getElementById('dev-panel-lab');
   if (!root) return;
 

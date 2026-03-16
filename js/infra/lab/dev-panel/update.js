@@ -34,4 +34,7 @@ export function updateDevPanel(refs) {
   for (const g of refs.grids) {
     g.btn.classList.toggle('dp-btn-active', !isPatternMode && cfg.gridKey === g.key);
   }
+
+  // AI checkbox
+  if (refs.aiCheckbox) refs.aiCheckbox.checked = cfg.aiPlay;
 }

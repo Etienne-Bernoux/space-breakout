@@ -1,5 +1,5 @@
 import { loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from '../infra/menu/index.js';
-import { loadDevConfig, isDevPanelActive, showDevPanel, hideDevPanel, initDevPanel } from '../infra/lab/dev-panel/index.js';
+import { loadDevConfig, isDevPanelActive, isAIPlayEnabled, showDevPanel, hideDevPanel, initDevPanel } from '../infra/lab/dev-panel/index.js';
 import { setVolume as setMusicVolume } from '../contexts/audio/infra/music/index.js';
 import { setSfxVolume, perceptualVolume } from '../contexts/audio/infra/sfx/audio.js';
 import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../infra/lab/music-lab/index.js';
@@ -15,7 +15,9 @@ import { menuItemLayout } from '../infra/menu/draw-menu.js';
 import { getSystemNodePositions } from '../infra/screens/system-map/index.js';
 import { getNodePositions } from '../infra/screens/world-map/index.js';
 import { CONFIG } from '../config.js';
-import { AITrainer } from '../contexts/ai/index.js';
+import { AITrainer, AIPlayer } from '../contexts/ai/index.js';
+import { Genome } from '../contexts/ai/domain/genome.js';
+import { loadFromStorage } from '../infra/lab/ai-lab/model-storage.js';
 
 loadSettings();
 loadDevConfig();
@@ -31,7 +33,20 @@ if (isLabMode()) showLabHub();
 
 // Init dev panel DOM (toujours, pour que le div existe)
 initDevPanel({
-  onLaunch: () => startGame(),
+  onLaunch: () => {
+    startGame();
+    // Si l'IA doit jouer, charger le meilleur genome et créer l'AIPlayer
+    if (isAIPlayEnabled()) {
+      const data = loadFromStorage();
+      if (data && data.weights) {
+        const genome = new Genome(data.topology);
+        genome.brain.decode(new Float32Array(data.weights));
+        G.gameLoop._devAIPlayer = new AIPlayer(genome, {
+          entities: G.entities, session: G.session, canvas: CONFIG.canvas,
+        });
+      }
+    }
+  },
   onBack: () => { hideDevPanel(); showLabHub(); },
 });
 
@@ -116,6 +131,19 @@ window.__GAME__ = {
   /** Lance un niveau spécifique par son id (usage e2e / dev). */
   startLevel(levelId) {
     startGame(levelId);
+  },
+  /** True si l'IA dev joue actuellement. */
+  get aiPlaying() { return !!G.gameLoop._devAIPlayer; },
+  /** Lance un niveau avec l'IA comme joueur (charge le meilleur modèle). */
+  startLevelWithAI(levelId) {
+    const data = loadFromStorage();
+    if (!data || !data.weights) throw new Error('Aucun modèle IA en localStorage');
+    startGame(levelId);
+    const genome = new Genome(data.topology);
+    genome.brain.decode(new Float32Array(data.weights));
+    G.gameLoop._devAIPlayer = new AIPlayer(genome, {
+      entities: G.entities, session: G.session, canvas: CONFIG.canvas,
+    });
   },
   /** Retourne les hitZones cliquables (coordonnées canvas) selon l'état courant. */
   get hitZones() {

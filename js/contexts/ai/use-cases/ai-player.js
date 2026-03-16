@@ -8,7 +8,7 @@ import { computeRallyScore, calcFitness } from '../domain/ai-fitness.js';
 
 const INPUT_COUNT = 24;
 const OUTPUT_COUNT = 2;
-export const TOPOLOGY = [INPUT_COUNT, 16, OUTPUT_COUNT];
+export const TOPOLOGY = [INPUT_COUNT, 16, 12, OUTPUT_COUNT];
 
 export class AIPlayer {
   constructor(genome, gameState) {

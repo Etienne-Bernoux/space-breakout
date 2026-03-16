@@ -27,7 +27,7 @@ export class AITrainer {
    * @param {Function} [deps.delay]      - setTimeout-like (cb, ms → id)
    */
   constructor({ startGame, tick, entities, session, canvas, levelId = 'z1-1',
-    schedule = requestAnimationFrame, unschedule = cancelAnimationFrame, delay = setTimeout }) {
+    schedule = (cb) => requestAnimationFrame(cb), unschedule = (id) => cancelAnimationFrame(id), delay = (cb, ms) => setTimeout(cb, ms) }) {
     this.startGame = startGame;
     this.tick = tick;
     this.gameState = { entities, session, canvas };

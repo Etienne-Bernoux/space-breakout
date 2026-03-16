@@ -34,12 +34,10 @@ export function initAILab({ onBack, levels, createTrainer }) {
     onStart: () => toggleTraining(createTrainer),
     onWatch: () => toggleWatch(createTrainer),
     onReset: () => {
-      if (trainer) {
-        clearStorage();
-        stopTraining();
-        drawAllGraphs(refs.graphCanvases, null);
-        refs.statsDiv.innerHTML = '<div class="ai-stat-muted">Reset — prêt.</div>';
-      }
+      clearStorage();
+      if (trainer) stopTraining();
+      drawAllGraphs(refs.graphCanvases, null);
+      refs.statsDiv.innerHTML = '<div class="ai-stat-muted">Reset — prêt.</div>';
     },
     onExport: () => exportModel(refs, trainer),
     onImport: () => refs.fileInput.click(),

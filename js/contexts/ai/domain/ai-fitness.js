@@ -78,8 +78,8 @@ export function calcFitness(metrics) {
   // Anti-oscillation : pénalise les vibrations excessives
   if (framesSurvived > 0) {
     const oscillationRate = directionChanges / framesSurvived;
-    if (oscillationRate > 0.3) {
-      fitness -= (oscillationRate - 0.3) * 100;
+    if (oscillationRate > 0.5) {
+      fitness -= (oscillationRate - 0.5) * 200;
     }
   }
 

@@ -7,6 +7,7 @@ Guide de la boucle itérative d'entraînement du modèle IA (neuroévolution).
 - **Topologie** : [20, 14, 8, 2] — 20 inputs, 2 couches cachées (14+8), 2 outputs
 - **408 poids** optimisés par algorithme génétique (sélection tournoi, crossover uniforme, mutation gaussienne)
 - **Ratio pop/poids** : ~29x avec pop 120 (zone optimale neuroévolution : 20-50x)
+- **Parallélisation** : `worker_threads` (9 workers par défaut, ×3-4 speedup)
 
 ### Inputs (20)
 
@@ -26,12 +27,12 @@ Guide de la boucle itérative d'entraînement du modèle IA (neuroévolution).
 
 | Output | Description |
 |--------|-------------|
-| Delta X | Déplacement relatif du vaisseau (tanh → ±W/2 pixels). Réduit les oscillations vs position absolue. |
+| Position X | Position cible du vaisseau (tanh → -1..1 → 0..W). Le ship se déplace vers cette cible à sa vitesse max. |
 | Lancer | >0 = lancer le drone |
 
 ### Choix de conception
 
-- **Delta vs position absolue** : la sortie delta produit des mouvements plus lisses. Les hésitations du réseau créent des micro-ajustements au lieu de sauts entre positions éloignées.
+- **Position absolue (pas delta)** : le ship a déjà une vitesse max intégrée — pas de téléportation. La sortie delta a été testée (v8) mais perd en réactivité pour les grands déplacements. Les oscillations se combattent par la pénalité fitness, pas par le type de sortie.
 - **2 couches cachées** : nécessaire pour la stratégie 3★ (planification court terme : orienter le rebond vers les clusters). Une seule couche = pattern matching réactif uniquement.
 - **3 astéroïdes proches (vs 5)** : les 2 plus lointains n'apportent presque rien — le drone touche les proches d'abord. Réduit les inputs bruités.
 - **Input minerai séparé** : sans signal dédié, l'IA ne distingue pas minerai/power-up et ignore les minerais. Avec un input dédié + bonus fitness +60, elle apprend à les collecter.
@@ -105,6 +106,7 @@ pnpm train -- --generations 150 --population 120 --level z1-3
 | `--levels IDs` | — | Niveaux séparés par virgule (rotation par gen) |
 | `--curriculum` | off | Débloque les niveaux progressivement |
 | `--evals N` | 1 | Parties par agent (moyenne la fitness, réduit le bruit) |
+| `--workers N` | CPUs-1 | Threads parallèles (×3-4 speedup) |
 | `--mutation-rate N` | 0.20 | Taux de mutation |
 | `--mutation-power N` | 0.4 | Puissance de mutation |
 | `--input FILE` | — | Modèle de départ |
@@ -151,6 +153,9 @@ Chaque agent joue N parties et la fitness est moyennée. Réduit le bruit dû au
 ### Multi-level (`--levels z1-1,z1-2,...`)
 Entraîner sur plusieurs niveaux pour généraliser. Sans ça, le modèle se spécialise sur un seul layout.
 
+### Parallélisation (`--workers N`)
+Chaque agent est simulé dans un `worker_thread` séparé avec son propre headless game. Par défaut utilise CPUs-1 threads. Speedup typique ×3-4 sur un M1/M2 (10 cœurs).
+
 ## Diagnostic
 
 ### Tester la généralisation
@@ -193,7 +198,7 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 | 0 minerais collectés | Drop rate trop faible ou bug headless | Vérifier wallet headless, drop rate 35% |
 | Jamais 3★ | Bonus 3★ trop faible ou réseau trop simple | Augmenter récompense 3★, 2 couches cachées |
 | Drone ne se lance pas | shouldLaunch pas appris | Malus framesBeforeLaunch + fallback 30 frames |
-| Vibrations / oscillations | Sortie position absolue | Passer en sortie delta relative |
+| Vibrations / oscillations | Pénalité anti-oscillation trop basse | Durcir le seuil ou augmenter la pénalité |
 | Biais directionnel | Inputs asymétriques / doublons | Vérifier symétrie des inputs |
 | Convergence trop lente | Trop de poids vs pop | Ratio pop/poids > 20x |
 | Seed = surapprentissage | Layout fixe par gen | Ne pas utiliser de seed déterministe |
@@ -205,7 +210,8 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 3. **Le seed déterministe cause du surapprentissage** — le modèle mémorise les layouts au lieu de généraliser.
 4. **La profondeur est utile pour la stratégie** — 2 couches cachées permettent de composer des abstractions (ex: "cluster dense + drone monte → anticiper le rebond").
 5. **Les objectifs contradictoires se résolvent par des inputs dédiés** — le réseau ne collectera jamais les minerais sans un signal spécifique lui indiquant où ils sont.
-6. **La sortie delta réduit les oscillations** — le réseau dit "bouge un peu à gauche" au lieu de "va à x=342", ce qui transforme les hésitations en micro-ajustements.
+6. **La sortie delta ne fonctionne pas pour le breakout** — en théorie réduit les oscillations, en pratique le ship a déjà une vitesse max (pas de téléport), et le delta perd en réactivité pour les grands déplacements. Position absolue + vitesse du ship = le bon combo.
+7. **La parallélisation (worker_threads) est le meilleur levier perf** — ×3-4 speedup sans changer la simulation, chaque worker a son propre headless game.
 
 ## Historique des améliorations
 
@@ -218,6 +224,7 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 | v5 multi-level | 3488 | Rotation aléatoire z1-1→z1-5 |
 | v6 curriculum | 3640 | Curriculum + bonus vitesse + rotation/gen |
 | v7 fix inputs | 3748 | Fix doublons inputs, marges ship, mineral drop 35% |
-| **v8 refonte** | **3567** | **[20,14,8,2], delta output, minerai dédié, 2 evals** |
+| v8 delta (abandonné) | 3567 | [20,14,8,2], delta output — perte de réactivité |
+| **v9 workers** | **3623** | **Position absolue restaurée, worker_threads ×3-4 speedup** |
 
-> Note : la fitness v8 est inférieure à v7 car l'architecture est entièrement nouvelle (delta output, inputs réduits). Le modèle collecte des minerais (2-4/partie) et a des mouvements plus lisses. Plus d'entraînement devrait dépasser v7.
+> v9 gagne z1-1 (3★ 44s), z1-2 (2★), z1-3 (1★). Collecte des minerais. z1-4/z1-5 restent difficiles.

@@ -139,6 +139,22 @@ const ICONS = {
     ctx.stroke();
   },
 
+  // Boule de feu : flamme
+  droneFireball(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(0, s);
+    ctx.bezierCurveTo(-s * 0.8, s * 0.2, -s * 0.5, -s * 0.5, 0, -s);
+    ctx.bezierCurveTo(s * 0.5, -s * 0.5, s * 0.8, s * 0.2, 0, s);
+    ctx.fill();
+    // Noyau clair
+    ctx.fillStyle = '#ffcc00';
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.5);
+    ctx.bezierCurveTo(-s * 0.3, 0, -s * 0.2, -s * 0.3, 0, -s * 0.5);
+    ctx.bezierCurveTo(s * 0.2, -s * 0.3, s * 0.3, 0, 0, s * 0.5);
+    ctx.fill();
+  },
+
   // Fragilisation : éclairs / fissures
   weaken(ctx, s) {
     ctx.beginPath();

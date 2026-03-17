@@ -50,10 +50,14 @@ describe('calcFitness', () => {
     expect(twoDrop).toBe(noDrop - 400);
   });
 
-  it('récompense les capsules récupérées', () => {
-    const noCaps = calcFitness(baseMetrics);
-    const threeCaps = calcFitness({ ...baseMetrics, capsulesCaught: 3 });
-    expect(threeCaps - noCaps).toBe(90);
+  it('récompense les minerais (+60), bonus (+20), pénalise malus (-10)', () => {
+    const base = calcFitness(baseMetrics);
+    const minerals = calcFitness({ ...baseMetrics, mineralsCaught: 2 });
+    const bonus = calcFitness({ ...baseMetrics, bonusCaught: 2 });
+    const malus = calcFitness({ ...baseMetrics, malusCaught: 2 });
+    expect(minerals - base).toBe(120);
+    expect(bonus - base).toBe(40);
+    expect(malus - base).toBe(-20);
   });
 
   it('inclut un bonus quadratique de progression', () => {

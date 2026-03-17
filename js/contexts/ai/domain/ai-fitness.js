@@ -34,7 +34,9 @@ export function calcFitness(metrics) {
   const {
     sessionState, dropCount, capsulesCaught, framesSurvived,
     progress, catchCount, rallyScore, asteroidsDestroyed,
-    directionChanges, framesBeforeLaunch = 0, extraRally = 0,
+    directionChanges, framesBeforeLaunch = 0,
+    mineralsCaught = 0, bonusCaught = 0, malusCaught = 0,
+    extraRally = 0,
   } = metrics;
 
   const won = sessionState === 'won';
@@ -48,16 +50,18 @@ export function calcFitness(metrics) {
   // 2. Ne pas perdre de vie
   fitness -= dropCount * 200;
 
-  // 3. Capsules récupérées (minerais + power-ups)
-  fitness += capsulesCaught * 30;
+  // 3. Capsules récupérées (minerais, bonus, malus distincts)
+  fitness += mineralsCaught * 60;
+  fitness += bonusCaught * 20;
+  fitness -= malusCaught * 10;
 
-  // 4. Étoiles (temps + vies) — bonus progressif
+  // 4. Étoiles (temps + vies) — bonus progressif, 3★ très incitatif
   if (won) {
     const timeSec = framesSurvived / 60;
     const stars = dropCount > 0 ? 1
       : timeSec <= 60 ? 3
       : 2;
-    fitness += stars * 200; // 1★=200, 2★=400, 3★=600
+    fitness += [0, 200, 500, 1500][stars]; // 1★=200, 2★=500, 3★=1500
   }
 
   // ── Signal de bootstrap (secondaire, guide vers la victoire) ──

@@ -23,7 +23,10 @@ export class AIPlayer {
     this.dropCount = 0;      // nombre de fois où le drone tombe (vie perdue)
     this.rallyDestroys = 0;  // destructions dans le rally courant (entre 2 rattrapages)
     this.rallyScore = 0;     // score cumulé des rallies (log décroissant)
-    this.capsulesCaught = 0; // capsules (power-up + minerai) récupérées
+    this.capsulesCaught = 0; // total capsules récupérées (rétro-compat)
+    this.mineralsCaught = 0;  // capsules minerai
+    this.bonusCaught = 0;     // power-ups bonus
+    this.malusCaught = 0;     // power-ups malus
     this.prevPointerX = null; // pour détecter les changements de direction
     this.directionChanges = 0; // nombre de changements de direction
     this.framesBeforeLaunch = 0; // frames jouées avant le premier lancement
@@ -75,10 +78,18 @@ export class AIPlayer {
     }
 
     // Détecter les capsules récupérées (flag `collected` posé par collision)
-    const allCaps = [...(entities.capsules || []), ...(entities.mineralCapsules || [])];
-    for (const c of allCaps) {
+    for (const c of (entities.mineralCapsules || [])) {
       if (c.collected && !c._aiCounted) {
         this.capsulesCaught++;
+        this.mineralsCaught++;
+        c._aiCounted = true;
+      }
+    }
+    for (const c of (entities.capsules || [])) {
+      if (c.collected && !c._aiCounted) {
+        this.capsulesCaught++;
+        if (c.powerUp?.type === 'malus') this.malusCaught++;
+        else this.bonusCaught++;
         c._aiCounted = true;
       }
     }
@@ -197,6 +208,9 @@ export class AIPlayer {
       asteroidsDestroyed: this.asteroidsDestroyed,
       directionChanges: this.directionChanges,
       framesBeforeLaunch: this.framesBeforeLaunch,
+      mineralsCaught: this.mineralsCaught,
+      bonusCaught: this.bonusCaught,
+      malusCaught: this.malusCaught,
       extraRally,
     });
   }

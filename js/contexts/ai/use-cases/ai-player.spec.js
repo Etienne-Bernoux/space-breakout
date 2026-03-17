@@ -260,8 +260,8 @@ describe('AIPlayer', () => {
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 1800; // 30s → 3★
       const fitness = player.computeFitness();
-      // win(1000) + 3★(600) + progress(1²×400) = 2000
-      expect(fitness).toBeCloseTo(2000, 0);
+      // win(1000) + 3★(1500) + progress(1²×400) = 2900
+      expect(fitness).toBeCloseTo(2900, 0);
     });
 
     it('2 étoiles si victoire sans perte mais temps > 60s', () => {
@@ -271,8 +271,8 @@ describe('AIPlayer', () => {
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 5400; // 90s → 2★
       const fitness = player.computeFitness();
-      // win(1000) + 2★(400) + progress(400) = 1800
-      expect(fitness).toBeCloseTo(1800, 0);
+      // win(1000) + 2★(500) + progress(400) = 1900
+      expect(fitness).toBeCloseTo(1900, 0);
     });
 
     it('1 étoile si victoire avec pertes de vie', () => {
@@ -304,12 +304,14 @@ describe('AIPlayer', () => {
       expect(fitness).toBeCloseTo(100, 0);
     });
 
-    it('récompense les capsules récupérées (30 par capsule)', () => {
+    it('récompense minerais (60), bonus (20), pénalise malus (-10)', () => {
       const gs = makeGameState();
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
-      player.capsulesCaught = 3;
+      player.mineralsCaught = 2;
+      player.bonusCaught = 1;
+      player.malusCaught = 1;
       const fitness = player.computeFitness();
-      expect(fitness).toBe(90); // 3 × 30
+      expect(fitness).toBe(2 * 60 + 20 - 10); // 130
     });
 
     it('pénalise les drops (-200 par drop)', () => {
@@ -328,8 +330,8 @@ describe('AIPlayer', () => {
       player.rallyDestroys = 2;
       player.framesSurvived = 1800; // 3★
       const fitness = player.computeFitness();
-      // win(1000) + 3★(600) + progress(400) + rally(10+5)×2.0 = 2030
-      expect(fitness).toBeCloseTo(2030, 0);
+      // win(1000) + 3★(1500) + progress(400) + rally(10+5)×2.0 = 2930
+      expect(fitness).toBeCloseTo(2930, 0);
     });
 
     it('currentFitness inclut le rally en cours sans le clôturer', () => {

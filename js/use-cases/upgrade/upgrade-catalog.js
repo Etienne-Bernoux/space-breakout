@@ -65,6 +65,19 @@ export const UPGRADES = {
     effect: { target: 'drone', prop: 'damage', factors: [2, 3] },
   },
 
+  dronePiercingDamage: {
+    id: 'dronePiercingDamage',
+    name: 'Foret perçant',
+    description: 'Le drone inflige plus de dégâts en mode perçant',
+    category: 'drone',
+    maxLevel: 2,
+    costs: [
+      { copper: 25, silver: 10 },
+      { silver: 25, gold: 8 },
+    ],
+    effect: { target: 'drone', prop: 'piercingDamage', factors: [2, 3] },
+  },
+
   // --- Power-ups ---
   puDuration: {
     id: 'puDuration',

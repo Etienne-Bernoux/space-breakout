@@ -92,8 +92,8 @@ export class CollisionResolver {
         if (drone.fireball && a.materialKey === 'ice') {
           a.hp = 0;
         } else {
-          // Décrémenter HP (damage upgrade : drone.damage, default 1)
-          const dmg = drone.damage || 1;
+          // Dégâts : piercingDamage si piercing actif, sinon damage normal
+          const dmg = (effectivePiercing && drone.piercingDamage) ? drone.piercingDamage : (drone.damage || 1);
           a.hp -= dmg;
         }
         if (a.hp > 0) {

@@ -75,6 +75,13 @@ export function calcFitness(metrics) {
   // Rallies : récompense les destructions entre rattrapages
   fitness += rallyScore + extraRally;
 
+  // Efficacité : récompense la progression rapide (même sans victoire)
+  // progress/temps → plus on détruit vite, plus le bonus est élevé (0–300 pts)
+  if (framesSurvived > 0 && progress > 0) {
+    const efficiency = progress / (framesSurvived / 3600); // progress per minute
+    fitness += Math.min(efficiency * 150, 300);
+  }
+
   // Pénalité rallies vides : catches sans destruction = perte de temps
   const emptyCatches = catchCount - asteroidsDestroyed;
   if (emptyCatches > 5) fitness -= (emptyCatches - 5) * 5;

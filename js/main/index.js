@@ -75,6 +75,7 @@ initProgressLab({
 initAILab({
   onBack: () => { hideAILab(); showLabHub(); },
   levels: ZONE_1.levels,
+  session: G.session,
   createTrainer: (levelId) => {
     const trainer = new AITrainer({
       startGame: (lvl) => startGame(lvl, { skipUpgrades: true }),

@@ -15,13 +15,15 @@ export { isAILabActive, isAILabOpen };
 let trainer = null;
 let refs = null;
 let rafId = null;
+let _session = null;
 
 /**
  * Initialise le AI Lab. Construit le DOM, attache les handlers.
  * @param {object} deps - { onBack, levels, createTrainer }
  *   createTrainer(levelId) → AITrainer instance
  */
-export function initAILab({ onBack, levels, createTrainer }) {
+export function initAILab({ onBack, levels, createTrainer, session }) {
+  _session = session;
   const root = document.getElementById('ai-lab');
   if (!root) return;
 
@@ -172,6 +174,9 @@ export function showAILab() {
 
 export function hideAILab() {
   stopTraining();
+  if (_session && (_session.state === 'playing' || _session.state === 'won' || _session.state === 'gameOver')) {
+    _session.backToMenu();
+  }
   setAILabActive(false);
   const root = document.getElementById('ai-lab');
   if (root) root.classList.remove('active');

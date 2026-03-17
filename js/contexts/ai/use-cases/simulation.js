@@ -26,7 +26,7 @@ export function simulateAgent(genome, gameState, startGame, tick, levelId) {
     const decision = player.decide();
 
     const drone = gameState.entities.drones[0];
-    if (drone && !drone.launched && (decision.shouldLaunch || frame > 60)) {
+    if (drone && !drone.launched && (decision.shouldLaunch || frame > 10)) {
       drone.launch(gameState.entities.ship);
     }
 

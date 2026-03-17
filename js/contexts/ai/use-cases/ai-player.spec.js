@@ -31,8 +31,8 @@ function makeGameState(overrides = {}) {
 
 describe('AIPlayer', () => {
   describe('TOPOLOGY', () => {
-    it('a 24 inputs, 16 hidden, 2 outputs', () => {
-      expect(TOPOLOGY).toEqual([24, 16, 2]);
+    it('a 30 inputs, 20+12 hidden, 2 outputs', () => {
+      expect(TOPOLOGY).toEqual([30, 20, 12, 2]);
     });
   });
 
@@ -353,21 +353,21 @@ describe('AIPlayer', () => {
       expect(fitness).toBeCloseTo(300 - 65, 0);
     });
 
-    it('pénalise les oscillations excessives (>30%)', () => {
+    it('pénalise les oscillations excessives (>50%)', () => {
       const gs = makeGameState();
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 100;
-      player.directionChanges = 50; // 50% > 30%
+      player.directionChanges = 70; // 70% > 50%
       const fitness = player.computeFitness();
-      // penalty = (0.5 - 0.3) × 100 = 20
-      expect(fitness).toBeCloseTo(-20, 0);
+      // penalty = (0.7 - 0.5) × 200 = 40
+      expect(fitness).toBeCloseTo(-40, 0);
     });
 
-    it('pas de pénalité si oscillation <= 30%', () => {
+    it('pas de pénalité si oscillation <= 50%', () => {
       const gs = makeGameState();
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 100;
-      player.directionChanges = 20; // 20% < 30%
+      player.directionChanges = 40; // 40% < 50%
       const fitness = player.computeFitness();
       expect(fitness).toBe(0);
     });

@@ -298,8 +298,7 @@ export class GameLoop {
       const decision = this._devAIPlayer.decide();
       if (decision.pointerX !== null) infra.setAIPointerX(decision.pointerX);
       const drone = drones[0];
-      if (drone && !drone.launched && (decision.shouldLaunch || this._devAIFrames > 60)) drone.launch(ship);
-      this._devAIFrames = (this._devAIFrames || 0) + 1;
+      if (drone && !drone.launched && decision.shouldLaunch) drone.launch(ship);
     }
 
     // Slow-motion : ralentit le dt au lieu de skip des frames
@@ -420,7 +419,6 @@ export class GameLoop {
     if (this._devAIPlayer && this.session.state !== 'playing') {
       this.infra.setAIPointerX(null);
       this._devAIPlayer = null;
-      this._devAIFrames = 0;
     }
 
     this.infra.updateDevOverlay();

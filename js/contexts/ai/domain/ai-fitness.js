@@ -34,7 +34,7 @@ export function calcFitness(metrics) {
   const {
     sessionState, dropCount, capsulesCaught, framesSurvived,
     progress, catchCount, rallyScore, asteroidsDestroyed,
-    directionChanges, extraRally = 0,
+    directionChanges, framesBeforeLaunch = 0, extraRally = 0,
   } = metrics;
 
   const won = sessionState === 'won';
@@ -74,6 +74,9 @@ export function calcFitness(metrics) {
   // Pénalité rallies vides : catches sans destruction = perte de temps
   const emptyCatches = catchCount - asteroidsDestroyed;
   if (emptyCatches > 5) fitness -= (emptyCatches - 5) * 5;
+
+  // Anti-lenteur lancement : pénalise chaque frame passée sans lancer le drone
+  if (framesBeforeLaunch > 5) fitness -= (framesBeforeLaunch - 5) * 2;
 
   // Anti-oscillation : pénalise les vibrations excessives
   if (framesSurvived > 0) {

@@ -64,13 +64,13 @@ describe('calcFitness', () => {
 
   it('pénalise l\'oscillation excessive', () => {
     const calm = calcFitness({ ...baseMetrics, directionChanges: 10, framesSurvived: 1000 });
-    const shaky = calcFitness({ ...baseMetrics, directionChanges: 500, framesSurvived: 1000 });
+    const shaky = calcFitness({ ...baseMetrics, directionChanges: 600, framesSurvived: 1000 });
     expect(shaky).toBeLessThan(calm);
   });
 
-  it('ne pénalise pas si le taux d\'oscillation est sous 0.3', () => {
+  it('ne pénalise pas si le taux d\'oscillation est sous 0.5', () => {
     const a = calcFitness({ ...baseMetrics, directionChanges: 100, framesSurvived: 1000 });
-    const b = calcFitness({ ...baseMetrics, directionChanges: 200, framesSurvived: 1000 });
+    const b = calcFitness({ ...baseMetrics, directionChanges: 400, framesSurvived: 1000 });
     expect(a).toBe(b);
   });
 

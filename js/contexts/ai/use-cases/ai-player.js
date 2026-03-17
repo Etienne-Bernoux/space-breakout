@@ -1,14 +1,14 @@
 // --- AI Player ---
 // Observe l'état du jeu, alimente le réseau de neurones, applique les décisions.
-// Inputs (24) : ship, drone (+ position relative), capsule proche,
-//   centroïde astéroïdes / ship, densité gauche/droite, 5 astéroïdes proches / drone.
+// Inputs (30) : ship, drone (pos/vel/angle/launched/murs), position relative,
+//   capsule proche, centroïde astéroïdes, densité G/D, progression, 5 astéroïdes proches.
 // Outputs (2) : position cible du vaisseau (tanh → -1..1), lancer le drone (>0 = oui).
 
 import { computeRallyScore, calcFitness } from '../domain/ai-fitness.js';
 
-const INPUT_COUNT = 24;
+const INPUT_COUNT = 30;
 const OUTPUT_COUNT = 2;
-export const TOPOLOGY = [INPUT_COUNT, 16, 12, OUTPUT_COUNT];
+export const TOPOLOGY = [INPUT_COUNT, 20, 12, OUTPUT_COUNT];
 
 export class AIPlayer {
   constructor(genome, gameState) {
@@ -26,6 +26,7 @@ export class AIPlayer {
     this.capsulesCaught = 0; // capsules (power-up + minerai) récupérées
     this.prevPointerX = null; // pour détecter les changements de direction
     this.directionChanges = 0; // nombre de changements de direction
+    this.framesBeforeLaunch = 0; // frames jouées avant le premier lancement
   }
 
   /** Appelé chaque frame pendant 'playing'. Retourne { pointerX, shouldLaunch }. */
@@ -49,6 +50,9 @@ export class AIPlayer {
     }
     this.prevRemaining = field.remaining;
     this.framesSurvived++;
+
+    // Tracker les frames avant le premier lancement
+    if (!drone.launched && this.catchCount === 0) this.framesBeforeLaunch++;
 
     // Détecter les rattrapages (dy+ → dy- ET drone proche du vaisseau)
     if (drone.launched && this.prevDroneDy > 0 && drone.dy <= 0) {
@@ -79,7 +83,7 @@ export class AIPlayer {
       }
     }
 
-    // --- Construire les inputs ---
+    // --- Construire les inputs (30) ---
     const inputs = new Float32Array(INPUT_COUNT);
     let idx = 0;
 
@@ -87,15 +91,28 @@ export class AIPlayer {
     inputs[idx++] = shipCx / W * 2 - 1;
     inputs[idx++] = ship.width / W;
 
-    // Drone (4)
+    // Drone position + vitesse (4)
     inputs[idx++] = drone.x / W * 2 - 1;
     inputs[idx++] = drone.y / H * 2 - 1;
     inputs[idx++] = drone.launched ? drone.dx / (drone.speed || 3) : 0;
     inputs[idx++] = drone.launched ? drone.dy / (drone.speed || 3) : 0;
 
+    // Drone angle (1) — direction de déplacement normalisée [-1, 1]
+    inputs[idx++] = drone.launched ? Math.atan2(drone.dy, drone.dx) / Math.PI : 0;
+
+    // Drone lancé (1) — flag binaire
+    inputs[idx++] = drone.launched ? 1 : -1;
+
+    // Drone distance aux murs gauche/droit (2) — anticipation rebonds
+    inputs[idx++] = drone.x / W * 2 - 1;          // -1 = mur gauche, +1 = mur droit
+    inputs[idx++] = (W - drone.x) / W * 2 - 1;    // inverse
+
     // Position relative drone → vaisseau (2)
     inputs[idx++] = (drone.x - shipCx) / W * 2;
     inputs[idx++] = (drone.y - ship.y) / H * 2;
+
+    // Distance drone ↔ ship en Y (1) — urgence du rattrapage
+    inputs[idx++] = drone.launched ? (drone.y - ship.y) / H * 2 : 0;
 
     // Capsule la plus proche du ship (2) — power-up ou minerai
     const nearestCap = this.#nearestCapsule(entities, shipCx, ship.y, W, H);
@@ -111,6 +128,9 @@ export class AIPlayer {
     const density = this.#asteroidDensityLR(field, drone);
     inputs[idx++] = density.left;
     inputs[idx++] = density.right;
+
+    // Progression du niveau (1) — stratégie change en fin de partie
+    inputs[idx++] = 1 - field.remaining / totalAst;
 
     // 5 astéroïdes les plus proches du drone (2 chacun = 10)
     const nearest = this.#nearestAsteroids(drone, field, 5, W, H);
@@ -176,6 +196,7 @@ export class AIPlayer {
       rallyScore: this.rallyScore,
       asteroidsDestroyed: this.asteroidsDestroyed,
       directionChanges: this.directionChanges,
+      framesBeforeLaunch: this.framesBeforeLaunch,
       extraRally,
     });
   }

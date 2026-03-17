@@ -92,7 +92,7 @@ export class AITrainer {
     const decision = this.currentPlayer.decide();
 
     const drone = this.gameState.entities.drones[0];
-    if (drone && !drone.launched && (decision.shouldLaunch || this.frameCount > 60)) {
+    if (drone && !drone.launched && decision.shouldLaunch) {
       drone.launch(this.gameState.entities.ship);
     }
 

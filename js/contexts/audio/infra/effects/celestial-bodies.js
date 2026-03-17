@@ -1,9 +1,12 @@
 // --- Corps célestes : planètes et nébuleuses en fond ---
 // Couche intermédiaire entre les étoiles parallaxe (rapides) et le canvas de jeu.
+// Supporte des thèmes par zone : 'default' (menus), 'belt' (zone1), 'ice' (zone2).
 
 const BODY_COUNT = 4;
 const BODY_SPEED = 0.15;
 const BODY_TYPES = ['planet', 'planet', 'planet', 'nebula'];
+
+let _canvas = null; // référence au bg-canvas pour setBodyTheme
 
 const PALETTES = [
   { core: '#664422', glow: '#aa6633' },
@@ -56,7 +59,92 @@ export function randomBody(canvas, startY) {
 }
 
 export function initBodies(canvas) {
+  _canvas = canvas;
   return Array.from({ length: BODY_COUNT }, () => randomBody(canvas));
+}
+
+// === Thème belt : petits astéroïdes sombres ===
+
+function randomBeltRock(canvas, startY) {
+  const sizeScale = Math.min(1, canvas.width / 800);
+  const radius = (5 + Math.random() * 12) * sizeScale;
+  const numPoints = 6 + Math.floor(Math.random() * 3);
+  const shape = Array.from({ length: numPoints }, (_, i) => {
+    const angle = (i / numPoints) * Math.PI * 2;
+    const jitter = 0.65 + Math.random() * 0.35;
+    return { angle, jitter };
+  });
+  return {
+    type: 'beltRock', radius, shape,
+    x: Math.random() * canvas.width,
+    y: startY !== undefined ? startY : Math.random() * canvas.height,
+    speed: 0.1 + Math.random() * 0.3,
+    alpha: (0.08 + Math.random() * 0.07) * Math.min(1, canvas.width / 600),
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.002,
+  };
+}
+
+function randomIceChunk(canvas, startY) {
+  const sizeScale = Math.min(1, canvas.width / 800);
+  const radius = (8 + Math.random() * 14) * sizeScale;
+  const numPoints = 5 + Math.floor(Math.random() * 4);
+  const shape = Array.from({ length: numPoints }, (_, i) => {
+    const angle = (i / numPoints) * Math.PI * 2;
+    const jitter = 0.55 + Math.random() * 0.45; // plus anguleux
+    return { angle, jitter };
+  });
+  return {
+    type: 'iceChunk', radius, shape,
+    x: Math.random() * canvas.width,
+    y: startY !== undefined ? startY : Math.random() * canvas.height,
+    speed: 0.1 + Math.random() * 0.15,
+    alpha: (0.12 + Math.random() * 0.08) * Math.min(1, canvas.width / 600),
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.0015,
+  };
+}
+
+function randomIcePlanet(canvas) {
+  const sizeScale = Math.min(1, canvas.width / 800);
+  const radius = (120 + Math.random() * 30) * sizeScale;
+  const bandCount = 5 + Math.floor(Math.random() * 4);
+  const bands = Array.from({ length: bandCount }, () => ({
+    offset: Math.random() * 0.08 - 0.04,
+    width: 0.08 + Math.random() * 0.12,
+  }));
+  const alphaScale = Math.min(1, canvas.width / 600);
+  return {
+    type: 'planet', radius,
+    palette: { core: '#1a3a5c', glow: '#5bc0eb' },
+    alpha: 0.25 * alphaScale,
+    x: canvas.width * (0.3 + Math.random() * 0.4),
+    y: canvas.height * (0.3 + Math.random() * 0.4),
+    speed: 0.03,
+    rotation: Math.random() * Math.PI * 2,
+    hasRing: false, bands, ringTilt: 0, ringGap: 0,
+    lightAngle: Math.random() * Math.PI * 2,
+  };
+}
+
+function initBeltBodies(canvas) {
+  const count = 15 + Math.floor(Math.random() * 6);
+  return Array.from({ length: count }, () => randomBeltRock(canvas));
+}
+
+function initIceBodies(canvas) {
+  const planet = randomIcePlanet(canvas);
+  const chunks = Array.from({ length: 10 }, () => randomIceChunk(canvas));
+  return [planet, ...chunks];
+}
+
+/** Change le thème de fond. Retourne le nouveau tableau de bodies. */
+export function setBodyTheme(theme, canvas) {
+  const c = canvas || _canvas;
+  if (!c) return [];
+  if (theme === 'belt') return initBeltBodies(c);
+  if (theme === 'ice') return initIceBodies(c);
+  return initBodies(c);
 }
 
 function drawRing(ctx, x, y, r, palette, tilt) {
@@ -196,16 +284,80 @@ function drawNebula(ctx, b) {
   ctx.restore();
 }
 
+function drawBeltAsteroid(ctx, b) {
+  const { x, y, radius, alpha, shape, rotation } = b;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  const grad = ctx.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius);
+  grad.addColorStop(0, '#2a2a3e');
+  grad.addColorStop(1, '#1a1a2e');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  for (let i = 0; i < shape.length; i++) {
+    const px = Math.cos(shape[i].angle) * radius * shape[i].jitter;
+    const py = Math.sin(shape[i].angle) * radius * shape[i].jitter;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawIceChunk(ctx, b) {
+  const { x, y, radius, alpha, shape, rotation } = b;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  const grad = ctx.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius);
+  grad.addColorStop(0, '#aaddff');
+  grad.addColorStop(0.6, '#88ccee');
+  grad.addColorStop(1, '#5599bb');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  for (let i = 0; i < shape.length; i++) {
+    const px = Math.cos(shape[i].angle) * radius * shape[i].jitter;
+    const py = Math.sin(shape[i].angle) * radius * shape[i].jitter;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  // Reflet blanc (specularity)
+  ctx.globalAlpha = alpha * 0.4;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(-radius * 0.2, -radius * 0.2, radius * 0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function respawnBody(b, canvas) {
+  if (b.type === 'beltRock') {
+    Object.assign(b, randomBeltRock(canvas, -(b.radius * 2 + Math.random() * 100)));
+  } else if (b.type === 'iceChunk') {
+    Object.assign(b, randomIceChunk(canvas, -(b.radius * 2 + Math.random() * 100)));
+  } else {
+    Object.assign(b, randomBody(canvas, -(b.radius * 2 + Math.random() * canvas.height * 0.5)));
+  }
+}
+
 export function updateBodies(ctx, canvas, bodies) {
   for (const b of bodies) {
-    b.y += BODY_SPEED;
-    b.rotation += 0.0003;
+    b.y += b.speed || BODY_SPEED;
+    b.rotation += b.rotSpeed || 0.0003;
     if (b.y - b.radius * 1.5 > canvas.height) {
-      Object.assign(b, randomBody(canvas, -(b.radius * 2 + Math.random() * canvas.height * 0.5)));
+      respawnBody(b, canvas);
     }
   }
+  // Dessiner par couches : planètes d'abord (fond), puis chunks/rocks (avant-plan)
   for (const b of bodies) {
     if (b.type === 'planet') drawPlanet(ctx, b);
-    else drawNebula(ctx, b);
+    else if (b.type === 'nebula') drawNebula(ctx, b);
+  }
+  for (const b of bodies) {
+    if (b.type === 'beltRock') drawBeltAsteroid(ctx, b);
+    else if (b.type === 'iceChunk') drawIceChunk(ctx, b);
   }
 }

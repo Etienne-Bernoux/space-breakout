@@ -28,7 +28,7 @@ import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input/input-handler/index.js';
-import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains } from './adapters.js';
+import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains, setBodyTheme } from './adapters.js';
 import { initMineralHUD } from '../contexts/mineral/infra/mineral-render.js';
 
 // --- Canvas setup ---
@@ -184,6 +184,9 @@ export function startGame(levelId, opts) {
   // Mettre à jour le zoneIndex pour le filtrage des power-ups
   const zoneId = levelId ? getZoneForLevel(levelId) : 'zone1';
   G.systems.drop.zoneIndex = zoneId ? getZoneIndex(zoneId) : 0;
+  // Thème de fond par zone
+  const bgThemeMap = { zone1: 'belt', zone2: 'ice' };
+  setBodyTheme(bgThemeMap[zoneId] || 'default');
   spawnEntities(G.entities, level?.asteroids);
   resetSystems(G.systems);
   resetMineralSessionGains();
@@ -234,6 +237,7 @@ export function goToSystemMap() {
   if (G.session.state === 'worldMap') {
     G.ui.mapTransition = { type: 'zoomOut', frame: 0, duration: 40, zoneIdx: G.systemMapState.selectedZone };
   }
+  setBodyTheme('default');
   G.session.goToSystemMap();
 }
 

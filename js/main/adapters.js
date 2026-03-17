@@ -7,7 +7,7 @@ import { triggerShake, updateShake, setAmbientShake } from '../contexts/audio/in
 import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/lab/dev-panel/index.js';
 import { isLabMode, isLabHubActive } from '../infra/lab/hub/index.js';
 import { updateDevOverlay } from '../infra/dev-overlay/index.js';
-import { updateStars } from '../contexts/audio/infra/effects/stars.js';
+import { updateStars, setBodyTheme } from '../contexts/audio/infra/effects/stars.js';
 import { setupPointer, getPointerX, setAIPointerX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos, setGameState } from '../infra/input/pointer.js';
 import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
 import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/power-up-render.js';
@@ -69,4 +69,4 @@ export const collisionEffects = {
   spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, triggerShake, spawnDebris, playMineralPickup, addMineralSessionGain,
 };
 
-export { resetMineralSessionGains };
+export { resetMineralSessionGains, setBodyTheme };

@@ -1,7 +1,7 @@
 // --- Fond étoilé parallaxe + corps célestes ---
 // Les étoiles (3 couches) restent ici ; les planètes/nébuleuses sont dans celestial-bodies.js.
 
-import { initBodies, updateBodies } from './celestial-bodies.js';
+import { initBodies, updateBodies, setBodyTheme as _setBodyTheme } from './celestial-bodies.js';
 
 const bgCanvas = document.getElementById('bg-canvas');
 const bgCtx = bgCanvas.getContext('2d');
@@ -53,4 +53,9 @@ export function updateStars(speedMultiplier = 1) {
   }
 
   updateBodies(bgCtx, bgCanvas, bodies);
+}
+
+/** Change le thème des corps célestes en fond (par zone). */
+export function setBodyTheme(theme) {
+  bodies = _setBodyTheme(theme, bgCanvas);
 }

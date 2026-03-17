@@ -144,8 +144,8 @@ pnpm train -- --generations 150 --population 120 --level z1-3
 ### Curriculum learning (`--curriculum`)
 Débloque les niveaux progressivement : commence par z1-1 (facile), ajoute un niveau tous les N gens. L'IA apprend les bases avant de se confronter aux niveaux durs.
 
-### Rotation par génération
-Tous les agents d'une même génération jouent le même niveau (rotation cyclique). Plus équitable que l'évaluation aléatoire par agent — les agents sont comparés sur le même problème.
+### Rotation par génération + seed par génération
+Tous les agents d'une même génération jouent le même niveau (rotation cyclique) **et le même layout** (seed aléatoire unique par gen). Comparaison parfaitement équitable. Le seed change à chaque gen et à chaque run → pas de surapprentissage.
 
 ### Multi-évaluation (`--evals N`)
 Chaque agent joue N parties et la fitness est moyennée. Réduit le bruit dû aux layouts aléatoires. `--evals 2` est un bon compromis (coût ×2, convergence plus stable).
@@ -201,13 +201,13 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 | Vibrations / oscillations | Pénalité anti-oscillation trop basse | Durcir le seuil ou augmenter la pénalité |
 | Biais directionnel | Inputs asymétriques / doublons | Vérifier symétrie des inputs |
 | Convergence trop lente | Trop de poids vs pop | Ratio pop/poids > 20x |
-| Seed = surapprentissage | Layout fixe par gen | Ne pas utiliser de seed déterministe |
+| Seed = surapprentissage | Seed fixe par n° de gen | Seed *aléatoire* par gen (change à chaque run) |
 
 ## Enseignements
 
 1. **Le ratio pop/poids est critique** en neuroévolution. En dessous de 20x, le réseau est sous-échantillonné et converge lentement vers des optima locaux.
 2. **Moins d'inputs = mieux**, si les inputs sont pertinents et non-redondants. Un réseau avec 20 inputs ciblés surpasse un réseau avec 30 inputs bruités.
-3. **Le seed déterministe cause du surapprentissage** — le modèle mémorise les layouts au lieu de généraliser.
+3. **Le seed déterministe (fixé par n° de gen) cause du surapprentissage** — le modèle mémorise les layouts. Solution : seed *aléatoire* par gen (même layout pour tous les agents, mais différent à chaque run).
 4. **La profondeur est utile pour la stratégie** — 2 couches cachées permettent de composer des abstractions (ex: "cluster dense + drone monte → anticiper le rebond").
 5. **Les objectifs contradictoires se résolvent par des inputs dédiés** — le réseau ne collectera jamais les minerais sans un signal spécifique lui indiquant où ils sont.
 6. **La sortie delta ne fonctionne pas pour le breakout** — en théorie réduit les oscillations, en pratique le ship a déjà une vitesse max (pas de téléport), et le delta perd en réactivité pour les grands déplacements. Position absolue + vitesse du ship = le bon combo.
@@ -225,6 +225,7 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 | v6 curriculum | 3640 | Curriculum + bonus vitesse + rotation/gen |
 | v7 fix inputs | 3748 | Fix doublons inputs, marges ship, mineral drop 35% |
 | v8 delta (abandonné) | 3567 | [20,14,8,2], delta output — perte de réactivité |
-| **v9 workers** | **3623** | **Position absolue restaurée, worker_threads ×3-4 speedup** |
+| v9 workers | 3623 | Position absolue restaurée, worker_threads ×3-4 speedup |
+| **v10 seed/gen** | **3607** | **Seed aléatoire par gen → même layout pour tous les agents** |
 
-> v9 gagne z1-1 (3★ 44s), z1-2 (2★), z1-3 (1★). Collecte des minerais. z1-4/z1-5 restent difficiles.
+> v10 gagne z1-1, z1-2 quasi systématiquement, z1-3 2/3. Collecte des minerais. Comparaison équitable entre agents.

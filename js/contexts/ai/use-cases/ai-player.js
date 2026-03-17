@@ -93,6 +93,9 @@ export class AIPlayer {
         c._aiCounted = true;
       }
     }
+    // Purger les capsules déjà comptées pour éviter l'accumulation en headless
+    entities.mineralCapsules = (entities.mineralCapsules || []).filter(c => !c._aiCounted);
+    entities.capsules = (entities.capsules || []).filter(c => !c._aiCounted);
 
     // --- Construire les inputs (30) ---
     const inputs = new Float32Array(INPUT_COUNT);

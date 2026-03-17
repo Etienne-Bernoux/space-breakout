@@ -14,6 +14,8 @@ import { DroneManager } from '../../../use-cases/drone/drone-manager.js';
 import { getLevel } from '../../../domain/progression/level-catalog.js';
 
 const noop = () => {};
+/** Wallet factice pour que le CollisionHandler collecte les minerais. */
+const dummyWallet = { add: noop, save: noop, canAfford: () => false, spend: noop };
 const noopEffects = {
   spawnExplosion: noop, triggerShake: noop, spawnComboSparkle: noop,
   spawnAlienExplosion: noop, spawnBossExplosion: noop, spawnDebris: () => null,
@@ -82,7 +84,7 @@ export function createHeadlessGame() {
         mineralCapsule: CONFIG.mineralCapsule, combo: CONFIG.combo,
       },
       effects: noopEffects,
-      getGameState, droneManager, wallet: null,
+      getGameState, droneManager, wallet: dummyWallet,
     });
 
     session.start(levelId);
@@ -95,9 +97,9 @@ export function createHeadlessGame() {
     ship.update(pointerX, 1);
     for (const d of drones) d.update(ship, CONFIG.canvas.width, 1);
     for (const c of entities.capsules) c.update(CONFIG.canvas.height, 1);
-    entities.capsules = entities.capsules.filter(c => c.alive);
+    entities.capsules = entities.capsules.filter(c => c.alive || c.collected);
     for (const mc of entities.mineralCapsules) mc.update(CONFIG.canvas.height, 1);
-    entities.mineralCapsules = entities.mineralCapsules.filter(mc => mc.alive);
+    entities.mineralCapsules = entities.mineralCapsules.filter(mc => mc.alive || mc.collected);
     collisionHandler.update();
   }
 

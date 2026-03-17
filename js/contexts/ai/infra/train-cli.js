@@ -28,7 +28,7 @@ const flag = (name) => args.includes(`--${name}`);
 
 const GENERATIONS    = parseInt(arg('generations', '100'));
 const POP_SIZE       = parseInt(arg('population', '50'));
-const LEVEL_ID       = arg('level', 'z1-1');
+const LEVEL_IDS      = (arg('levels', '') || arg('level', 'z1-1')).split(',').filter(Boolean);
 const MUTATION_RATE  = parseFloat(arg('mutation-rate', '0.20'));
 const MUTATION_POWER = parseFloat(arg('mutation-power', '0.4'));
 const OUTPUT_FILE    = arg('output', 'js/contexts/ai/models/best.json');
@@ -40,7 +40,9 @@ const SILENT         = flag('silent');
 const { startGame, tick, gameState } = createHeadlessGame();
 
 function simulate(genome) {
-  return simulateAgent(genome, gameState, startGame, tick, LEVEL_ID);
+  // Multi-level : évalue sur un niveau aléatoire pour généraliser
+  const levelId = LEVEL_IDS[Math.floor(Math.random() * LEVEL_IDS.length)];
+  return simulateAgent(genome, gameState, startGame, tick, levelId);
 }
 
 // ─── Training loop ─────────────────────────────────
@@ -61,7 +63,7 @@ if (INPUT_FILE) {
 }
 
 if (!SILENT) {
-  console.log(`\n🧠 Entraînement IA — ${GENERATIONS} générations, pop ${POP_SIZE}, niveau ${LEVEL_ID}`);
+  console.log(`\n🧠 Entraînement IA — ${GENERATIONS} générations, pop ${POP_SIZE}, niveaux ${LEVEL_IDS.join(',')}`);
   console.log(`   Mutation: rate=${MUTATION_RATE} power=${MUTATION_POWER}`);
   console.log(`   Sortie: ${OUTPUT_FILE}\n`);
   console.log(genStatsHeader());

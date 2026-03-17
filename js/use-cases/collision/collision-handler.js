@@ -33,6 +33,7 @@ export class CollisionHandler {
   update() {
     this.#handleDroneCollisions();
     this.#handleProjectileCollisions();
+    this.#handleShipAsteroidCollision();
     this.#handleCapsulePickup();
     this.#handleMineralPickup();
     this.#handlePowerUpExpiry();
@@ -156,6 +157,36 @@ export class CollisionHandler {
           break;
         }
       }
+    }
+  }
+
+  #handleShipAsteroidCollision() {
+    const { ship, field } = this.entities;
+    if (!ship.visible) return;
+    const ev = this.session.checkShipAsteroidCollision(ship, field);
+    if (!ev) return;
+
+    this.ui.combo = 0;
+    this.session.combo = 0;
+    const livesLeft = this.session.loseLife();
+
+    if (livesLeft <= 0) {
+      this.session.state = 'gameOver';
+      this.ui.deathAnimTimer = 240;
+      this.ui.deathZoomCenter = { x: ship.x + ship.width / 2, y: ship.y + ship.height / 2 };
+      this.ui.deathDebris = this.effects.spawnDebris(ship.x, ship.y, ship.width, ship.height, ship.color);
+      this.systems.intensity.onGameOver();
+      this.effects.spawnShipExplosion(ship.x + ship.width / 2, ship.y + ship.height / 2);
+      this.effects.triggerShake(14);
+      ship.visible = false;
+    } else {
+      this.effects.spawnShipExplosion(ev.x, ev.y);
+      this.effects.triggerShake(10);
+      ship.resetToBase();
+      this.droneManager
+        ? this.droneManager.resetLast(this.entities.drones, ship)
+        : this.entities.drones[0]?.reset(ship);
+      this.systems.intensity.onLifeChanged(livesLeft);
     }
   }
 

@@ -21,6 +21,10 @@ export class Ship {
       : this._desktopMargin;
     this.x = (canvasWidth - this.width) / 2;
     this.y = canvasHeight - this.height - this.bottomMargin;
+    this.baseY = this.y;
+    this.advanceTimer = 0;
+    this.advanceDelay = 0; // calculé au premier appel de advanceY
+    this.advanceConfig = config.advance || null;
     this.movingLeft = false;
     this.movingRight = false;
     this.canvasWidth = canvasWidth;
@@ -57,5 +61,40 @@ export class Ship {
     }
     this.x = Math.max(0, Math.min(this.canvasWidth - this.width, this.x));
     this.vx = this.x - prevX;
+  }
+
+  /**
+   * Avance le vaisseau vers le haut.
+   * @param {number} dt - delta time (1 = 1 frame à 60fps)
+   * @param {number} remainingRatio - remaining / totalAsteroids (1→0)
+   * @param {number} totalAsteroids - nombre total d'astéroïdes (pour calcul délai)
+   */
+  advanceY(dt, remainingRatio, totalAsteroids) {
+    const cfg = this.advanceConfig;
+    if (!cfg) return;
+
+    // Calcul du délai initial au premier appel
+    if (!this.advanceDelay && totalAsteroids > 0) {
+      const t = Math.min(totalAsteroids / cfg.maxAsteroidsRef, 1);
+      this.advanceDelay = cfg.minDelay + (cfg.maxDelay - cfg.minDelay) * t;
+    }
+
+    this.advanceTimer += dt;
+    const elapsed = this.advanceTimer / 60; // secondes
+    if (elapsed < this.advanceDelay) return;
+
+    const sinceDel = elapsed - this.advanceDelay;
+    const speed = cfg.baseSpeed
+      * (1 + cfg.timeFactor * sinceDel)
+      * (1 + cfg.remainingFactor * (1 - remainingRatio));
+    this.y -= speed * dt;
+    if (this.y < cfg.minY) this.y = cfg.minY;
+  }
+
+  /** Reset le vaisseau en bas (après perte de vie). */
+  resetToBase() {
+    this.y = this.baseY;
+    this.advanceTimer = 0;
+    this.advanceDelay = 0;
   }
 }

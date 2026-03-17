@@ -7,7 +7,7 @@ function makeDrone(launched = true) {
 }
 
 function makeShip() {
-  return { x: 100, y: 400, width: 60, height: 10 };
+  return { x: 100, y: 400, width: 60, height: 10, visible: true, color: '#00aaff', resetToBase: vi.fn() };
 }
 
 function makeField(remaining = 5) {
@@ -26,10 +26,12 @@ function makeDeps(overrides = {}) {
   const session = {
     checkShipCollision: vi.fn(() => null),
     checkAsteroidCollision: vi.fn(() => null),
+    checkShipAsteroidCollision: vi.fn(() => null),
     checkCapsuleCollision: vi.fn(() => []),
     isDroneLost: vi.fn(() => false),
     checkWin: vi.fn(() => null),
     loseLife: vi.fn(() => 2),
+    combo: 0,
     state: 'playing',
     ...overrides.session,
   };
@@ -281,6 +283,43 @@ describe('CollisionHandler', () => {
     handler.update();
 
     expect(deps.entities.field.grid[0].shield).toBe(true); // toujours true, pas de double
+  });
+
+  // --- Ship-asteroid crash ---
+
+  it('perd une vie et reset le ship sur crash astéroïde (vies > 0)', () => {
+    deps.session.checkShipAsteroidCollision.mockReturnValue({ type: 'shipCrash', x: 120, y: 300 });
+    deps.session.loseLife.mockReturnValue(1);
+    deps.ui.combo = 4;
+
+    handler.update();
+
+    expect(deps.session.loseLife).toHaveBeenCalled();
+    expect(deps.ui.combo).toBe(0);
+    expect(deps.entities.ship.resetToBase).toHaveBeenCalled();
+    expect(deps.effects.spawnShipExplosion).toHaveBeenCalledWith(120, 300);
+    expect(deps.effects.triggerShake).toHaveBeenCalledWith(10);
+    expect(deps.systems.intensity.onLifeChanged).toHaveBeenCalledWith(1);
+  });
+
+  it('game over sur crash astéroïde quand plus de vies', () => {
+    deps.session.checkShipAsteroidCollision.mockReturnValue({ type: 'shipCrash', x: 120, y: 300 });
+    deps.session.loseLife.mockReturnValue(0);
+
+    handler.update();
+
+    expect(deps.session.state).toBe('gameOver');
+    expect(deps.systems.intensity.onGameOver).toHaveBeenCalled();
+    expect(deps.entities.ship.visible).toBe(false);
+  });
+
+  it('ne check pas le crash si le ship est invisible', () => {
+    deps.entities.ship.visible = false;
+    deps.session.checkShipAsteroidCollision.mockReturnValue({ type: 'shipCrash', x: 120, y: 300 });
+
+    handler.update();
+
+    expect(deps.session.loseLife).not.toHaveBeenCalled();
   });
 
   // 16. Projectile ignore les tentacules

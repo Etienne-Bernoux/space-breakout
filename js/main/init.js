@@ -327,6 +327,7 @@ setupResize(() => {
       ship.bottomMargin = Math.max(60, Math.round(CONFIG.canvas.height * ship._mobileRatio));
     }
     ship.y = CONFIG.canvas.height - ship.height - ship.bottomMargin;
+    ship.baseY = ship.y;
     ship.canvasWidth = CONFIG.canvas.width;
     for (const d of G.entities.drones) { if (!d.launched) d.reset(ship); }
   }

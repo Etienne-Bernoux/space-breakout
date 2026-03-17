@@ -96,6 +96,8 @@ export function createHeadlessGame() {
     if (ui.slowMoTimer > 0) ui.slowMoTimer -= 1;
     field.update(1);
     ship.update(pointerX, 1);
+    const total = entities.totalAsteroids;
+    ship.advanceY(1, total > 0 ? field.remaining / total : 1, total);
     for (const d of drones) d.update(ship, CONFIG.canvas.width, 1);
     for (const c of entities.capsules) c.update(CONFIG.canvas.height, 1);
     entities.capsules = entities.capsules.filter(c => c.alive || c.collected);

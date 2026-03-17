@@ -13,6 +13,15 @@ export const CONFIG = {
     color: '#00d4ff',
     bottomMargin: 10,              // desktop (fixe)
     bottomMarginMobileRatio: 0.08, // mobile : 8% de la hauteur canvas
+    advance: {
+      baseSpeed: 0.015,          // px/frame (dt=1)
+      timeFactor: 0.008,         // accélération par seconde écoulée
+      remainingFactor: 1.5,      // accélération quand il reste peu d'astéroïdes
+      minY: 200,                 // le vaisseau ne monte pas au-dessus
+      minDelay: 10,              // délai initial minimum (secondes)
+      maxDelay: 30,              // délai initial maximum (secondes)
+      maxAsteroidsRef: 80,       // seuil d'astéroïdes pour atteindre maxDelay
+    },
   },
 
   drone: {

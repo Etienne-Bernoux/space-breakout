@@ -14,6 +14,7 @@ export class CollisionResolver {
     if (
       drone.dy > 0 &&
       drone.y + drone.radius >= ship.y &&
+      drone.y - drone.radius <= ship.y + ship.height &&
       drone.x >= ship.x &&
       drone.x <= ship.x + ship.width
     ) {
@@ -127,6 +128,19 @@ export class CollisionResolver {
            drone.x - drone.radius < a.x + a.width &&
            drone.y + drone.radius > a.y &&
            drone.y - drone.radius < a.y + a.height;
+  }
+
+  /** Vaisseau touche un astéroïde (AABB) — mort immédiate */
+  checkShipAsteroidCollision(ship, field) {
+    const sx = ship.x, sy = ship.y, sw = ship.width, sh = ship.height;
+    for (const a of field.grid) {
+      if (!a.alive) continue;
+      if (sx < a.x + a.width && sx + sw > a.x &&
+          sy < a.y + a.height && sy + sh > a.y) {
+        return { type: 'shipCrash', x: a.x + a.width / 2, y: a.y + a.height / 2 };
+      }
+    }
+    return null;
   }
 
   /** Drone perdu en bas de l'écran */

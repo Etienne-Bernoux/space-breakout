@@ -1,7 +1,9 @@
 import { expect } from 'chai';
 import { Ship } from './ship.js';
 
-const CFG = { width: 80, height: 12, speed: 6, color: '#0ff', bottomMargin: 10 };
+const CFG = { width: 80, height: 12, speed: 6, color: '#0ff', bottomMargin: 10,
+  advance: { baseSpeed: 0.015, timeFactor: 0.008, remainingFactor: 1.5, minY: 200, minDelay: 10, maxDelay: 30, maxAsteroidsRef: 80 },
+};
 
 describe('Ship', () => {
   it('se positionne centré en bas du canvas', () => {
@@ -91,6 +93,56 @@ describe('Ship', () => {
     const x0 = s.x;
     s.update(null);
     expect(s.x).to.be.greaterThan(x0);
+  });
+
+  // --- advanceY ---
+
+  it('advanceY ne bouge pas pendant le délai initial', () => {
+    const s = new Ship(CFG, 800, 600);
+    const y0 = s.y;
+    // 40 astéroïdes → délai = 10 + (30-10) * (40/80) = 20s = 1200 frames
+    s.advanceY(60, 1, 40); // 1 seconde (60 frames)
+    expect(s.y).to.equal(y0);
+  });
+
+  it('advanceY monte le vaisseau après le délai', () => {
+    const s = new Ship(CFG, 800, 600);
+    const y0 = s.y;
+    // 0 astéroïde ref → délai = minDelay = 10s = 600 frames
+    s.advanceTimer = 600; // skip le délai
+    s.advanceDelay = 10;
+    s.advanceY(60, 0.5, 1); // 1 seconde après le délai
+    expect(s.y).to.be.lessThan(y0);
+  });
+
+  it('advanceY respecte le clamp minY', () => {
+    const s = new Ship(CFG, 800, 600);
+    s.y = 201;
+    s.advanceTimer = 600;
+    s.advanceDelay = 10;
+    s.advanceY(6000, 0, 1); // gros dt pour forcer le dépassement
+    expect(s.y).to.equal(200);
+  });
+
+  it('advanceY ne fait rien sans advanceConfig', () => {
+    const noCfg = { ...CFG, advance: undefined };
+    delete noCfg.advance;
+    const s = new Ship(noCfg, 800, 600);
+    const y0 = s.y;
+    s.advanceY(100, 0.5, 10);
+    expect(s.y).to.equal(y0);
+  });
+
+  it('resetToBase remet le vaisseau en position initiale', () => {
+    const s = new Ship(CFG, 800, 600);
+    const y0 = s.y;
+    s.y = 300;
+    s.advanceTimer = 999;
+    s.advanceDelay = 15;
+    s.resetToBase();
+    expect(s.y).to.equal(y0);
+    expect(s.advanceTimer).to.equal(0);
+    expect(s.advanceDelay).to.equal(0);
   });
 
   it('mobile : marge basse plus grande', () => {

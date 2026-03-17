@@ -264,6 +264,8 @@ export class GameLoop {
 
     field.update(dtEff);
     ship.update(this.infra.getPointerX(), dtEff);
+    const total = this.entities.totalAsteroids;
+    ship.advanceY(dtEff, total > 0 ? field.remaining / total : 1, total);
     for (const d of drones) d.update(ship, this.canvas.width, dtEff);
     for (const c of this.entities.capsules) c.update(this.canvas.height, dtEff);
     this.entities.capsules = this.entities.capsules.filter(c => c.alive);
@@ -311,6 +313,8 @@ export class GameLoop {
 
     field.update(dtEff);
     ship.update(infra.getPointerX(), dtEff);
+    const totalP = this.entities.totalAsteroids;
+    ship.advanceY(dtEff, totalP > 0 ? field.remaining / totalP : 1, totalP);
     for (const d of drones) {
       d.update(ship, this.canvas.width, dtEff);
       if (d.launched) infra.spawnTrail(d.x, d.y, d.dx, d.dy);

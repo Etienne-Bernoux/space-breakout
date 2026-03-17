@@ -84,6 +84,10 @@ export class GameSession {
     return this._resolver.isDroneLost(drone, this.canvasHeight);
   }
 
+  checkShipAsteroidCollision(ship, field) {
+    return this._resolver.checkShipAsteroidCollision(ship, field);
+  }
+
   checkCapsuleCollision(capsules, ship) {
     return this._resolver.checkCapsuleCollision(capsules, ship);
   }

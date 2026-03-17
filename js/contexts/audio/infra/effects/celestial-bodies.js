@@ -107,7 +107,7 @@ function randomIceChunk(canvas, startY) {
 
 function randomIcePlanet(canvas) {
   const sizeScale = Math.min(1, canvas.width / 800);
-  const radius = (120 + Math.random() * 30) * sizeScale;
+  const radius = (200 + Math.random() * 60) * sizeScale;
   const bandCount = 5 + Math.floor(Math.random() * 4);
   const bands = Array.from({ length: bandCount }, () => ({
     offset: Math.random() * 0.08 - 0.04,
@@ -134,7 +134,14 @@ function initBeltBodies(canvas) {
 
 function initIceBodies(canvas) {
   const planet = randomIcePlanet(canvas);
-  const chunks = Array.from({ length: 10 }, () => randomIceChunk(canvas));
+  const count = 10;
+  // Répartir les chunks sur toute la hauteur pour éviter les regroupements
+  const chunks = Array.from({ length: count }, (_, i) => {
+    const chunk = randomIceChunk(canvas);
+    chunk.y = (i / count) * (canvas.height + 100) - 50;
+    chunk.x = chunk.radius + Math.random() * (canvas.width - chunk.radius * 2);
+    return chunk;
+  });
   return [planet, ...chunks];
 }
 

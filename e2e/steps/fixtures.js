@@ -1,6 +1,42 @@
 import { test as base } from 'playwright-bdd';
 
+/** Script injecté avant chaque page pour neutraliser Web Audio (pas de son en e2e). */
+/** Stub complet Web Audio : crée un vrai AudioContext mais coupe la destination. */
+const MUTE_AUDIO_SCRIPT = `
+  const OrigAudioContext = window.AudioContext || window.webkitAudioContext;
+  if (OrigAudioContext) {
+    const _origProto = OrigAudioContext.prototype;
+    const _origCreateGain = _origProto.createGain;
+    window.AudioContext = function(...args) {
+      const ctx = new OrigAudioContext(...args);
+      // Couper le master gain en interceptant destination
+      try {
+        const silence = _origCreateGain.call(ctx);
+        silence.gain.value = 0;
+        silence.connect(ctx.destination);
+        // Override destination pour que tout soit routé vers le gain muet
+        Object.defineProperty(ctx, '_mutedDest', { value: silence });
+        const origConnect = AudioNode.prototype.connect;
+        const dest = ctx.destination;
+        AudioNode.prototype.connect = function(target, ...rest) {
+          if (target === dest) return origConnect.call(this, silence, ...rest);
+          return origConnect.call(this, target, ...rest);
+        };
+      } catch(e) {}
+      return ctx;
+    };
+    window.AudioContext.prototype = _origProto;
+    window.webkitAudioContext = window.AudioContext;
+  }
+`;
+
 export const test = base.extend({
+  /** Neutralise Web Audio avant chaque navigation. */
+  page: async ({ page }, use) => {
+    await page.addInitScript(MUTE_AUDIO_SCRIPT);
+    await use(page);
+  },
+
   /** Collecte les erreurs console pour assertions. */
   consoleErrors: async ({ page }, use) => {
     const errors = [];

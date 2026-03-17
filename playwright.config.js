@@ -21,7 +21,7 @@ export default defineConfig({
   timeout: 15000,
   retries: 0,
   use: {
-    launchOptions: { args: ['--mute-audio'] },
+    launchOptions: { args: ['--mute-audio', '--disable-audio-output', '--autoplay-policy=no-user-gesture-required'] },
   },
   projects: [
     {

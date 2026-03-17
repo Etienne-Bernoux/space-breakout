@@ -1,4 +1,4 @@
-import { getLevelIndex, getNextLevel } from './level-catalog.js';
+import { getLevelIndex, getNextLevel, getZoneForLevel } from './level-catalog.js';
 import { getZoneIndex, ZONES } from './zone-catalog.js';
 
 export class PlayerProgress {
@@ -15,6 +15,9 @@ export class PlayerProgress {
   }
 
   isUnlocked(levelId) {
+    const zone = getZoneForLevel(levelId);
+    const currentZone = getZoneForLevel(this.unlockedUpTo);
+    if (zone !== currentZone) return this.isZoneUnlocked(zone);
     return getLevelIndex(levelId) <= getLevelIndex(this.unlockedUpTo);
   }
 

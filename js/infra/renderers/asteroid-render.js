@@ -4,7 +4,7 @@
 import {
   lighten, darken,
   drawVeins, drawCraters, drawRim,
-  drawFractureGlow, drawDamageOverlay, drawShieldAura,
+  drawFractureGlow, drawDamageOverlay, drawShieldAura, drawFrostAura,
 } from './asteroid-render-helpers.js';
 
 // Re-export pour les consommateurs existants
@@ -187,4 +187,5 @@ export function renderAsteroid(ctx, a, rx, ry, tracePath) {
   const styleFn = STYLE_MAP[a.materialKey] || styleRock;
   styleFn(ctx, a, rx, ry, tracePath);
   drawShieldAura(ctx, tracePath, a, rx, ry);
+  drawFrostAura(ctx, tracePath, a, rx, ry);
 }

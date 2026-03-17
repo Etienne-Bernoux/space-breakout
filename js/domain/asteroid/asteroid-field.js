@@ -62,6 +62,41 @@ export class AsteroidField {
     return this.grid.some(a => a.alive && a.material?.isBoss);
   }
 
+  /** Retourne les astéroïdes vivants adjacents (4-connecté, exclut creaturePart). */
+  getGridNeighbors(asteroid) {
+    const cells = new Set();
+    for (let dr = 0; dr < asteroid.ch; dr++) {
+      for (let dc = 0; dc < asteroid.cw; dc++) {
+        cells.add(`${asteroid.gridCol + dc},${asteroid.gridRow + dr}`);
+      }
+    }
+    // Collecter les cellules voisines (bord extérieur du bloc)
+    const neighborCells = new Set();
+    for (let dr = 0; dr < asteroid.ch; dr++) {
+      for (let dc = 0; dc < asteroid.cw; dc++) {
+        const c = asteroid.gridCol + dc;
+        const r = asteroid.gridRow + dr;
+        for (const [nc, nr] of [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]]) {
+          const key = `${nc},${nr}`;
+          if (!cells.has(key)) neighborCells.add(key);
+        }
+      }
+    }
+    // Trouver les astéroïdes vivants qui occupent ces cellules
+    const result = new Set();
+    for (const a of this.grid) {
+      if (!a.alive || a === asteroid || a.material?.creaturePart) continue;
+      for (let dr = 0; dr < a.ch; dr++) {
+        for (let dc = 0; dc < a.cw; dc++) {
+          if (neighborCells.has(`${a.gridCol + dc},${a.gridRow + dr}`)) {
+            result.add(a);
+          }
+        }
+      }
+    }
+    return [...result];
+  }
+
   // --- Mutations ---
 
   /** Tue tous les tentacules vivants — appelé quand le core est détruit */
@@ -157,6 +192,12 @@ export class AsteroidField {
       a.fragOffsetY *= decay;
       if (Math.abs(a.fragOffsetX) < 0.1) a.fragOffsetX = 0;
       if (Math.abs(a.fragOffsetY) < 0.1) a.fragOffsetY = 0;
+
+      // Frost timer decay
+      if (a.frost) {
+        a.frost.remaining -= dt;
+        if (a.frost.remaining <= 0) a.frost = null;
+      }
 
       // Recalculer le polygone de collision world-space
       if (a.material?.isBoss) {

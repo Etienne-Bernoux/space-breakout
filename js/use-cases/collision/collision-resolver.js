@@ -79,9 +79,23 @@ export class CollisionResolver {
           continue;
         }
 
-        // Décrémenter HP (damage upgrade : drone.damage, default 1)
-        const dmg = drone.damage || 1;
-        a.hp -= dmg;
+        // Frost absorbe le coup (sauf si drone fireball)
+        if (a.frost && !drone.fireball) {
+          a.frost = null;
+          const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: '#5bc0eb', hpLeft: a.hp, maxHp: a.maxHp, materialKey: a.materialKey };
+          if (!effectivePiercing) return ev;
+          if (!firstEvent) firstEvent = ev;
+          continue;
+        }
+
+        // Fireball one-shot ice
+        if (drone.fireball && a.materialKey === 'ice') {
+          a.hp = 0;
+        } else {
+          // Décrémenter HP (damage upgrade : drone.damage, default 1)
+          const dmg = drone.damage || 1;
+          a.hp -= dmg;
+        }
         if (a.hp > 0) {
           const ev = { type: 'asteroidDamage', x: hitX, y: hitY, color: a.color, hpLeft: a.hp, maxHp: a.maxHp, materialKey: a.materialKey };
           if (!effectivePiercing) return ev;
@@ -101,6 +115,7 @@ export class CollisionResolver {
           type: fragments.length > 0 ? 'asteroidFragment' : 'asteroidHit',
           points, x: hitX, y: hitY, color: a.color, fragments,
           materialKey: a.materialKey, material: a.material, sizeName: a.sizeName,
+          asteroid: a, droneFireball: !!drone.fireball,
         };
         if (!effectivePiercing) return ev;
         if (!firstEvent) firstEvent = ev;

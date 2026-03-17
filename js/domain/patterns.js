@@ -202,6 +202,60 @@ export const PATTERNS = {
     ],
   },
 
+  // --- Zone 2 : Glace ---
+  frostWall: {
+    name: 'Mur de givre',
+    grid: GRID_PRESETS.medium,
+    lines: [
+      'II..IIII..IIII',
+      'II..IIII..IIII',
+      '..............',
+      'IIII..IIII..II',
+      'IIII..IIII..II',
+      '..............',
+      'II..IIII..IIII',
+      'II..IIII..IIII',
+      '..............',
+      '??..????..??II',
+    ],
+  },
+
+  iceCrown: {
+    name: 'Couronne de glace',
+    grid: GRID_PRESETS.large,
+    lines: [
+      '...IIIIIIIIII...',
+      '..IIIIIIIIIIII..',
+      '.III..MMMM..III.',
+      'III..MRRRRM..III',
+      'II..MR.RR.RM..II',
+      'II..MR.RR.RM..II',
+      'III..MRRRRM..III',
+      '.III..MMMM..III.',
+      '..IIIIIIIIIIII..',
+      '...IIIIIIIIII...',
+      '................',
+      '......CCCC......',
+    ],
+  },
+
+  cryovore: {
+    name: 'Cryovore',
+    grid: GRID_PRESETS.medium,
+    lines: [
+      'O..IIIIIIII..O',
+      '..II.ABBA.II..',
+      '.II..ABBA..II.',
+      '..II.A..A.II..',
+      'O..IIIIIIII..O',
+      '..............',
+      '..I..IIII..I..',
+      '.I..I....I..I.',
+      'I..I......I..I',
+      '..I........I..',
+    ],
+  },
+
   // --- Invasion (aliens placés manuellement) ---
   invasion1: {
     name: 'Invasion 1',

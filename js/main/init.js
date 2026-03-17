@@ -4,6 +4,7 @@ import { Drone } from '../domain/drone/drone.js';
 import { AsteroidField } from '../domain/asteroid/index.js';
 import { PlayerProgress } from '../domain/progression/player-progress.js';
 import { getLevel, getNextLevel, getAllLevels, getZoneForLevel } from '../domain/progression/level-catalog.js';
+import { getZoneIndex } from '../domain/progression/zone-catalog.js';
 import { computeStars } from '../domain/progression/star-rating.js';
 import { loadProgress, saveProgress } from '../infra/persistence/progress-storage.js';
 import { GameSession } from '../use-cases/game-logic/game-session.js';
@@ -180,6 +181,9 @@ function resetSystems(sys) {
  */
 export function startGame(levelId, opts) {
   const level = levelId ? getLevel(levelId) : null;
+  // Mettre à jour le zoneIndex pour le filtrage des power-ups
+  const zoneId = levelId ? getZoneForLevel(levelId) : 'zone1';
+  G.systems.drop.zoneIndex = zoneId ? getZoneIndex(zoneId) : 0;
   spawnEntities(G.entities, level?.asteroids);
   resetSystems(G.systems);
   resetMineralSessionGains();

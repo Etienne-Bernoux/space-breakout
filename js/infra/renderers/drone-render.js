@@ -99,4 +99,30 @@ export function drawDrone(ctx, drone) {
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
+
+  // --- 7. Aura fireball (quand actif) ---
+  if (drone.fireball) {
+    const firePulse = 0.5 + Math.sin(t * 6) * 0.2;
+    const fireRadius = radius + 6 + Math.sin(t * 8) * 2;
+    const fireGrad = ctx.createRadialGradient(x, y, radius * 0.3, x, y, fireRadius);
+    fireGrad.addColorStop(0, `rgba(255, 100, 0, ${0.4 * firePulse})`);
+    fireGrad.addColorStop(0.5, `rgba(255, 60, 0, ${0.2 * firePulse})`);
+    fireGrad.addColorStop(1, 'rgba(255, 30, 0, 0)');
+    ctx.fillStyle = fireGrad;
+    ctx.beginPath();
+    ctx.arc(x, y, fireRadius, 0, Math.PI * 2);
+    ctx.fill();
+    // Traînée de flamme (direction opposée au mouvement)
+    if (speed > 0.5) {
+      const trailX = x - (vx / speed) * radius * 2;
+      const trailY = y - (vy / speed) * radius * 2;
+      const trailGrad = ctx.createRadialGradient(trailX, trailY, 0, trailX, trailY, radius * 1.5);
+      trailGrad.addColorStop(0, `rgba(255, 80, 0, ${0.3 * firePulse})`);
+      trailGrad.addColorStop(1, 'rgba(255, 40, 0, 0)');
+      ctx.fillStyle = trailGrad;
+      ctx.beginPath();
+      ctx.arc(trailX, trailY, radius * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 }

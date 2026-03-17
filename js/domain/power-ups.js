@@ -41,6 +41,7 @@ export const POWER_UPS = {
     color: '#ff6600',
     effect: { target: 'drone', prop: 'piercing' },
     dropWeight: { rock: 1, ice: 2, lava: 2, metal: 3, crystal: 3, obsidian: 0 },
+    minZone: 2,
   },
   extraLife: {
     id: 'extraLife',
@@ -121,6 +122,18 @@ export const POWER_UPS = {
     color: '#cc00ff',
     effect: { target: 'drones', action: 'spawn' },
     dropWeight: { rock: 1, ice: 1, lava: 1, metal: 2, crystal: 3, obsidian: 0 },
+    minZone: 2,
+  },
+  droneFireball: {
+    id: 'droneFireball',
+    name: 'Boule de feu',
+    short: 'Feu',
+    type: 'bonus',
+    duration: 15000,
+    color: '#ff4400',
+    effect: { target: 'drone', prop: 'fireball' },
+    dropWeight: { rock: 1, ice: 5, lava: 0, metal: 1, crystal: 1, obsidian: 0 },
+    minZone: 2,
   },
 };
 

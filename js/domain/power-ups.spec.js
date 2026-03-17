@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import { POWER_UPS, POWER_UP_IDS, getPowerUp } from './power-ups.js';
 
 describe('power-ups definitions', () => {
-  it('définit 12 power-ups', () => {
-    expect(POWER_UP_IDS).to.have.length(12);
+  it('définit 13 power-ups', () => {
+    expect(POWER_UP_IDS).to.have.length(13);
   });
 
   it('chaque power-up a les champs requis', () => {

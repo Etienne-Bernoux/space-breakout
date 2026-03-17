@@ -89,6 +89,17 @@ export class CollisionHandler {
       this.effects.spawnAlienExplosion(ev.x, ev.y);
     }
 
+    // Explosion givrante → gèle les voisins (sauf si fireball)
+    if (ev.material?.frostExplosion && ev.asteroid && !ev.droneFireball) {
+      const neighbors = field.getGridNeighbors(ev.asteroid);
+      for (const n of neighbors) {
+        if (!n.frost) {
+          n.frost = { remaining: 360 }; // ~6s @60fps
+          this.effects.spawnExplosion(n.x + n.width / 2, n.y + n.height / 2, '#5bc0eb');
+        }
+      }
+    }
+
     // Boss détruit → tue les tentacules + spectacle total
     if (ev.material?.isBoss) {
       field.killTentacles();

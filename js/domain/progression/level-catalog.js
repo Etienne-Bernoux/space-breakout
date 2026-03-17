@@ -18,9 +18,24 @@ export const ZONE_1 = {
   ],
 };
 
+export const ZONE_2 = {
+  id: 'zone2',
+  name: 'Lune de Kryos',
+  theme: { bg: '#0a0a2a', accent: '#5bc0eb' },
+  levels: [
+    { id: 'z2-1', name: 'Glacis',          asteroids: { rows: 4, cols: 6,  density: 0.4,  materials: { ice: 0.7, rock: 0.3 } },                                        timeTarget: 90 },
+    { id: 'z2-2', name: 'Crevasses',        asteroids: { rows: 5, cols: 8,  density: 0.5,  materials: { ice: 0.5, rock: 0.4, metal: 0.1 } },                              timeTarget: 100 },
+    { id: 'z2-3', name: 'Permafrost',       asteroids: { rows: 6, cols: 10, materials: { ice: 0.6, rock: 0.3, metal: 0.1 }, pattern: PATTERNS.frostWall },                 timeTarget: 110 },
+    { id: 'z2-4', name: 'Geysers',          asteroids: { rows: 6, cols: 10, density: 0.55, materials: { ice: 0.4, rock: 0.2, lava: 0.2, metal: 0.2 } },                   timeTarget: 115 },
+    { id: 'z2-5', name: 'Calotte polaire',  asteroids: { rows: 8, cols: 12, materials: { ice: 0.5, rock: 0.2, metal: 0.2, crystal: 0.1 }, pattern: PATTERNS.iceCrown },    timeTarget: 125 },
+    { id: 'z2-6', name: 'Cryovore',         asteroids: { rows: 10, cols: 14, materials: { ice: 0.7, rock: 0.3 }, pattern: PATTERNS.cryovore },                             timeTarget: 150 },
+  ],
+};
+
 /** Map zone id → levels array. Les zones futures seront ajoutées ici. */
 const LEVELS_BY_ZONE = {
   zone1: ZONE_1.levels,
+  zone2: ZONE_2.levels,
 };
 
 /** Tous les levels à plat (toutes zones confondues). */

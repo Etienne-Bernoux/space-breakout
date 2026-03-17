@@ -17,6 +17,7 @@ export const MATERIALS = {
     destructible: true,
     pointsMult: 1,
     noFragment: true, // explose entièrement, pas de fragmentation
+    frostExplosion: true, // gèle les voisins adjacents à la destruction
     colors: ['#88ccee', '#66aadd', '#aaddff', '#77bbee'],
     style: 'ice', // translucide, reflets, cristaux
   },

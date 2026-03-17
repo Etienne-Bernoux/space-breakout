@@ -117,6 +117,28 @@ export function drawShieldAura(ctx, tracePath, a, rx, ry) {
   ctx.stroke();
 }
 
+/** Aura bleue/blanche de givre (frost explosion) */
+export function drawFrostAura(ctx, tracePath, a, rx, ry) {
+  if (!a.frost) return;
+  const fade = Math.min(1, a.frost.remaining / 60); // fade-out sur la dernière seconde
+  const pulse = 0.6 + Math.sin((a.floatPhase || 0) * 4) * 0.2;
+  // Halo externe
+  tracePath(ctx, a.shape, rx * 1.18, ry * 1.18);
+  ctx.strokeStyle = `rgba(91,192,235,${0.12 * pulse * fade})`;
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  // Halo moyen
+  tracePath(ctx, a.shape, rx * 1.1, ry * 1.1);
+  ctx.strokeStyle = `rgba(170,221,255,${0.3 * pulse * fade})`;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  // Halo interne
+  tracePath(ctx, a.shape, rx * 1.03, ry * 1.03);
+  ctx.strokeStyle = `rgba(220,240,255,${0.55 * pulse * fade})`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
 /** Indicateur de dégât (fissure assombrie proportionnelle aux HP perdus) */
 export function drawDamageOverlay(ctx, tracePath, a, rx, ry) {
   if (a.hp >= a.maxHp || !a.destructible) return;

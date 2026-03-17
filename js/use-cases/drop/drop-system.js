@@ -10,7 +10,8 @@ export class DropSystem {
   constructor(config = {}) {
     this.baseRate = config.baseRate ?? 0.012;
     this.sizeMult = config.sizeMult || DEFAULT_SIZE_MULT;
-    // Future : config.locked = Set de powerUpId verrouillés
+    /** Index de zone (0 = zone1, 1 = zone2…) pour filtrer les power-ups par minZone. */
+    this.zoneIndex = config.zoneIndex ?? 0;
   }
 
   /**
@@ -25,6 +26,7 @@ export class DropSystem {
     let cumul = 0;
     for (const id of POWER_UP_IDS) {
       const pu = POWER_UPS[id];
+      if (pu.minZone && pu.minZone > this.zoneIndex + 1) continue;
       const weight = (pu.dropWeight[mat] || 0) * this.baseRate * sizeMult;
       cumul += weight;
       if (rand < cumul) return id;

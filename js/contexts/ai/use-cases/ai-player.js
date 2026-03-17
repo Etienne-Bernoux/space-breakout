@@ -117,9 +117,9 @@ export class AIPlayer {
     // Drone lancé (1) — flag binaire
     inputs[idx++] = drone.launched ? 1 : -1;
 
-    // Drone distance aux murs gauche/droit (2) — anticipation rebonds
-    inputs[idx++] = drone.x / W * 2 - 1;          // -1 = mur gauche, +1 = mur droit
-    inputs[idx++] = (W - drone.x) / W * 2 - 1;    // inverse
+    // Marge du vaisseau gauche/droite (2) — place pour manœuvrer
+    inputs[idx++] = ship.x / W * 2 - 1;                          // -1 = collé à gauche
+    inputs[idx++] = (W - ship.x - ship.width) / W * 2 - 1;      // -1 = collé à droite
 
     // Position relative drone → vaisseau (2)
     inputs[idx++] = (drone.x - shipCx) / W * 2;

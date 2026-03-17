@@ -42,7 +42,8 @@ export function createHeadlessGame() {
   const powerUp = new PowerUpManager({ droneManager });
   powerUp.droneManager = droneManager;
   const drop = new DropSystem(CONFIG.drop);
-  const mineralDrop = new MineralDropSystem(CONFIG.mineralDrop);
+  // Drop rate minerai augmenté en entraînement (0.35 vs 0.08 en jeu)
+  const mineralDrop = new MineralDropSystem({ ...CONFIG.mineralDrop, baseRate: 0.35 });
   const intensity = {
     update: noop, onBounce: noop, onAsteroidHit: noop, onAsteroidDestroyed: noop,
     onPowerUpActivated: noop, onPowerUpExpired: noop, onLifeChanged: noop,

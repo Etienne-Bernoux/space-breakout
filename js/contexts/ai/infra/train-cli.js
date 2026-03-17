@@ -121,6 +121,20 @@ const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
 const model = population.exportModel({ genHistory });
 if (model) {
   writeFileSync(OUTPUT_FILE, JSON.stringify(model, null, 2));
+  // Mettre à jour index.json si la sortie est dans le dossier models/
+  if (OUTPUT_FILE.includes('models/')) {
+    const indexPath = OUTPUT_FILE.replace(/[^/]+$/, 'index.json');
+    try {
+      const index = JSON.parse(readFileSync(indexPath, 'utf-8'));
+      const fileName = OUTPUT_FILE.split('/').pop();
+      const entry = index.find(e => e.file === fileName);
+      if (entry) {
+        entry.generation = model.generation;
+        entry.fitness = Math.round(model.fitness);
+      }
+      writeFileSync(indexPath, JSON.stringify(index, null, 2) + '\n');
+    } catch { /* index.json absent, pas grave */ }
+  }
   console.log(`\n✅ Modèle sauvegardé dans ${OUTPUT_FILE}`);
   console.log(`   Génération: ${model.generation}, Fitness: ${Math.round(model.fitness)}`);
   console.log(`   Historique: ${genHistory.length} générations`);

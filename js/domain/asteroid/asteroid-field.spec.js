@@ -182,7 +182,7 @@ describe('AsteroidField', () => {
       expect(field.grid.length).to.equal(3); // original + 2 fragments
     });
 
-    it('ice (noFragment) → pas de fragments', () => {
+    it('ice → se fragmente comme la roche', () => {
       const field = new AsteroidField({
         ...BASE_CFG,
         rows: 1, cols: 2,
@@ -190,7 +190,7 @@ describe('AsteroidField', () => {
       });
       const a = field.grid[0];
       const frags = field.fragment(a, a.x + 5, a.y + 5);
-      expect(frags).to.have.length(0);
+      expect(frags.length).to.be.greaterThan(0);
       expect(a.alive).to.be.false;
     });
 

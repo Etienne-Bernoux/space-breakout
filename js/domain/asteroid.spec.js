@@ -224,7 +224,7 @@ describe('AsteroidField', () => {
       }
     });
 
-    it('ice noFragment → pas de fragments même en large', () => {
+    it('ice → se fragmente en morceaux (comme la roche)', () => {
       const fragConfig = {
         rows: 4, cols: 4, cellW: 70, cellH: 28, padding: 6,
         offsetTop: 10, offsetLeft: 10, density: 0, colors: ['#88ccee'],
@@ -233,7 +233,7 @@ describe('AsteroidField', () => {
       const ast = field._makeAsteroid(0, 0, 2, 2, fragConfig, 'ice');
       field.grid.push(ast);
       const frags = field.fragment(ast, ast.x + 5, ast.y + 5);
-      expect(frags).to.have.length(0);
+      expect(frags.length).to.be.greaterThan(0);
       expect(ast.alive).to.be.false;
     });
   });

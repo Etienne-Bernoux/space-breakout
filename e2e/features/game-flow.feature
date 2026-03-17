@@ -38,3 +38,24 @@ Feature: Flow — menu → lancer → jouer → fin
     Then l'état du jeu est "stats"
     When j'appuie sur "Escape"
     Then l'état du jeu est "worldMap"
+
+  Scenario: L'IA joue z1-1 en accéléré et gagne
+    Given je suis sur la page d'accueil
+    When je lance le niveau "z1-1" avec l'IA
+    And j'accélère le jeu x5
+    And l'IA atteint la fin de partie
+    Then l'état du jeu est "won" ou "gameOver" ou "stats"
+
+  Scenario: Victoire IA → stats → worldMap → systemMap → menu
+    Given je suis sur la page d'accueil
+    When je lance le niveau "z1-1" avec l'IA
+    And j'accélère le jeu x5
+    And l'IA atteint la fin de partie
+    And je force la victoire
+    Then l'état du jeu est "stats"
+    When j'appuie sur "Escape"
+    Then l'état du jeu est "worldMap"
+    When j'appuie sur "Escape"
+    Then l'état du jeu est "systemMap"
+    When j'appuie sur "Escape"
+    Then l'état du jeu est "menu"

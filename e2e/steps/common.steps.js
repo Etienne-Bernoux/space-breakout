@@ -54,6 +54,14 @@ When('je lance le niveau {string}', async ({ page, gameHelpers }, levelId) => {
   await gameHelpers.waitForState('playing');
 });
 
+When('j\'accélère le jeu x{int}', async ({ page }, factor) => {
+  await page.evaluate((f) => { window.__GAME__.timeScale = f; }, factor);
+});
+
+When('je remets la vitesse normale', async ({ page }) => {
+  await page.evaluate(() => { window.__GAME__.timeScale = 1; });
+});
+
 // ── Assertions état ─────────────────────────────────────────
 
 Then('l\'état du jeu est {string}', async ({ page, gameHelpers }, expected) => {

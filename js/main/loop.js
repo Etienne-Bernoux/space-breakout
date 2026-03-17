@@ -339,7 +339,8 @@ export class GameLoop {
   // --- Main loop ---
 
   loop(now = performance.now()) {
-    const dt = this.lastTime ? Math.min((now - this.lastTime) / 16.667, 3) : 1;
+    const rawDt = this.lastTime ? Math.min((now - this.lastTime) / 16.667, 3) : 1;
+    const dt = rawDt * (this.timeScale || 1);
     this.lastTime = now;
 
     // --- AI ---

@@ -124,6 +124,9 @@ window.__GAME__ = {
   get labHub() { return isLabHubActive(); },
   get wallet() { return G.wallet; },
   get upgrades() { return G.upgrades; },
+  /** Multiplicateur de vitesse du jeu (usage e2e / dev). */
+  set timeScale(v) { G.gameLoop.timeScale = v; },
+  get timeScale() { return G.gameLoop.timeScale || 1; },
   /** Force la victoire en tuant tous les astéroïdes (usage e2e / dev). */
   forceWin() {
     if (!G.entities.field) return;

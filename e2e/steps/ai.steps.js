@@ -40,11 +40,10 @@ Then('le nombre d\'astéroïdes a diminué', async ({ page }) => {
 });
 
 When('l\'IA atteint la fin de partie', async ({ page }) => {
-  // Attend que l'IA termine (won, gameOver ou stats), timeout 60s
   await page.waitForFunction(
     () => ['won', 'gameOver', 'stats'].includes(window.__GAME__?.state),
     null,
-    { timeout: 60_000 },
+    { timeout: 30_000 },
   );
 });
 

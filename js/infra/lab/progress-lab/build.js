@@ -1,6 +1,6 @@
 // --- Construction DOM du progress lab (panel droit + simulator modal) ---
 
-import { MINERAL_IDS, getMineral } from '../../../contexts/mineral/domain/index.js';
+import { MINERAL_IDS, getMineral } from '../../../domain/minerals/index.js';
 import { UPGRADE_IDS, getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
 
 /**

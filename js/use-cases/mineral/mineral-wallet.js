@@ -2,7 +2,7 @@
 // Portefeuille persistant de minerais. add / spend / canAfford.
 // Persistence localStorage via toJSON / fromJSON.
 
-import { MINERAL_IDS } from '../domain/index.js';
+import { MINERAL_IDS } from '../../domain/minerals/index.js';
 
 const STORAGE_KEY = 'space-breakout-minerals';
 

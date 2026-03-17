@@ -9,7 +9,7 @@ import { GameSession } from '../../../use-cases/game-logic/game-session.js';
 import { CollisionHandler } from '../../../use-cases/collision/collision-handler.js';
 import { DropSystem } from '../../../use-cases/drop/drop-system.js';
 import { PowerUpManager } from '../../../use-cases/power-up/power-up-manager.js';
-import { MineralDropSystem } from '../../mineral/use-cases/mineral-drop-system.js';
+import { MineralDropSystem } from '../../../use-cases/mineral/mineral-drop-system.js';
 import { DroneManager } from '../../../use-cases/drone/drone-manager.js';
 import { getLevel } from '../../../domain/progression/level-catalog.js';
 

@@ -10,8 +10,8 @@ import { loadProgress, saveProgress } from '../infra/persistence/progress-storag
 import { GameSession } from '../use-cases/game-logic/game-session.js';
 import { DropSystem } from '../use-cases/drop/drop-system.js';
 import { PowerUpManager } from '../use-cases/power-up/power-up-manager.js';
-import { MineralDropSystem } from '../contexts/mineral/use-cases/mineral-drop-system.js';
-import { MineralWallet } from '../contexts/mineral/use-cases/mineral-wallet.js';
+import { MineralDropSystem } from '../use-cases/mineral/mineral-drop-system.js';
+import { MineralWallet } from '../use-cases/mineral/mineral-wallet.js';
 import { UpgradeManager } from '../use-cases/upgrade/upgrade-manager.js';
 import { GameIntensityDirector } from '../contexts/audio/use-cases/intensity/game-intensity-director.js';
 import { MusicDirector } from '../contexts/audio/infra/orchestrators/music-director.js';
@@ -29,7 +29,7 @@ import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input/input-handler/index.js';
 import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains, setBodyTheme } from './adapters.js';
-import { initMineralHUD } from '../contexts/mineral/infra/mineral-render.js';
+import { initMineralHUD } from '../infra/renderers/mineral-render.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');

@@ -1,14 +1,14 @@
 // --- AI Player ---
 // Observe l'état du jeu, alimente le réseau de neurones, applique les décisions.
-// Inputs (30) : ship, drone (pos/vel/angle/launched/murs), position relative,
-//   capsule proche, centroïde astéroïdes, densité G/D, progression, 5 astéroïdes proches.
-// Outputs (2) : position cible du vaisseau (tanh → -1..1), lancer le drone (>0 = oui).
+// Inputs (20) : ship (pos, width), drone (pos, vel, lancé), minerai proche,
+//   centroïde astéroïdes, densité G/D, progression, 3 astéroïdes proches du drone.
+// Outputs (2) : delta position vaisseau (tanh → -1..1), lancer le drone (>0 = oui).
 
 import { computeRallyScore, calcFitness } from '../domain/ai-fitness.js';
 
-const INPUT_COUNT = 30;
+const INPUT_COUNT = 20;
 const OUTPUT_COUNT = 2;
-export const TOPOLOGY = [INPUT_COUNT, 20, 12, OUTPUT_COUNT];
+export const TOPOLOGY = [INPUT_COUNT, 14, 8, OUTPUT_COUNT];
 
 export class AIPlayer {
   constructor(genome, gameState) {
@@ -97,7 +97,7 @@ export class AIPlayer {
     entities.mineralCapsules = (entities.mineralCapsules || []).filter(c => !c._aiCounted);
     entities.capsules = (entities.capsules || []).filter(c => !c._aiCounted);
 
-    // --- Construire les inputs (30) ---
+    // --- Construire les inputs (20) ---
     const inputs = new Float32Array(INPUT_COUNT);
     let idx = 0;
 
@@ -105,33 +105,17 @@ export class AIPlayer {
     inputs[idx++] = shipCx / W * 2 - 1;
     inputs[idx++] = ship.width / W;
 
-    // Drone position + vitesse (4)
+    // Drone position + vitesse + lancé (5)
     inputs[idx++] = drone.x / W * 2 - 1;
     inputs[idx++] = drone.y / H * 2 - 1;
     inputs[idx++] = drone.launched ? drone.dx / (drone.speed || 3) : 0;
     inputs[idx++] = drone.launched ? drone.dy / (drone.speed || 3) : 0;
-
-    // Drone angle (1) — direction de déplacement normalisée [-1, 1]
-    inputs[idx++] = drone.launched ? Math.atan2(drone.dy, drone.dx) / Math.PI : 0;
-
-    // Drone lancé (1) — flag binaire
     inputs[idx++] = drone.launched ? 1 : -1;
 
-    // Marge du vaisseau gauche/droite (2) — place pour manœuvrer
-    inputs[idx++] = ship.x / W * 2 - 1;                          // -1 = collé à gauche
-    inputs[idx++] = (W - ship.x - ship.width) / W * 2 - 1;      // -1 = collé à droite
-
-    // Position relative drone → vaisseau (2)
-    inputs[idx++] = (drone.x - shipCx) / W * 2;
-    inputs[idx++] = (drone.y - ship.y) / H * 2;
-
-    // Distance drone ↔ ship en Y (1) — urgence du rattrapage
-    inputs[idx++] = drone.launched ? (drone.y - ship.y) / H * 2 : 0;
-
-    // Capsule la plus proche du ship (2) — power-up ou minerai
-    const nearestCap = this.#nearestCapsule(entities, shipCx, ship.y, W, H);
-    inputs[idx++] = nearestCap.dx;
-    inputs[idx++] = nearestCap.dy;
+    // Capsule minerai la plus proche du ship (2) — signal dédié collecte
+    const nearestMineral = this.#nearestMineral(entities, shipCx, ship.y, W, H);
+    inputs[idx++] = nearestMineral.dx;
+    inputs[idx++] = nearestMineral.dy;
 
     // Centroïde des astéroïdes restants relatif au vaisseau (2) — signal "où viser"
     const centroid = this.#asteroidCentroid(field, shipCx, ship.y, W, H);
@@ -146,9 +130,9 @@ export class AIPlayer {
     // Progression du niveau (1) — stratégie change en fin de partie
     inputs[idx++] = 1 - field.remaining / totalAst;
 
-    // 5 astéroïdes les plus proches du drone (2 chacun = 10)
-    const nearest = this.#nearestAsteroids(drone, field, 5, W, H);
-    for (let i = 0; i < 5; i++) {
+    // 3 astéroïdes les plus proches du drone (2 chacun = 6) — visée précise
+    const nearest = this.#nearestAsteroids(drone, field, 3, W, H);
+    for (let i = 0; i < 3; i++) {
       if (i < nearest.length) {
         inputs[idx++] = nearest[i].dx;
         inputs[idx++] = nearest[i].dy;
@@ -161,7 +145,9 @@ export class AIPlayer {
     // --- Forward pass ---
     const outputs = this.genome.brain.forward(inputs);
 
-    const targetX = (outputs[0] + 1) / 2 * W;
+    // Output 0 : delta relatif (tanh → -1..1 → ±W/2 pixels de déplacement max)
+    const delta = outputs[0] * W / 2;
+    const targetX = Math.max(0, Math.min(W, shipCx + delta));
     const shouldLaunch = outputs[1] > 0;
 
     // Tracker les changements de direction (anti-oscillation)
@@ -218,14 +204,10 @@ export class AIPlayer {
     });
   }
 
-  /** Trouve la capsule (power-up ou minerai) la plus proche du ship. */
-  #nearestCapsule(entities, shipCx, shipY, W, H) {
+  /** Trouve la capsule minerai la plus proche du ship. */
+  #nearestMineral(entities, shipCx, shipY, W, H) {
     let bestDx = 0, bestDy = 0, bestDist = Infinity;
-    const allCapsules = [
-      ...(entities.capsules || []),
-      ...(entities.mineralCapsules || []),
-    ];
-    for (const c of allCapsules) {
+    for (const c of (entities.mineralCapsules || [])) {
       if (!c.alive) continue;
       const cx = c.x + (c.width || 0) / 2;
       const cy = c.y + (c.height || 0) / 2;

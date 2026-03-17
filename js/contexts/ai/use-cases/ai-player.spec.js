@@ -31,8 +31,8 @@ function makeGameState(overrides = {}) {
 
 describe('AIPlayer', () => {
   describe('TOPOLOGY', () => {
-    it('a 30 inputs, 20+12 hidden, 2 outputs', () => {
-      expect(TOPOLOGY).toEqual([30, 20, 12, 2]);
+    it('a 20 inputs, 14+8 hidden, 2 outputs', () => {
+      expect(TOPOLOGY).toEqual([20, 14, 8, 2]);
     });
   });
 
@@ -260,8 +260,8 @@ describe('AIPlayer', () => {
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 1800; // 30s → 3★
       const fitness = player.computeFitness();
-      // win(1000) + 3★(1500) + progress(1²×400) = 2900
-      expect(fitness).toBeCloseTo(2900, 0);
+      // win(1000) + 3★(1500) + progress(400) + efficiency(300) = 3200
+      expect(fitness).toBeCloseTo(3200, 0);
     });
 
     it('2 étoiles si victoire sans perte mais temps > 60s', () => {
@@ -271,8 +271,8 @@ describe('AIPlayer', () => {
       const player = new AIPlayer(new Genome(TOPOLOGY), gs);
       player.framesSurvived = 5400; // 90s → 2★
       const fitness = player.computeFitness();
-      // win(1000) + 2★(500) + progress(400) = 1900
-      expect(fitness).toBeCloseTo(1900, 0);
+      // win(1000) + 2★(500) + progress(400) + efficiency(min(1/1.5*150,300)=100) = 2000
+      expect(fitness).toBeCloseTo(2000, 0);
     });
 
     it('1 étoile si victoire avec pertes de vie', () => {
@@ -283,8 +283,8 @@ describe('AIPlayer', () => {
       player.dropCount = 1;
       player.framesSurvived = 1800;
       const fitness = player.computeFitness();
-      // win(1000) + 1★(200) - drop(200) + progress(400) = 1400
-      expect(fitness).toBeCloseTo(1400, 0);
+      // win(1000) + 1★(200) - drop(200) + progress(400) + efficiency(300) = 1700
+      expect(fitness).toBeCloseTo(1700, 0);
     });
 
     it('peut être négatif (drops sans victoire)', () => {
@@ -330,8 +330,8 @@ describe('AIPlayer', () => {
       player.rallyDestroys = 2;
       player.framesSurvived = 1800; // 3★
       const fitness = player.computeFitness();
-      // win(1000) + 3★(1500) + progress(400) + rally(10+5)×2.0 = 2930
-      expect(fitness).toBeCloseTo(2930, 0);
+      // win(1000) + 3★(1500) + progress(400) + efficiency(300) + rally(10+5)×2.0 = 3230
+      expect(fitness).toBeCloseTo(3230, 0);
     });
 
     it('currentFitness inclut le rally en cours sans le clôturer', () => {

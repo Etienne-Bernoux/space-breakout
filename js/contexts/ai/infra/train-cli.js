@@ -6,6 +6,7 @@
 //   --level ID         niveau d'entraînement (défaut: z1-1)
 //   --levels IDs       niveaux séparés par virgule (rotation par génération)
 //   --curriculum       curriculum learning (ajoute progressivement les niveaux)
+//   --evals N          nombre de parties par agent (défaut: 1, moyenne la fitness)
 //   --mutation-rate N  taux de mutation (défaut: 0.20)
 //   --mutation-power N puissance de mutation (défaut: 0.4)
 //   --output FILE      fichier de sortie du modèle (défaut: js/contexts/ai/models/best.json)
@@ -32,29 +33,12 @@ const GENERATIONS    = parseInt(arg('generations', '100'));
 const POP_SIZE       = parseInt(arg('population', '50'));
 const LEVEL_IDS      = (arg('levels', '') || arg('level', 'z1-1')).split(',').filter(Boolean);
 const CURRICULUM     = flag('curriculum');
+const EVALS          = parseInt(arg('evals', '1'));
 const MUTATION_RATE  = parseFloat(arg('mutation-rate', '0.20'));
 const MUTATION_POWER = parseFloat(arg('mutation-power', '0.4'));
 const OUTPUT_FILE    = arg('output', 'js/contexts/ai/models/best.json');
 const INPUT_FILE     = arg('input', '');
 const SILENT         = flag('silent');
-
-// ─── PRNG déterministe (mulberry32) ──────────────────
-
-function mulberry32(seed) {
-  return function() {
-    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-function withSeededRandom(seed, fn) {
-  const original = Math.random;
-  Math.random = mulberry32(seed);
-  try { return fn(); }
-  finally { Math.random = original; }
-}
 
 // ─── Headless game setup ───────────────────────────
 
@@ -63,7 +47,6 @@ const { startGame, tick, gameState } = createHeadlessGame();
 /** Retourne les niveaux disponibles pour cette génération (curriculum). */
 function getLevelsForGen(gen) {
   if (!CURRICULUM || LEVEL_IDS.length <= 1) return LEVEL_IDS;
-  // Débloquer un niveau tous les N gens (répartition uniforme)
   const step = Math.max(1, Math.floor(GENERATIONS / LEVEL_IDS.length));
   const unlocked = Math.min(LEVEL_IDS.length, Math.floor(gen / step) + 1);
   return LEVEL_IDS.slice(0, unlocked);
@@ -87,8 +70,9 @@ if (INPUT_FILE) {
 }
 
 if (!SILENT) {
+  const extras = [CURRICULUM ? 'curriculum' : '', EVALS > 1 ? `${EVALS} evals` : ''].filter(Boolean).join(', ');
   console.log(`\n🧠 Entraînement IA — ${GENERATIONS} générations, pop ${POP_SIZE}, niveaux ${LEVEL_IDS.join(',')}`);
-  console.log(`   Mutation: rate=${MUTATION_RATE} power=${MUTATION_POWER}${CURRICULUM ? ' (curriculum)' : ''}`);
+  console.log(`   Mutation: rate=${MUTATION_RATE} power=${MUTATION_POWER}${extras ? ` (${extras})` : ''}`);
   console.log(`   Sortie: ${OUTPUT_FILE}\n`);
   console.log(genStatsHeader());
   console.log(genStatsSeparator());
@@ -100,10 +84,27 @@ for (let gen = 0; gen < GENERATIONS; gen++) {
   // Même niveau pour tous les agents d'une génération (rotation)
   const levels = getLevelsForGen(gen);
   const levelId = levels[gen % levels.length];
+
   for (const genome of population.genomes) {
-    const result = simulateAgent(genome, gameState, startGame, tick, levelId);
-    genome.fitness = result.fitness;
-    genome._details = result;
+    if (EVALS <= 1) {
+      // Évaluation simple
+      const result = simulateAgent(genome, gameState, startGame, tick, levelId);
+      genome.fitness = result.fitness;
+      genome._details = result;
+    } else {
+      // Multi-éval : moyenne sur N parties (réduit le bruit)
+      let totalFitness = 0;
+      let bestResult = null;
+      for (let e = 0; e < EVALS; e++) {
+        const lvl = EVALS > 1 && levels.length > 1
+          ? levels[e % levels.length] : levelId;
+        const result = simulateAgent(genome, gameState, startGame, tick, lvl);
+        totalFitness += result.fitness;
+        if (!bestResult || result.fitness > bestResult.fitness) bestResult = result;
+      }
+      genome.fitness = totalFitness / EVALS;
+      genome._details = bestResult;
+    }
   }
 
   const genStats = computeGenStats(population.genomes, population.generation, population);

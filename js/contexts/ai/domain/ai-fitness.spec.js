@@ -30,7 +30,7 @@ describe('calcFitness', () => {
     dropCount: 0,
     capsulesCaught: 0,
     framesSurvived: 600,
-    progress: 0.5,
+    progress: 0,
     catchCount: 5,
     rallyScore: 50,
     asteroidsDestroyed: 10,
@@ -60,10 +60,11 @@ describe('calcFitness', () => {
     expect(malus - base).toBe(-20);
   });
 
-  it('inclut un bonus quadratique de progression', () => {
+  it('inclut un bonus quadratique de progression + efficacité', () => {
     const p0 = calcFitness({ ...baseMetrics, progress: 0 });
     const p1 = calcFitness({ ...baseMetrics, progress: 1 });
-    expect(p1 - p0).toBeCloseTo(400);
+    // progress²×400 = 400 + efficacité (1/(600/3600)*150 = 900, clampé à 300)
+    expect(p1 - p0).toBeCloseTo(700);
   });
 
   it('pénalise l\'oscillation excessive', () => {

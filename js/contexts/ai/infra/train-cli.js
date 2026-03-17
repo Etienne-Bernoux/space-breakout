@@ -58,7 +58,7 @@ function createWorkerPool(size) {
 }
 
 /** Simule tous les génomes d'une génération en parallèle via le pool de workers. */
-function simulateGeneration(genomes, levelId, levels, pool) {
+function simulateGeneration(genomes, levelId, levels, pool, seed) {
   return new Promise((resolve) => {
     const results = new Array(genomes.length);
     let nextIdx = 0;
@@ -86,6 +86,7 @@ function simulateGeneration(genomes, levelId, levels, pool) {
         levelId,
         levels,
         evals: EVALS,
+        seed,
       });
     }
 
@@ -142,7 +143,9 @@ for (let gen = 0; gen < GENERATIONS; gen++) {
   const levels = getLevelsForGen(gen);
   const levelId = levels[gen % levels.length];
 
-  const results = await simulateGeneration(population.genomes, levelId, levels, pool);
+  // Seed aléatoire par gen → même layout pour tous les agents, différent chaque gen
+  const genSeed = Math.floor(Math.random() * 2147483647);
+  const results = await simulateGeneration(population.genomes, levelId, levels, pool, genSeed);
 
   for (let i = 0; i < population.genomes.length; i++) {
     population.genomes[i].fitness = results[i].fitness;

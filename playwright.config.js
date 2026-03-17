@@ -20,6 +20,9 @@ const bddMobile = defineBddConfig({
 export default defineConfig({
   timeout: 15000,
   retries: 0,
+  use: {
+    launchOptions: { args: ['--mute-audio'] },
+  },
   projects: [
     {
       name: 'desktop',

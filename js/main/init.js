@@ -223,7 +223,7 @@ function applyUpgradeEffects() {
       drone.dy = -drone.speed;
       drone.speedBoost = effects.drone.speed;
     }
-    if (effects.drone.damage) drone.damage = effects.drone.damage;
+    if (effects.drone.metalDamage) drone.metalDamage = effects.drone.metalDamage;
     if (effects.drone.piercingDamage) drone.piercingDamage = effects.drone.piercingDamage;
   }
   // Power-up upgrades

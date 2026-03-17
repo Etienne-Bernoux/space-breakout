@@ -92,8 +92,10 @@ export class CollisionResolver {
         if (drone.fireball && a.materialKey === 'ice') {
           a.hp = 0;
         } else {
-          // Dégâts : piercingDamage si piercing actif, sinon damage normal
-          const dmg = (effectivePiercing && drone.piercingDamage) ? drone.piercingDamage : (drone.damage || 1);
+          // Dégâts : piercingDamage si piercing actif, metalDamage si métal, sinon 1
+          let dmg = drone.damage || 1;
+          if (effectivePiercing && drone.piercingDamage) dmg = drone.piercingDamage;
+          else if (a.materialKey === 'metal' && drone.metalDamage) dmg = drone.metalDamage;
           a.hp -= dmg;
         }
         if (a.hp > 0) {

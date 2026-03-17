@@ -52,17 +52,17 @@ export const UPGRADES = {
     ],
     effect: { target: 'drone', prop: 'speed', factors: [1.15, 1.3, 1.5] },
   },
-  droneDamage: {
-    id: 'droneDamage',
-    name: 'Foret renforc\u00e9',
-    description: 'Le drone inflige plus de d\u00e9g\u00e2ts',
+  droneMetalDamage: {
+    id: 'droneMetalDamage',
+    name: 'Foreuse à métal',
+    description: 'Le drone inflige plus de dégâts aux astéroïdes de métal',
     category: 'drone',
     maxLevel: 2,
     costs: [
       { silver: 15, gold: 3 },
       { silver: 30, gold: 10, platinum: 2 },
     ],
-    effect: { target: 'drone', prop: 'damage', factors: [2, 3] },
+    effect: { target: 'drone', prop: 'metalDamage', factors: [2, 3] },
   },
 
   dronePiercingDamage: {

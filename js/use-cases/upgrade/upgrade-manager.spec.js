@@ -82,11 +82,11 @@ describe('UpgradeManager', () => {
   });
 
   it('sérialise et désérialise', () => {
-    const um = new UpgradeManager({ shipSpeed: 2, droneDamage: 1 });
+    const um = new UpgradeManager({ shipSpeed: 2, droneMetalDamage: 1 });
     const json = um.toJSON();
     const um2 = new UpgradeManager(json);
     expect(um2.getLevel('shipSpeed')).toBe(2);
-    expect(um2.getLevel('droneDamage')).toBe(1);
+    expect(um2.getLevel('droneMetalDamage')).toBe(1);
     expect(um2.getLevel('puDuration')).toBe(0);
   });
 });

@@ -3,6 +3,7 @@
 import { gameScale } from '../../../shared/responsive.js';
 import { getMineral, MINERAL_IDS } from '../../../contexts/mineral/domain/index.js';
 import state, { getSelectedCategoryKey, getVisibleUpgrades, CATEGORY_KEYS, UPGRADE_CATEGORIES } from './state.js';
+import { drawUpgradeIcon } from './icons.js';
 
 /**
  * Dessine l'écran d'upgrade.
@@ -115,16 +116,26 @@ function _drawUpgradeItem(ctx, upgrade, W, y, h, s, selected, wallet, upgManager
     ctx.strokeRect(pad, y, W - pad * 2, h - 4 * s);
   }
 
+  // Icône
+  const iconS = 10 * s;
+  const iconX = pad + 6 * s + iconS;
+  const iconY = y + h * 0.42;
+  ctx.save();
+  ctx.translate(iconX, iconY);
+  drawUpgradeIcon(ctx, upgrade.id, iconS, maxed ? '#ffd700' : '#ffffff');
+  ctx.restore();
+
   // Nom
+  const textLeft = pad + 26 * s;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold ${Math.round(13 * s)}px monospace`;
-  ctx.fillText(upgrade.name, pad + 10 * s, y + 18 * s);
+  ctx.fillText(upgrade.name, textLeft, y + 18 * s);
 
   // Description
   ctx.fillStyle = '#aaaaaa';
   ctx.font = `${Math.round(10 * s)}px monospace`;
-  ctx.fillText(upgrade.description, pad + 10 * s, y + 34 * s);
+  ctx.fillText(upgrade.description, textLeft, y + 34 * s);
 
   // Niveau (barres)
   const barX = W * 0.55;

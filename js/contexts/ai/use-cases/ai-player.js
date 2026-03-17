@@ -2,7 +2,7 @@
 // Observe l'état du jeu, alimente le réseau de neurones, applique les décisions.
 // Inputs (20) : ship (pos, width), drone (pos, vel, lancé), minerai proche,
 //   centroïde astéroïdes, densité G/D, progression, 3 astéroïdes proches du drone.
-// Outputs (2) : delta position vaisseau (tanh → -1..1), lancer le drone (>0 = oui).
+// Outputs (2) : position cible vaisseau (tanh → -1..1 → 0..W), lancer le drone (>0 = oui).
 
 import { computeRallyScore, calcFitness } from '../domain/ai-fitness.js';
 
@@ -145,9 +145,7 @@ export class AIPlayer {
     // --- Forward pass ---
     const outputs = this.genome.brain.forward(inputs);
 
-    // Output 0 : delta relatif (tanh → -1..1 → ±W/2 pixels de déplacement max)
-    const delta = outputs[0] * W / 2;
-    const targetX = Math.max(0, Math.min(W, shipCx + delta));
+    const targetX = (outputs[0] + 1) / 2 * W;
     const shouldLaunch = outputs[1] > 0;
 
     // Tracker les changements de direction (anti-oscillation)

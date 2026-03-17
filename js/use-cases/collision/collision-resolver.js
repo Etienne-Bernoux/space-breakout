@@ -110,7 +110,9 @@ export class CollisionResolver {
         const points = Math.round(basePoints * mult);
         session.score += points;
 
-        const fragments = field.fragment(a, hitX, hitY);
+        // Fireball + ice → explose tout sans fragmentation
+        const skipFragment = drone.fireball && a.materialKey === 'ice';
+        const fragments = skipFragment ? (a.alive = false, []) : field.fragment(a, hitX, hitY);
         const ev = {
           type: fragments.length > 0 ? 'asteroidFragment' : 'asteroidHit',
           points, x: hitX, y: hitY, color: a.color, fragments,

@@ -24,6 +24,7 @@ Le thème spatial influence le gameplay : récolte de minerais, power-ups, upgra
 
 ```
 BUG.md                  → bugs connus non corrigés (supprimés une fois fixés)
+AI-TRAINING.md          → méthodologie d'entraînement IA (boucle itérative, fitness, curriculum)
 ARCHITECTURE.md         → décisions techniques détaillées
 index.html              → point d'entrée
 style.css               → styles (responsive, touch-action)
@@ -209,6 +210,7 @@ e2e/                    → tests end-to-end (Playwright + Gherkin)
     smoke.feature       → démarrage sans erreur console
     game-flow.feature   → menu → lancer → pause → resume → win
     lab-modes.feature   → ?lab (hub, dev, music, progress)
+    ai.feature          → IA (entraînement, reset, jeu auto, forceWin flow)
     desktop-audit.feature → audit visuel desktop (screenshots)
     mobile-audit.feature  → audit visuel mobile iPhone 13 (screenshots)
   steps/                → step definitions + fixtures
@@ -216,6 +218,7 @@ e2e/                    → tests end-to-end (Playwright + Gherkin)
     common.steps.js     → steps partagés (navigation, clavier, assertions)
     smoke.steps.js      → assertion erreurs console
     lab-modes.steps.js  → flags __GAME__, méthodes exposées
+    ai.steps.js         → steps IA (training, reset, startLevelWithAI)
     audit.steps.js      → screenshots, diagnostics, interactions tactiles
 playwright.config.js    → config Playwright BDD (2 projets : desktop + mobile)
 ```
@@ -292,8 +295,8 @@ Tests e2e (Playwright + Gherkin via playwright-bdd, dossier `e2e/`) :
 pnpm test:e2e                    # bddgen + playwright test (22 scénarios)
 pnpm bddgen                      # génère les specs depuis les .feature
 pnpm test:all                    # unit + e2e
-pnpm train                       # entraînement IA CLI (voir options ci-dessous)
-pnpm train -- --generations 200 --population 80 --level z1-2
+pnpm train                       # entraînement IA CLI (voir AI-TRAINING.md)
+pnpm train -- --generations 150 --population 120 --levels z1-1,z1-2,z1-3,z1-4,z1-5 --curriculum
 ```
 Le serveur statique est lancé automatiquement par Playwright sur le port 3333.
 Les specs sont générées dans `.features-gen/` (gitignored).

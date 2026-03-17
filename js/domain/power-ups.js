@@ -123,6 +123,7 @@ export const POWER_UPS = {
     effect: { target: 'drones', action: 'spawn' },
     dropWeight: { rock: 1, ice: 1, lava: 1, metal: 2, crystal: 3, obsidian: 0 },
     minZone: 2,
+    requiresUpgrade: 'puUnlockMulti',
   },
   droneFireball: {
     id: 'droneFireball',
@@ -134,6 +135,7 @@ export const POWER_UPS = {
     effect: { target: 'drone', prop: 'fireball' },
     dropWeight: { rock: 1, ice: 5, lava: 0, metal: 1, crystal: 1, obsidian: 0 },
     minZone: 2,
+    requiresUpgrade: 'puUnlockFireball',
   },
 };
 

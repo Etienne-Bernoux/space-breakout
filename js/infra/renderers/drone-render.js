@@ -102,27 +102,56 @@ export function drawDrone(ctx, drone) {
 
   // --- 7. Aura fireball (quand actif) ---
   if (drone.fireball) {
-    const firePulse = 0.5 + Math.sin(t * 6) * 0.2;
-    const fireRadius = radius + 6 + Math.sin(t * 8) * 2;
-    const fireGrad = ctx.createRadialGradient(x, y, radius * 0.3, x, y, fireRadius);
-    fireGrad.addColorStop(0, `rgba(255, 100, 0, ${0.4 * firePulse})`);
-    fireGrad.addColorStop(0.5, `rgba(255, 60, 0, ${0.2 * firePulse})`);
-    fireGrad.addColorStop(1, 'rgba(255, 30, 0, 0)');
-    ctx.fillStyle = fireGrad;
+    const fp = 0.6 + Math.sin(t * 7) * 0.25;
+
+    // Grande aura de feu (très visible)
+    const outerR = radius + 10 + Math.sin(t * 9) * 3;
+    const outerGrad = ctx.createRadialGradient(x, y, radius * 0.2, x, y, outerR);
+    outerGrad.addColorStop(0, `rgba(255, 200, 50, ${0.5 * fp})`);
+    outerGrad.addColorStop(0.4, `rgba(255, 100, 0, ${0.4 * fp})`);
+    outerGrad.addColorStop(0.7, `rgba(255, 40, 0, ${0.2 * fp})`);
+    outerGrad.addColorStop(1, 'rgba(200, 0, 0, 0)');
+    ctx.fillStyle = outerGrad;
     ctx.beginPath();
-    ctx.arc(x, y, fireRadius, 0, Math.PI * 2);
+    ctx.arc(x, y, outerR, 0, Math.PI * 2);
     ctx.fill();
-    // Traînée de flamme (direction opposée au mouvement)
-    if (speed > 0.5) {
-      const trailX = x - (vx / speed) * radius * 2;
-      const trailY = y - (vy / speed) * radius * 2;
-      const trailGrad = ctx.createRadialGradient(trailX, trailY, 0, trailX, trailY, radius * 1.5);
-      trailGrad.addColorStop(0, `rgba(255, 80, 0, ${0.3 * firePulse})`);
-      trailGrad.addColorStop(1, 'rgba(255, 40, 0, 0)');
-      ctx.fillStyle = trailGrad;
+
+    // Flammes ondulantes (4 langues de feu)
+    for (let i = 0; i < 4; i++) {
+      const fa = t * 3 + i * Math.PI * 0.5;
+      const fx = x + Math.cos(fa) * (radius + 4);
+      const fy = y + Math.sin(fa) * (radius + 4);
+      const fr = 3 + Math.sin(t * 10 + i * 2) * 2;
+      ctx.fillStyle = `rgba(255, ${150 + Math.floor(Math.sin(t * 8 + i) * 80)}, 0, ${0.6 * fp})`;
       ctx.beginPath();
-      ctx.arc(trailX, trailY, radius * 1.5, 0, Math.PI * 2);
+      ctx.arc(fx, fy, fr, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Recolorer le corps en orange vif (par-dessus)
+    const fireBody = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.2, 0, x, y, radius);
+    fireBody.addColorStop(0, '#ffffaa');
+    fireBody.addColorStop(0.4, '#ff8800');
+    fireBody.addColorStop(1, '#cc3300');
+    ctx.fillStyle = fireBody;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Traînée de flamme longue
+    if (speed > 0.3) {
+      const nx = vx / speed;
+      const ny = vy / speed;
+      for (let d = 1; d <= 3; d++) {
+        const tx = x - nx * radius * d * 1.2;
+        const ty = y - ny * radius * d * 1.2;
+        const tr = radius * (1.1 - d * 0.25);
+        const ta = 0.35 * fp * (1 - d * 0.25);
+        ctx.fillStyle = `rgba(255, ${60 + d * 30}, 0, ${ta})`;
+        ctx.beginPath();
+        ctx.arc(tx, ty, tr, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 }

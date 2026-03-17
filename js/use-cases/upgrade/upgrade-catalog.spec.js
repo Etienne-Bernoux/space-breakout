@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { UPGRADES, UPGRADE_IDS, UPGRADE_CATEGORIES, getUpgrade, getUpgradesByCategory } from './upgrade-catalog.js';
 
 describe('Catalogue d\'upgrades', () => {
-  it('définit 7 upgrades', () => {
-    expect(UPGRADE_IDS).toHaveLength(7);
+  it('définit 9 upgrades', () => {
+    expect(UPGRADE_IDS).toHaveLength(9);
   });
 
   it('chaque upgrade a les champs requis', () => {

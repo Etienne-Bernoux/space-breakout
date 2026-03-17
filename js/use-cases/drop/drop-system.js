@@ -12,6 +12,8 @@ export class DropSystem {
     this.sizeMult = config.sizeMult || DEFAULT_SIZE_MULT;
     /** Index de zone (0 = zone1, 1 = zone2…) pour filtrer les power-ups par minZone. */
     this.zoneIndex = config.zoneIndex ?? 0;
+    /** Fonction (upgradeId) → boolean, vérifie si un upgrade est débloqué. */
+    this.isUpgradeUnlocked = config.isUpgradeUnlocked || (() => true);
   }
 
   /**
@@ -27,6 +29,7 @@ export class DropSystem {
     for (const id of POWER_UP_IDS) {
       const pu = POWER_UPS[id];
       if (pu.minZone && pu.minZone > this.zoneIndex + 1) continue;
+      if (pu.requiresUpgrade && !this.isUpgradeUnlocked(pu.requiresUpgrade)) continue;
       const weight = (pu.dropWeight[mat] || 0) * this.baseRate * sizeMult;
       cumul += weight;
       if (rand < cumul) return id;

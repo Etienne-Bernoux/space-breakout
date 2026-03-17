@@ -92,6 +92,29 @@ export const UPGRADES = {
     effect: { target: 'powerUp', prop: 'dropRateMult', factors: [1.3, 1.6] },
   },
 
+  puUnlockFireball: {
+    id: 'puUnlockFireball',
+    name: 'Module incendiaire',
+    description: 'Débloque le power-up Boule de feu',
+    category: 'powerUp',
+    maxLevel: 1,
+    costs: [
+      { copper: 30, silver: 15 },
+    ],
+    effect: { target: 'powerUp', prop: 'unlockFireball', factors: [1] },
+  },
+  puUnlockMulti: {
+    id: 'puUnlockMulti',
+    name: 'Duplicateur de drone',
+    description: 'Débloque le power-up Drone supplémentaire',
+    category: 'powerUp',
+    maxLevel: 1,
+    costs: [
+      { copper: 40, silver: 20, gold: 5 },
+    ],
+    effect: { target: 'powerUp', prop: 'unlockMulti', factors: [1] },
+  },
+
   // --- Consommables ---
   extraLife: {
     id: 'extraLife',

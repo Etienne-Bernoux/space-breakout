@@ -53,7 +53,7 @@ export const G = {
     return { ship: e.ship, drones: e.drones, session: this.session, field: e.field };
   },
   systems: {
-    drop: new DropSystem(CONFIG.drop),
+    drop: null, // wired below (needs upgrades ref)
     powerUp: null, // wired below (circular dep with droneManager)
     intensity: new GameIntensityDirector({
       music: new MusicDirector(),
@@ -70,6 +70,12 @@ export const G = {
   systemMapState: { selectedZone: 0 },
   levelResult: null,   // { levelId, stars, timeSpent, livesLost } — set après victoire
 };
+
+// --- Wiring DropSystem (needs upgrades ref) ---
+G.systems.drop = new DropSystem({
+  ...CONFIG.drop,
+  isUpgradeUnlocked: (id) => G.upgrades.getLevel(id) > 0,
+});
 
 // --- Wiring mineral HUD ---
 initMineralHUD(G.wallet);

@@ -100,7 +100,62 @@ export function drawDrone(ctx, drone) {
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  // --- 7. Aura fireball (quand actif) ---
+  // --- 7. Aura piercing (quand actif) ---
+  if (drone.piercing) {
+    const pp = 0.6 + Math.sin(t * 8) * 0.2;
+
+    // Halo électrique cyan
+    const piercR = radius + 7 + Math.sin(t * 10) * 2;
+    const piercGrad = ctx.createRadialGradient(x, y, radius * 0.5, x, y, piercR);
+    piercGrad.addColorStop(0, `rgba(0, 220, 255, ${0.35 * pp})`);
+    piercGrad.addColorStop(0.6, `rgba(0, 150, 255, ${0.15 * pp})`);
+    piercGrad.addColorStop(1, 'rgba(0, 100, 255, 0)');
+    ctx.fillStyle = piercGrad;
+    ctx.beginPath();
+    ctx.arc(x, y, piercR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pointe directionnelle (flèche dans le sens du mouvement)
+    if (speed > 0.3) {
+      const nx = vx / speed;
+      const ny = vy / speed;
+      const tipX = x + nx * (radius + 8);
+      const tipY = y + ny * (radius + 8);
+      ctx.save();
+      ctx.fillStyle = `rgba(100, 230, 255, ${0.7 * pp})`;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(tipX - ny * 4 - nx * 6, tipY + nx * 4 - ny * 6);
+      ctx.lineTo(tipX + ny * 4 - nx * 6, tipY - nx * 4 - ny * 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Traînée de particules cyan
+      for (let d = 1; d <= 4; d++) {
+        const tx = x - nx * radius * d * 0.9;
+        const ty = y - ny * radius * d * 0.9;
+        const ta = 0.4 * pp * (1 - d * 0.2);
+        const tr = 1.5 + (4 - d) * 0.5;
+        ctx.fillStyle = `rgba(100, 220, 255, ${ta})`;
+        ctx.beginPath();
+        ctx.arc(tx, ty, tr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Recolorer le corps en cyan/blanc
+    const piercBody = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.2, 0, x, y, radius);
+    piercBody.addColorStop(0, '#eeffff');
+    piercBody.addColorStop(0.4, '#44ddff');
+    piercBody.addColorStop(1, '#0088cc');
+    ctx.fillStyle = piercBody;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // --- 8. Aura fireball (quand actif) ---
   if (drone.fireball) {
     const fp = 0.6 + Math.sin(t * 7) * 0.25;
 

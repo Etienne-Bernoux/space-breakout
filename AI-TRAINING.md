@@ -230,6 +230,6 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 | v9 workers | 3623 | Position absolue restaurée, worker_threads ×3-4 speedup |
 | v10 seed/gen | 3607 | Seed aléatoire par gen → même layout pour tous les agents |
 | v11 signaux | 3614 | Signal {0,-2} pour absence capsule/astéroïde, speed via speedMod |
-| **v11b z1-3→6** | **3743** | **Fine-tuning ciblé z1-3,z1-4,z1-5,z1-6** |
+| **v11b fine-tune** | **4004** | **Fine-tuning itératif : retrait niveaux ≥2★, focus niveaux durs** |
 
-> v11b gagne z1-1, z1-3 (1★), z1-6/boss (2★). z1-4/z1-5 survie longue. Collecte minerais.
+> v11b gagne z1-1 (3★), z1-2/z1-6/z2-1/z2-3 (2★), z1-4 (1★). z1-3/z1-5/z2-2 survie longue. Collecte minerais.

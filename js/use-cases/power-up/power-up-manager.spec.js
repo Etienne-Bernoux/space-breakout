@@ -1,15 +1,30 @@
 import { expect } from 'chai';
 import { PowerUpManager } from './power-up-manager.js';
 import { DroneManager } from '../drone/drone-manager.js';
+import { PropModifier } from '../../shared/prop-modifier.js';
 
 function makeDrone(overrides = {}) {
-  return { sticky: false, piercing: false, warp: false, radius: 6, speed: 3, launched: true, launch() { this.launched = true; }, ...overrides };
+  const d = {
+    sticky: false, piercing: false, warp: false, fireball: false,
+    radiusMod: new PropModifier(6),
+    speedMod: new PropModifier(3),
+    _baseRadius: 6, _baseSpeed: 3,
+    launched: true, color: '#ffcc00', speedBoost: 1,
+    launch() { this.launched = true; },
+    launchAtAngle() { this.launched = true; },
+    reset() { this.radiusMod.clear(); this.speedMod.clear(); this.piercing = false; this.sticky = false; this.warp = false; this.fireball = false; },
+    ...overrides,
+  };
+  // Getters pour radius/speed via modifier
+  Object.defineProperty(d, 'radius', { get() { return this.radiusMod.current; }, set(v) { this.radiusMod.base = v; }, enumerable: true });
+  Object.defineProperty(d, 'speed', { get() { return this.speedMod.currentRaw; }, set(v) { this.speedMod.base = v; }, enumerable: true });
+  return d;
 }
 
 function makeGameState(overrides = {}) {
   const drone = makeDrone(overrides.drone);
   return {
-    ship: { width: 100, x: 0, y: 400, height: 10, ...overrides.ship },
+    ship: { widthMod: new PropModifier(100), get width() { return this.widthMod.current; }, set width(v) { this.widthMod.base = v; }, x: 0, y: 400, height: 10, ...(overrides.ship || {}) },
     drones: [drone],
     get drone() { return this.drones[0]; },
     session: { lives: 3, scoreMultiplier: 1, ...overrides.session },
@@ -133,60 +148,58 @@ describe('PowerUpManager', () => {
       expect(gs.drone.piercing).to.be.false;
     });
 
-    it('cumul taille vaisseau : shipWide ×1.5 puis ×1.5 = ×2.25', () => {
+    it('re-activation reset timer sans cumuler (modifier remplace le facteur)', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('shipWide', gs, 0);
       expect(gs.ship.width).to.equal(150);
-      pm.activate('shipWide', gs, 5000);
-      expect(gs.ship.width).to.equal(225); // 150 × 1.5
+      pm.activate('shipWide', gs, 5000); // re-active : même facteur, timer reset
+      expect(gs.ship.width).to.equal(150); // pas de cumul
     });
 
-    it('cumul taille vaisseau : revert restaure la largeur originale', () => {
+    it('revert après re-activation restaure la largeur originale', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('shipWide', gs, 0);
       pm.activate('shipWide', gs, 5000);
-      expect(gs.ship.width).to.equal(225);
       pm.update(gs, 25001); // expiré
-      expect(gs.ship.width).to.equal(100); // retour original
+      expect(gs.ship.width).to.equal(100);
     });
 
-    it('cumul taille vaisseau : shipNarrow ×0.6 puis ×0.6 = ×0.36', () => {
+    it('shipWide + shipNarrow simultanés → base × 1.5 × 0.6 = 90', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
+      pm.activate('shipWide', gs, 0);
       pm.activate('shipNarrow', gs, 0);
-      expect(gs.ship.width).to.equal(60);
-      pm.activate('shipNarrow', gs, 3000);
-      expect(gs.ship.width).to.equal(36); // 60 × 0.6
+      expect(gs.ship.width).to.equal(90); // 100 × 1.5 × 0.6
     });
 
-    it('cumul drone : droneLarge ×1.8 puis ×1.8 = ×3.24', () => {
+    it('expire shipWide puis shipNarrow → retour à 100', () => {
+      const pm = new PowerUpManager();
+      const gs = makeGameState();
+      pm.activate('shipWide', gs, 0);    // durée 20s
+      pm.activate('shipNarrow', gs, 0);  // durée 10s
+      pm.update(gs, 10001); // narrow expiré
+      expect(gs.ship.width).to.equal(150); // reste wide
+      pm.update(gs, 20001); // wide expiré
+      expect(gs.ship.width).to.equal(100); // retour base
+    });
+
+    it('droneLarge re-activation ne cumule pas', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('droneLarge', gs, 0);
-      expect(gs.drone.radius).to.be.closeTo(10.8, 0.01); // 6 × 1.8
+      expect(gs.drone.radius).to.equal(11); // 6 × 1.8 arrondi
       pm.activate('droneLarge', gs, 5000);
-      expect(gs.drone.radius).to.be.closeTo(19.44, 0.01); // 10.8 × 1.8
+      expect(gs.drone.radius).to.equal(11); // même facteur
     });
 
-    it('cumul drone : revert restaure le radius original', () => {
+    it('droneLarge revert restaure le radius original', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('droneLarge', gs, 0);
-      pm.activate('droneLarge', gs, 5000);
-      expect(gs.drone.radius).to.be.closeTo(19.44, 0.01);
-      pm.update(gs, 25001); // expiré
-      expect(gs.drone.radius).to.equal(6); // retour original
-    });
-
-    it('cumul drone : droneFast ×1.8 puis ×1.8', () => {
-      const pm = new PowerUpManager();
-      const gs = makeGameState();
-      pm.activate('droneFast', gs, 0);
-      expect(gs.drone.speed).to.be.closeTo(5.4, 0.01);
-      pm.activate('droneFast', gs, 3000);
-      expect(gs.drone.speed).to.be.closeTo(9.72, 0.01); // 5.4 × 1.8
+      pm.update(gs, 15001);
+      expect(gs.drone.radius).to.equal(6);
     });
   });
 
@@ -209,8 +222,8 @@ describe('PowerUpManager', () => {
       const gs = makeGameState();
       pm.activate('droneFast', gs, 0);
       expect(gs.drone.speed).to.be.closeTo(5.4, 0.01);
-      // Simule drone.reset() → remet speed à 3
-      gs.drone.speed = 3;
+      // Simule drone.reset() → nettoie les modifiers
+      gs.drone.reset();
       pm.clearDroneEffects();
       // Le power-up n'est plus dans active → update ne devrait rien casser
       pm.update(gs, 10001);
@@ -244,11 +257,11 @@ describe('PowerUpManager', () => {
   });
 
   describe('droneLarge', () => {
-    it('multiplie le radius ×1.8', () => {
+    it('multiplie le radius ×1.8 (arrondi)', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('droneLarge', gs, 0);
-      expect(gs.drone.radius).to.be.closeTo(10.8, 0.01);
+      expect(gs.drone.radius).to.equal(11); // Math.round(6 × 1.8) = 11
     });
 
     it('revert restaure le radius original', () => {
@@ -261,11 +274,11 @@ describe('PowerUpManager', () => {
   });
 
   describe('droneMini', () => {
-    it('réduit le radius ×0.5', () => {
+    it('réduit le radius ×0.5 (arrondi)', () => {
       const pm = new PowerUpManager();
       const gs = makeGameState();
       pm.activate('droneMini', gs, 0);
-      expect(gs.drone.radius).to.equal(3);
+      expect(gs.drone.radius).to.equal(3); // Math.round(6 × 0.5) = 3
     });
   });
 

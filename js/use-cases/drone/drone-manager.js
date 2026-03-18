@@ -22,7 +22,12 @@ export class DroneManager {
     );
     d.piercing = ref.piercing;
     d.sticky = ref.sticky;
+    d.warp = ref.warp;
+    d.fireball = ref.fireball;
     d.speedBoost = ref.speedBoost;
+    // Copier les multiplicateurs actifs (power-ups en cours)
+    if (ref.radiusMod) d.radiusMod.copyFrom(ref.radiusMod);
+    if (ref.speedMod) d.speedMod.copyFrom(ref.speedMod);
     d.launchAtAngle(ship, (Math.random() - 0.5) * 0.6);
     drones.push(d);
   }

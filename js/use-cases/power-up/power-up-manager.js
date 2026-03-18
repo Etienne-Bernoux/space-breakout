@@ -1,54 +1,40 @@
 // --- Power-Up Manager ---
-// Gère les effets actifs, timers, apply/revert.
+// Gère les effets actifs, timers, apply/revert via PropModifier (base + multiplicateurs).
 // gameState = { ship, drones, session, field }
 
 import { getPowerUp } from '../../domain/power-ups.js';
 
 // --- Strategies par type d'effet ---
-// Chaque strategy : { apply(gs, effect, saved), revert(gs, effect, saved), cumul?(gs, effect) }
+// Chaque strategy : { apply(gs, effect, puId), revert(gs, effect, puId) }
 
-function centerShipDrones(gs) {
+function recenterShip(gs) {
+  const cx = gs.ship.x + gs.ship.width / 2;
+  gs.ship.x = Math.max(0, cx - gs.ship.width / 2);
   for (const d of gs.drones) {
     if (!d.launched) d.x = gs.ship.x + gs.ship.width / 2;
   }
 }
 
-function resizeShip(gs, factor) {
-  const cx = gs.ship.x + gs.ship.width / 2;
-  gs.ship.width = Math.round(gs.ship.width * factor);
-  gs.ship.x = cx - gs.ship.width / 2;
-  centerShipDrones(gs);
-}
-
 const STRATEGIES = {
   shipWidth: {
-    apply(gs, effect, saved) {
-      saved.width = gs.ship.width;
-      resizeShip(gs, effect.factor);
+    apply(gs, effect, puId) {
+      gs.ship.widthMod.set(puId, effect.factor);
+      recenterShip(gs);
     },
-    revert(gs, effect, saved) {
-      const cx = gs.ship.x + gs.ship.width / 2;
-      gs.ship.width = saved.width;
-      gs.ship.x = cx - gs.ship.width / 2;
-      centerShipDrones(gs);
-    },
-    cumul(gs, effect) {
-      resizeShip(gs, effect.factor);
+    revert(gs, effect, puId) {
+      gs.ship.widthMod.remove(puId);
+      recenterShip(gs);
     },
   },
 
   droneNumeric: {
-    apply(gs, effect, saved) {
-      saved.values = gs.drones.map(d => d[effect.prop]);
-      for (const d of gs.drones) d[effect.prop] *= effect.factor;
+    apply(gs, effect, puId) {
+      const modKey = effect.prop + 'Mod';
+      for (const d of gs.drones) d[modKey]?.set(puId, effect.factor);
     },
-    revert(gs, effect, saved) {
-      for (let i = 0; i < gs.drones.length; i++) {
-        gs.drones[i][effect.prop] = saved.values?.[i] ?? gs.drones[i][effect.prop];
-      }
-    },
-    cumul(gs, effect) {
-      for (const d of gs.drones) d[effect.prop] *= effect.factor;
+    revert(gs, effect, puId) {
+      const modKey = effect.prop + 'Mod';
+      for (const d of gs.drones) d[modKey]?.remove(puId);
     },
   },
 
@@ -88,13 +74,13 @@ function resolveStrategy(effect) {
 
 export class PowerUpManager {
   constructor({ droneManager } = {}) {
-    this.active = new Map(); // id → { startTime, def, saved }
+    this.active = new Map(); // id → { startTime, def }
     this.droneManager = droneManager || null;
     /** Multiplicateur de durée des power-ups (upgrade). */
     this.durationMult = 1;
   }
 
-  /** Activer un power-up. Si déjà actif → reset timer + cumul. */
+  /** Activer un power-up. Si déjà actif → reset timer (modifier se met à jour automatiquement). */
   activate(puId, gameState, now = Date.now()) {
     const def = getPowerUp(puId);
     if (!def) return;
@@ -105,19 +91,15 @@ export class PowerUpManager {
       return;
     }
 
-    // Déjà actif → reset timer + cumul éventuel
+    // Déjà actif → juste reset timer (le facteur est déjà dans le modifier)
     if (this.active.has(puId)) {
-      const entry = this.active.get(puId);
-      entry.startTime = now;
-      const strategy = resolveStrategy(def.effect);
-      if (strategy?.cumul) strategy.cumul(gameState, def.effect);
+      this.active.get(puId).startTime = now;
       return;
     }
 
-    const saved = {};
     const strategy = resolveStrategy(def.effect);
-    if (strategy) strategy.apply(gameState, def.effect, saved);
-    this.active.set(puId, { startTime: now, def, saved });
+    if (strategy) strategy.apply(gameState, def.effect, puId);
+    this.active.set(puId, { startTime: now, def });
   }
 
   /** Mettre à jour : expirer les effets terminés. */
@@ -126,7 +108,7 @@ export class PowerUpManager {
       if (entry.def.duration === Infinity) continue;
       if (now - entry.startTime >= entry.def.duration * this.durationMult) {
         const strategy = resolveStrategy(entry.def.effect);
-        if (strategy) strategy.revert(gameState, entry.def.effect, entry.saved);
+        if (strategy) strategy.revert(gameState, entry.def.effect, puId);
         this.active.delete(puId);
       }
     }
@@ -136,14 +118,14 @@ export class PowerUpManager {
   clear(gameState) {
     for (const [puId, entry] of this.active) {
       const strategy = resolveStrategy(entry.def.effect);
-      if (strategy) strategy.revert(gameState, entry.def.effect, entry.saved);
+      if (strategy) strategy.revert(gameState, entry.def.effect, puId);
     }
     this.active.clear();
   }
 
-  /** Supprime les power-ups drone du manager (drone.reset() a déjà nettoyé les props).
-   *  Appelé sur perte de vie pour éviter un revert obsolète à l'expiration. */
-  clearDroneEffects() {
+  /** Retire les power-ups drone et revert leurs effets proprement.
+   *  Appelé sur perte de vie (drone.reset() nettoie les modifiers). */
+  clearDroneEffects(gameState) {
     for (const [puId, entry] of this.active) {
       if (entry.def.effect.target === 'drone') {
         this.active.delete(puId);

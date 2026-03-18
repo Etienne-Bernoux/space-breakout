@@ -223,20 +223,18 @@ function applyUpgradeEffects() {
   const ship = G.entities.ship;
   const drone = G.entities.drones[0];
 
-  // Ship upgrades
+  // Ship upgrades (modifient la base du modifier)
   if (effects.ship) {
     if (effects.ship.speed) ship.speed *= effects.ship.speed;
     if (effects.ship.width) {
-      const cx = ship.x + ship.width / 2;
-      ship.width = Math.round(ship.width * effects.ship.width);
-      ship.x = Math.min(cx - ship.width / 2, ship.canvasWidth - ship.width);
+      ship.widthMod.base = Math.round(ship.widthMod.base * effects.ship.width);
+      ship.x = Math.max(0, ship.x + ship.width / 2 - ship.width / 2);
     }
   }
-  // Drone upgrades
+  // Drone upgrades (modifient la base du modifier)
   if (effects.drone && drone) {
     if (effects.drone.speed) {
-      drone._baseSpeed *= effects.drone.speed;
-      drone.speed = drone._baseSpeed;
+      drone.speedMod.base *= effects.drone.speed;
       drone.dy = -drone.speed;
       drone.speedBoost = effects.drone.speed;
     }

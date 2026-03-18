@@ -1,3 +1,5 @@
+import { PropModifier } from '../../shared/prop-modifier.js';
+
 export class Drone {
   /**
    * @param {object} config - { radius, speed, color }
@@ -10,22 +12,30 @@ export class Drone {
     this._baseSpeed = (isMobile && config.mobileSpeedRatio)
       ? Math.max(config.speed, canvasHeight * config.mobileSpeedRatio)
       : config.speed;
-    this.radius = this._baseRadius;
-    this.speed = this._baseSpeed;
+    this.radiusMod = new PropModifier(this._baseRadius);
+    this.speedMod = new PropModifier(this._baseSpeed);
     this.color = config.color;
     this.speedBoost = 1;   // upgrade factor (>1 = smart boost: fast up, normal down)
     this.piercing = false;
     this.sticky = false;
     this.warp = false;
+    this.fireball = false;
     this.reset(ship);
   }
 
+  get radius() { return this.radiusMod ? this.radiusMod.current : this._baseRadius; }
+  set radius(v) { if (this.radiusMod) this.radiusMod.base = v; else this._baseRadius = v; }
+
+  get speed() { return this.speedMod ? this.speedMod.currentRaw : this._baseSpeed; }
+  set speed(v) { if (this.speedMod) this.speedMod.base = v; else this._baseSpeed = v; }
+
   reset(ship) {
-    this.radius = this._baseRadius;
-    this.speed = this._baseSpeed;
+    if (this.radiusMod) this.radiusMod.clear();
+    if (this.speedMod) this.speedMod.clear();
     this.piercing = false;
     this.sticky = false;
     this.warp = false;
+    this.fireball = false;
     this._stickyOffset = undefined;
     this.x = ship.x + ship.width / 2;
     this.y = ship.y - this.radius;

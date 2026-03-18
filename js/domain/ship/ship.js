@@ -1,3 +1,5 @@
+import { PropModifier } from '../../shared/prop-modifier.js';
+
 export class Ship {
   /**
    * @param {object} config - { width, height, speed, color }
@@ -5,11 +7,12 @@ export class Ship {
    * @param {number} canvasHeight
    */
   constructor(config, canvasWidth, canvasHeight, isMobile = false) {
-    this.width = isMobile && config.mobileWidthRatio
+    const baseWidth = isMobile && config.mobileWidthRatio
       ? Math.round(canvasWidth * config.mobileWidthRatio)
       : config.width;
+    this.widthMod = new PropModifier(baseWidth);
     this.height = isMobile && config.mobileWidthRatio
-      ? Math.round(this.width * (config.height / config.width))
+      ? Math.round(baseWidth * (config.height / config.width))
       : config.height;
     this.speed = config.speed;
     this.color = config.color;
@@ -32,6 +35,9 @@ export class Ship {
     this.visible = true;
     this.stunTimer = 0; // immobilisation (frames, décrémenté par dt)
   }
+
+  get width() { return this.widthMod.current; }
+  set width(v) { this.widthMod.base = v; }
 
   /** Applique un stun (immobilisation). durée en frames (~150 ≈ 2.5s à 60fps). */
   stun(duration = 150) {

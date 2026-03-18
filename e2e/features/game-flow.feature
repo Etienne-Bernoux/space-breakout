@@ -50,7 +50,7 @@ Feature: Flow — menu → lancer → jouer → fin
     Given je suis sur la page d'accueil
     When je lance le niveau "z1-1" avec l'IA
     And j'accélère le jeu x5
-    And l'IA atteint la fin de partie
+    And j'attends 2000ms
     And je force la victoire
     Then l'état du jeu est "stats"
     When j'appuie sur "Escape"

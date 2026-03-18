@@ -17,8 +17,8 @@ Guide de la boucle itérative d'entraînement du modèle IA (neuroévolution).
 | 1 | Ship width | 1 | Largeur vaisseau (varie avec power-ups shrink/expand) |
 | 2-5 | Drone X, Y, dx, dy | 4 | Position + trajectoire du drone |
 | 6 | Drone lancé | 1 | Flag binaire (-1/+1) |
-| 7-8 | Minerai proche dx/dy | 2 | Capsule minerai la plus proche du ship (dédié) |
-| 9-10 | Centroïde astéroïdes | 2 | Direction générale des briques restantes / ship |
+| 7-8 | Minerai proche dx/dy | 2 | Capsule minerai la plus proche du ship (dédié). `{0, -2}` si aucune capsule |
+| 9-10 | Centroïde astéroïdes | 2 | Direction générale des briques restantes / ship. `{0, -2}` si aucun astéroïde |
 | 11-12 | Densité astéroïdes G/D | 2 | Répartition gauche/droite autour du drone |
 | 13 | Progression | 1 | 0→1, stratégie change en fin de partie |
 | 14-19 | 3 astéroïdes proches | 6 | dx/dy des 3 plus proches du drone (visée) |
@@ -227,6 +227,6 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 | v8 delta (abandonné) | 3567 | [20,14,8,2], delta output — perte de réactivité |
 | v9 workers | 3623 | Position absolue restaurée, worker_threads ×3-4 speedup |
 | v10 seed/gen | 3607 | Seed aléatoire par gen → même layout pour tous les agents |
-| **v11 signaux** | **3614** | **Signaux ambigus corrigés ({0,-2} absence capsule/astéroïde), speed fallback via speedMod, tracking capsules isolé** |
+| **v11 signaux** | **3614** | **Signal {0,-2} pour absence capsule/astéroïde, speed via speedMod** |
 
-> v11 gagne z1-1 (3★), z1-2 (2★) quasi systématiquement. z1-3 à z1-5 survie longue. Collecte des minerais. 900 gens (4 cycles exploration + exploitation + fine-tuning).
+> v11 gagne z1-1 (3★), z1-2 (2★), z1-4 (1★). z1-3/z1-5 survie longue. Collecte minerais.

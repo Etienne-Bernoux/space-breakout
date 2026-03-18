@@ -44,6 +44,8 @@ export function bindKeyboardHandlers(ih) {
       if (e.key === 'ArrowRight') ih.entities.ship.movingRight = true;
       if (e.key === ' ') { if (ih.launchAllDrones()) ih.systems.intensity.onLaunch(); }
       if (e.key === 'Escape') { ih.session.pause(); ih.systems.intensity.onPause(); return; }
+      // Consommables actifs (touches 1/2/3)
+      if (e.key >= '1' && e.key <= '9' && ih.activateConsumable) ih.activateConsumable(e.key);
     }
 
     if (ih.session.state === 'paused') {

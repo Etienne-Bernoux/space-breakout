@@ -19,7 +19,7 @@ export class InputHandler {
    * @param {object} deps.progression - { progress, mapState, systemMapState, wallet, upgrades }
    * @param {object} deps.infra      - infra adapters
    */
-  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, nav, progression, infra, getLevelResult }) {
+  constructor({ entities, session, systems, canvas, gameScale, pauseBtnLayout, pauseScreenLayout, startGame, nav, progression, infra, getLevelResult, getConsumableActivator }) {
     this.entities = entities;
     this.session = session;
     this.systems = systems;
@@ -39,6 +39,8 @@ export class InputHandler {
     this.upgrades = progression.upgrades;
     this.infra = infra;
     this.getLevelResult = getLevelResult || (() => null);
+    this._getConsumableActivator = getConsumableActivator || (() => null);
+    this._getConsumableInventory = null; // set after construction
 
     infra.setupPointer();
     bindPointerHandlers(this);
@@ -69,6 +71,15 @@ export class InputHandler {
       });
     }
     return true;
+  }
+
+  /** Active un consommable par touche clavier (1/2/3). */
+  activateConsumable(key) {
+    const activator = this._getConsumableActivator();
+    if (!activator) return;
+    const keyMap = { '1': 'shockwave', '2': 'missiles', '3': 'fireball' };
+    const id = keyMap[key];
+    if (id) activator.activate(id);
   }
 
   backToDevPanel() {
@@ -108,6 +119,13 @@ export class InputHandler {
         this.systems.intensity.onUpgradePurchased();
       }
     }
+  }
+
+  /** Achète N unités d'un consommable. */
+  buyConsumable(id, qty) {
+    const inv = this._getConsumableInventory?.();
+    if (!inv) return;
+    inv.buy(id, qty, this.wallet);
   }
 
   statsToMap() {

@@ -2,6 +2,7 @@
 
 import { gameScale } from '../../../shared/responsive.js';
 import { getMineral, MINERAL_IDS } from '../../../domain/minerals/index.js';
+import { CONSUMABLE_IDS, getConsumable } from '../../../domain/consumables.js';
 import state, { getSelectedCategoryKey, getVisibleUpgrades, CATEGORY_KEYS, UPGRADE_CATEGORIES } from './state.js';
 import { drawUpgradeIcon } from './icons.js';
 
@@ -16,7 +17,7 @@ const CAT_COLORS = {
 /** Arrondi au pixel entier pour la netteté du texte. */
 const px = (v) => Math.round(v) | 0;
 
-export function drawUpgradeScreen(ctx, W, H, wallet, upgrades) {
+export function drawUpgradeScreen(ctx, W, H, wallet, upgrades, consumableInventory) {
   const s = gameScale(W);
 
   // Fond gradient
@@ -59,6 +60,12 @@ export function drawUpgradeScreen(ctx, W, H, wallet, upgrades) {
     const y = listY + i * itemH;
     const selected = i === state.selectedUpgrade;
     _drawUpgradeItem(ctx, u, W, y, itemH, s, selected, wallet, upgrades);
+  }
+
+  // Section stock consommables (onglet Consommables uniquement)
+  if (getSelectedCategoryKey() === 'consumable' && consumableInventory) {
+    const stockY = listY + upgList.length * itemH + px(10 * s);
+    _drawConsumableStock(ctx, W, stockY, s, wallet, consumableInventory);
   }
 
   _drawBackButton(ctx, W, H, s);
@@ -283,6 +290,96 @@ function _drawUpgradeItem(ctx, upgrade, W, y, h, s, selected, wallet, upgManager
   }
 }
 
+function _drawConsumableStock(ctx, W, startY, s, wallet, inventory) {
+  const pad = px(15 * s);
+  const col = CAT_COLORS.consumable;
+
+  // Titre section
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = col.accent;
+  ctx.font = `bold ${px(11 * s)}px monospace`;
+  ctx.fillText('STOCK CONSOMMABLES', pad, startY);
+
+  const lineY = startY + px(4 * s);
+  const lineGrad = ctx.createLinearGradient(pad, lineY, W - pad, lineY);
+  lineGrad.addColorStop(0, col.accent);
+  lineGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = lineGrad;
+  ctx.fillRect(pad, lineY, W - pad * 2, 1);
+
+  const rowH = px(32 * s);
+  let y = startY + px(14 * s);
+
+  for (const id of CONSUMABLE_IDS) {
+    const def = getConsumable(id);
+    const stock = inventory.getStock(id);
+    const canBuy1 = inventory.canBuy(id, 1, wallet);
+
+    // Fond
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    _roundRect(ctx, pad, y, W - pad * 2, rowH - 4, px(3 * s));
+    ctx.fill();
+
+    // Pastille couleur
+    ctx.fillStyle = def.color;
+    ctx.beginPath();
+    ctx.arc(pad + px(14 * s), y + rowH / 2 - 2, px(5 * s), 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nom
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ccccdd';
+    ctx.font = `${px(11 * s)}px monospace`;
+    ctx.fillText(def.short, pad + px(26 * s), y + rowH / 2 + 1);
+
+    // Stock actuel
+    ctx.textAlign = 'center';
+    ctx.fillStyle = stock > 0 ? '#ffffff' : '#555555';
+    ctx.font = `bold ${px(12 * s)}px monospace`;
+    ctx.fillText(`×${stock}`, px(W * 0.42), y + rowH / 2 + 1);
+
+    // Coût unitaire
+    ctx.textAlign = 'right';
+    ctx.font = `${px(9 * s)}px monospace`;
+    let costX = px(W * 0.65);
+    for (const [mk, amount] of Object.entries(def.cost)) {
+      const mineral = getMineral(mk);
+      ctx.fillStyle = canBuy1 ? mineral.color : '#ff4466';
+      ctx.fillText(`${amount}`, costX, y + rowH / 2 + 1);
+      // Pastille minerai
+      ctx.beginPath();
+      ctx.arc(costX + px(6 * s), y + rowH / 2 - 2, px(3 * s), 0, Math.PI * 2);
+      ctx.fill();
+      costX += px(35 * s);
+    }
+
+    // Bouton +1
+    const btnW = px(28 * s);
+    const btnH = px(18 * s);
+    const btnX = px(W - pad - btnW * 2 - 8 * s);
+    const btnY = y + (rowH - btnH) / 2 - 2;
+    ctx.fillStyle = canBuy1 ? col.glow + '0.25)' : 'rgba(255,255,255,0.03)';
+    _roundRect(ctx, btnX, btnY, btnW, btnH, px(2 * s));
+    ctx.fill();
+    ctx.fillStyle = canBuy1 ? '#ffffff' : '#444455';
+    ctx.font = `bold ${px(10 * s)}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('+1', btnX + btnW / 2, btnY + btnH / 2 + 1);
+
+    // Bouton +5
+    const canBuy5 = inventory.canBuy(id, 5, wallet);
+    const btn5X = btnX + btnW + px(4 * s);
+    ctx.fillStyle = canBuy5 ? col.glow + '0.25)' : 'rgba(255,255,255,0.03)';
+    _roundRect(ctx, btn5X, btnY, btnW, btnH, px(2 * s));
+    ctx.fill();
+    ctx.fillStyle = canBuy5 ? '#ffffff' : '#444455';
+    ctx.fillText('+5', btn5X + btnW / 2, btnY + btnH / 2 + 1);
+
+    y += rowH;
+  }
+}
+
 function _drawBackButton(ctx, W, H, s) {
   const btnW = px(130 * s);
   const btnH = px(34 * s);
@@ -355,5 +452,22 @@ export function getUpgradeScreenButtons(W, H, upgradeCount) {
     x: px(W / 2 - backBtnW / 2), y: px(H - 52 * s), w: backBtnW, h: px(34 * s),
   };
 
-  return { tabs, items, buyBtn, backBtn };
+  // Hitboxes stock consommables (onglet consumable)
+  const stockBtns = [];
+  if (getSelectedCategoryKey() === 'consumable') {
+    const stockY = listY + upgradeCount * itemH + px(10 * s);
+    const rowH = px(32 * s);
+    const sBtnW = px(28 * s);
+    const sBtnH = px(18 * s);
+    let sy = stockY + px(14 * s);
+    for (const id of CONSUMABLE_IDS) {
+      const sBtnX = px(W - pad - sBtnW * 2 - 8 * s);
+      const sBtnY = sy + (rowH - sBtnH) / 2 - 2;
+      stockBtns.push({ id, qty: 1, x: sBtnX, y: sBtnY, w: sBtnW, h: sBtnH });
+      stockBtns.push({ id, qty: 5, x: sBtnX + sBtnW + px(4 * s), y: sBtnY, w: sBtnW, h: sBtnH });
+      sy += rowH;
+    }
+  }
+
+  return { tabs, items, buyBtn, backBtn, stockBtns };
 }

@@ -33,6 +33,7 @@ export class CollisionHandler {
   update() {
     this.#handleDroneCollisions();
     this.#handleProjectileCollisions();
+    this.#handleMissileCollisions();
     this.#handleShipAsteroidCollision();
     this.#handleCapsulePickup();
     this.#handleMineralPickup();
@@ -248,6 +249,11 @@ export class CollisionHandler {
     for (let i = drones.length - 1; i >= 0; i--) {
       if (!this.session.isDroneLost(drones[i])) continue;
 
+      // Filet de sécurité : rebondit le drone au lieu de perdre une vie
+      if (this.consumableActivator?.activateSafetyNet(drones[i])) {
+        continue;
+      }
+
       if (this.droneManager?.removeExtra(drones, i)) {
         // drone supplémentaire retiré
       } else {
@@ -271,6 +277,33 @@ export class CollisionHandler {
             ? this.droneManager.resetLast(drones, ship)
             : drones[0].reset(ship);
           this.systems.intensity.onLifeChanged(livesLeft);
+        }
+      }
+    }
+  }
+
+  #handleMissileCollisions() {
+    const missiles = this.entities.missiles;
+    if (!missiles) return;
+    const { field } = this.entities;
+
+    for (const m of missiles) {
+      if (!m.alive) continue;
+      for (const a of field.grid) {
+        if (!a.alive) continue;
+        if (m.x + m.radius > a.x && m.x - m.radius < a.x + a.width &&
+            m.y + m.radius > a.y && m.y - m.radius < a.y + a.height) {
+          m.alive = false;
+          if (a.destructible) {
+            a.hp -= m.damage || 1;
+            if (a.hp <= 0) {
+              a.alive = false;
+              this.session.score += 10;
+            }
+          }
+          this.effects.spawnExplosion(m.x, m.y, m.color || '#ff3355');
+          this.effects.triggerShake(2);
+          break;
         }
       }
     }

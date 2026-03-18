@@ -23,13 +23,15 @@ import { isLabMode } from '../infra/lab/hub/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { AlienCombatManager } from '../use-cases/alien-combat/alien-combat-manager.js';
-import { AlienProjectile } from '../domain/projectile/index.js';
+import { AlienProjectile, Missile } from '../domain/projectile/index.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud-render.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input/input-handler/index.js';
 import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains, setBodyTheme } from './adapters.js';
 import { initMineralHUD } from '../infra/renderers/mineral-render.js';
+import { ConsumableInventory, ConsumableSession } from '../use-cases/consumable/index.js';
+import { ConsumableActivator } from '../use-cases/consumable/consumable-activator.js';
 
 // --- Canvas setup ---
 const canvas = document.getElementById('game');
@@ -69,6 +71,9 @@ export const G = {
   mapState: { selectedIndex: 0 },
   systemMapState: { selectedZone: 0 },
   levelResult: null,   // { levelId, stars, timeSpent, livesLost } — set après victoire
+  consumableInventory: ConsumableInventory.load(),
+  consumableSession: null, // créé au startGame
+  consumableActivator: null, // wired au startGame
 };
 
 // --- Wiring DropSystem (needs upgrades ref) ---
@@ -171,6 +176,7 @@ function spawnEntities(ent, levelAsteroids) {
   ent.capsules = [];
   ent.mineralCapsules = [];
   ent.projectiles = [];
+  ent.missiles = [];
   ent.totalAsteroids = ent.field.remaining;
 }
 
@@ -197,6 +203,17 @@ export function startGame(levelId, opts) {
   resetSystems(G.systems);
   resetMineralSessionGains();
   if (!opts?.skipUpgrades) applyUpgradeEffects();
+  // Consommables : snapshot du stock dans la session
+  G.consumableSession = new ConsumableSession(G.consumableInventory);
+  G.consumableActivator = new ConsumableActivator({
+    entities: G.entities,
+    session: G.session,
+    systems: G.systems,
+    consumableSession: G.consumableSession,
+    effects: collisionEffects,
+    config: { ...CONFIG, MissileClass: Missile },
+  });
+  G.collisionHandler.consumableActivator = G.consumableActivator;
   G.session.start(levelId);
 }
 
@@ -316,6 +333,9 @@ G.gameLoop = new GameLoop({
   alienCombat: G.alienCombat,
   wallet: G.wallet,
   upgrades: G.upgrades,
+  get consumableSession() { return G.consumableSession; },
+  get consumableActivator() { return G.consumableActivator; },
+  get _consumableInventory() { return G.consumableInventory; },
 });
 
 G.inputHandler = new InputHandler({
@@ -331,7 +351,9 @@ G.inputHandler = new InputHandler({
   progression: { progress: G.progress, mapState: G.mapState, systemMapState: G.systemMapState, wallet: G.wallet, upgrades: G.upgrades },
   infra: inputInfra,
   getLevelResult: () => G.levelResult,
+  getConsumableActivator: () => G.consumableActivator,
 });
+G.inputHandler._getConsumableInventory = () => G.consumableInventory;
 
 // --- Resize handler ---
 setupResize(() => {

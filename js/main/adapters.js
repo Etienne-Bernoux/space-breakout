@@ -2,7 +2,7 @@
 // Extrait de init.js pour alléger la composition root.
 
 import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnTrail, updateParticles } from '../contexts/audio/infra/effects/particles.js';
-import { playAlienShoot, playMineralPickup } from '../contexts/audio/infra/sfx/audio.js';
+import { playAlienShoot, playMineralPickup, playSafetyNetBounce, playShockwave, playMissileLaunch, playFireballActivate } from '../contexts/audio/infra/sfx/audio.js';
 import { triggerShake, updateShake, setAmbientShake } from '../contexts/audio/infra/effects/screenshake.js';
 import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/lab/dev-panel/index.js';
 import { isLabMode, isLabHubActive } from '../infra/lab/hub/index.js';
@@ -20,6 +20,8 @@ import { drawDrone } from '../infra/renderers/drone-render.js';
 import { drawField } from '../infra/renderers/field-render.js';
 import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
 import { drawProjectile } from '../infra/renderers/projectile-render.js';
+import { drawSafetyNetLine, drawConsumableHUD, getConsumableButtonRects } from '../infra/renderers/consumable-hud.js';
+import { drawMissile } from '../infra/renderers/missile-render.js';
 import { drawWorldMap, getNodePositions, getUpgradeButtonRect } from '../infra/screens/world-map/index.js';
 import { drawSystemMap, getSystemNodePositions } from '../infra/screens/system-map/index.js';
 import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';
@@ -51,6 +53,10 @@ export const loopInfra = {
   AlienProjectile,
   drawProjectile,
   playAlienShoot,
+  drawSafetyNetLine,
+  drawConsumableHUD,
+  getConsumableButtonRects,
+  drawMissile,
 };
 
 export const inputInfra = {
@@ -67,6 +73,7 @@ export const inputInfra = {
 
 export const collisionEffects = {
   spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, triggerShake, spawnDebris, playMineralPickup, addMineralSessionGain,
+  playSafetyNetBounce, playShockwave, playMissileLaunch, playFireballActivate,
 };
 
 export { resetMineralSessionGains, setBodyTheme };

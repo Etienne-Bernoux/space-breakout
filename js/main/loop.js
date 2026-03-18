@@ -177,7 +177,7 @@ export class GameLoop {
   }
 
   #loopUpgrade(ctx) {
-    this.infra.drawUpgradeScreen(ctx, this.canvas.width, this.canvas.height, this.wallet, this.upgrades);
+    this.infra.drawUpgradeScreen(ctx, this.canvas.width, this.canvas.height, this.wallet, this.upgrades, this._consumableInventory);
   }
 
   #loopStats(ctx, fx, dt) {
@@ -273,6 +273,11 @@ export class GameLoop {
     this.entities.mineralCapsules = this.entities.mineralCapsules.filter(mc => mc.alive);
     if (this.alienCombat) {
       this.entities.projectiles = this.alienCombat.update(field, ship, this.entities.projectiles, dtEff, this.canvas);
+    }
+    // Missiles joueur
+    if (this.entities.missiles) {
+      for (const m of this.entities.missiles) m.update(dtEff);
+      this.entities.missiles = this.entities.missiles.filter(m => m.alive);
     }
     this.collisionHandler.update();
   }
@@ -446,6 +451,9 @@ export class GameLoop {
     for (const c of capsules) infra.drawCapsule(ctx, c);
     for (const mc of this.entities.mineralCapsules) infra.drawMineralCapsule(ctx, mc);
     for (const p of this.entities.projectiles) infra.drawProjectile(ctx, p);
+    if (this.entities.missiles) {
+      for (const m of this.entities.missiles) infra.drawMissile?.(ctx, m);
+    }
     if (ship.isMobile) this.hud.drawDeathLine(ship, fx);
     infra.drawShip(ctx, ship);
     for (const d of drones) infra.drawDrone(ctx, d);
@@ -454,6 +462,12 @@ export class GameLoop {
     this.hud.drawHUD(fx);
     infra.drawPowerUpHUD(ctx, this.systems.powerUp.getActive(), this.canvas.width);
     if (infra.drawMineralHUD) infra.drawMineralHUD(ctx, this.canvas.width, this.canvas.height);
+    // Consommables HUD
+    const cs = this.consumableSession;
+    if (cs) {
+      infra.drawSafetyNetLine?.(ctx, this.canvas.width, this.canvas.height, cs.hasCharge('safetyNet'));
+      infra.drawConsumableHUD?.(ctx, cs.getActiveConsumables(), this.canvas.width, this.canvas.height);
+    }
     this.hud.drawPauseButton();
     if (this._devAIPlayer) this.hud.drawAIBadge();
     if (this.ui.comboFadeTimer > 0) this.hud.drawCombo(dt);

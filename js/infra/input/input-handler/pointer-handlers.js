@@ -99,6 +99,12 @@ function handleUpgradeTap(ih, x, y) {
     if (hitBtn(x, y, btns.tabs[i])) { infra.nextCategory(); return; }
   }
   if (hitBtn(x, y, btns.buyBtn)) { ih.tryBuySelectedUpgrade(); return; }
+  // Boutons stock consommables (+1 / +5)
+  if (btns.stockBtns) {
+    for (const sb of btns.stockBtns) {
+      if (hitBtn(x, y, sb)) { ih.buyConsumable(sb.id, sb.qty); return; }
+    }
+  }
   for (let i = 0; i < btns.items.length; i++) {
     if (hitBtn(x, y, btns.items[i])) { infra.selectUpgrade(i); return; }
   }

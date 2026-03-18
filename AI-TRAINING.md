@@ -73,12 +73,12 @@ La fitness est composite (~3500 pts max typique) :
 ```
 1. Partir du meilleur modèle (best.json) ou from scratch
 2. Lancer un cycle de 150 générations
-3. Évaluer (test de généralisation sur z1-1 à z1-6) :
+3. Évaluer (test de généralisation sur tous les niveaux) :
    - Amélioration → sauvegarder, continuer
-   - Niveau ≥ 2★ → le retirer du set d'entraînement
    - Plateau (2 cycles sans progrès) → ajuster les paramètres
    - Plateau confirmé → convergence atteinte
-4. Répéter jusqu'à convergence (tous niveaux ≥ 2★ ou plateau confirmé)
+4. Répéter jusqu'à convergence
+⚠️ Toujours entraîner sur TOUS les niveaux — retirer des niveaux cause du catastrophic forgetting.
 ```
 
 ### Commandes
@@ -138,7 +138,6 @@ pnpm train -- --generations 150 --population 120 --level z1-3
 | Grosse amélioration (>+100) | Continuer mêmes params |
 | Amélioration faible (<+50) | Passer en phase suivante |
 | Pas d'amélioration (2 cycles) | Convergence ou restart |
-| Niveau ≥ 2★ en généralisation | Retirer du set d'entraînement — focaliser sur les niveaux restants |
 | Restart from scratch | Seulement si plateau ET nouvelles features (inputs, fitness, topologie) |
 
 ## Stratégies d'entraînement
@@ -214,6 +213,7 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 5. **Les objectifs contradictoires se résolvent par des inputs dédiés** — le réseau ne collectera jamais les minerais sans un signal spécifique lui indiquant où ils sont.
 6. **La sortie delta ne fonctionne pas pour le breakout** — en théorie réduit les oscillations, en pratique le ship a déjà une vitesse max (pas de téléport), et le delta perd en réactivité pour les grands déplacements. Position absolue + vitesse du ship = le bon combo.
 7. **La parallélisation (worker_threads) est le meilleur levier perf** — ×3-4 speedup sans changer la simulation, chaque worker a son propre headless game.
+8. **Le fine-tuning sur un sous-set de niveaux cause du catastrophic forgetting** — en retirant les niveaux maîtrisés, la population oublie comment y jouer. L'avg chute brutalement. Solution : toujours inclure tous les niveaux (ou au moins un mix faciles + durs) pour maintenir la généralisation.
 
 ## Historique des améliorations
 
@@ -230,6 +230,7 @@ for (const level of ['z1-1','z1-2','z1-3','z1-4','z1-5']) {
 | v9 workers | 3623 | Position absolue restaurée, worker_threads ×3-4 speedup |
 | v10 seed/gen | 3607 | Seed aléatoire par gen → même layout pour tous les agents |
 | v11 signaux | 3614 | Signal {0,-2} pour absence capsule/astéroïde, speed via speedMod |
-| **v11b fine-tune** | **4004** | **Fine-tuning itératif : retrait niveaux ≥2★, focus niveaux durs** |
+| v11b fine-tune | 4004 | Fine-tuning itératif : retrait niveaux ≥2★, focus niveaux durs |
+| **v11c re-gen** | **4004** | **Re-généralisation z1+z2 complet après catastrophic forgetting** |
 
-> v11b gagne z1-1 (3★), z1-2/z1-6/z2-1/z2-3 (2★), z1-4 (1★). z1-3/z1-5/z2-2 survie longue. Collecte minerais.
+> v11c gagne 7/12 niveaux. z1-1 (3★), z1-2/z1-6/z2-2/z2-3/z2-5/z2-6 (2★). z1-3/z1-4/z1-5/z2-4 survie longue.

@@ -9,7 +9,7 @@ describe('Catalogue de niveaux', () => {
   it('getLevel retourne le bon niveau', () => {
     const l = getLevel('z1-3');
     expect(l.name).toBe('Ceinture dense');
-    expect(l.asteroids.rows).toBe(6);
+    expect(l.asteroids.rows).toBe(10);
   });
 
   it('getLevel retourne null pour un id inconnu', () => {

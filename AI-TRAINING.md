@@ -73,11 +73,12 @@ La fitness est composite (~3500 pts max typique) :
 ```
 1. Partir du meilleur modèle (best.json) ou from scratch
 2. Lancer un cycle de 150 générations
-3. Évaluer :
+3. Évaluer (test de généralisation sur z1-1 à z1-6) :
    - Amélioration → sauvegarder, continuer
+   - Niveau ≥ 2★ → le retirer du set d'entraînement
    - Plateau (2 cycles sans progrès) → ajuster les paramètres
    - Plateau confirmé → convergence atteinte
-4. Répéter jusqu'à convergence
+4. Répéter jusqu'à convergence (tous niveaux ≥ 2★ ou plateau confirmé)
 ```
 
 ### Commandes
@@ -137,6 +138,7 @@ pnpm train -- --generations 150 --population 120 --level z1-3
 | Grosse amélioration (>+100) | Continuer mêmes params |
 | Amélioration faible (<+50) | Passer en phase suivante |
 | Pas d'amélioration (2 cycles) | Convergence ou restart |
+| Niveau ≥ 2★ en généralisation | Retirer du set d'entraînement — focaliser sur les niveaux restants |
 | Restart from scratch | Seulement si plateau ET nouvelles features (inputs, fitness, topologie) |
 
 ## Stratégies d'entraînement

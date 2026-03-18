@@ -17,7 +17,7 @@ import { GameIntensityDirector } from '../contexts/audio/use-cases/intensity/gam
 import { MusicDirector } from '../contexts/audio/infra/orchestrators/music-director.js';
 import { EffectDirector } from '../contexts/audio/infra/orchestrators/effect-director.js';
 import { setupResize } from '../infra/input/resize.js';
-import { playAlienShoot } from '../contexts/audio/infra/sfx/audio.js';
+import { playAlienShoot } from '../contexts/audio/infra/sfx/index.js';
 import { getDevAsteroidConfig } from '../infra/lab/dev-panel/index.js';
 import { isLabMode } from '../infra/lab/hub/index.js';
 import { initDevOverlay, updateDevOverlay } from '../infra/dev-overlay/index.js';
@@ -25,11 +25,11 @@ import { CollisionHandler } from '../use-cases/collision/collision-handler.js';
 import { AlienCombatManager } from '../use-cases/alien-combat/alien-combat-manager.js';
 import { AlienProjectile, Missile } from '../domain/projectile/index.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
-import { HudRenderer } from '../infra/renderers/hud-render.js';
+import { HudRenderer } from '../infra/renderers/hud/index.js';
 import { GameLoop } from './loop.js';
 import { InputHandler } from '../infra/input/input-handler/index.js';
 import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains, setBodyTheme } from './adapters.js';
-import { initMineralHUD } from '../infra/renderers/mineral-render.js';
+import { initMineralHUD } from '../infra/renderers/effects/index.js';
 import { ConsumableInventory, ConsumableSession } from '../use-cases/consumable/index.js';
 import { ConsumableActivator } from '../use-cases/consumable/consumable-activator.js';
 

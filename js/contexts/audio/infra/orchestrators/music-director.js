@@ -14,7 +14,7 @@ import {
   playBounce, playAsteroidHit, playAlienHit, playLoseLife,
   playWin, playGameOver, playShipExplosion, playBossExplosion, playLaunch, unlockAudio,
   playForgePurchase,
-} from '../sfx/audio.js';
+} from '../sfx/index.js';
 
 // BPM par niveau d'intensité : calm→climax
 const INTENSITY_BPM = [110, 114, 118, 122, 128];

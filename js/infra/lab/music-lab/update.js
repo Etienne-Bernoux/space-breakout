@@ -3,7 +3,7 @@
 
 import { isPlaying, getCurrentSection, getLayerVolumes, getTrack } from '../../../contexts/audio/infra/music/index.js';
 import { getCurrentTab, getActivityProgress, getSim, isMuffled } from './state.js';
-import { getInstruments } from './tab-sons.js';
+import { getInstruments } from './tabs/index.js';
 
 const INTENSITY_LABELS = ['CALM', 'CRUISE', 'ACTION', 'INTENSE', 'CLIMAX'];
 const INTENSITY_COLORS = ['#44aa66', '#88cc44', '#ccaa33', '#ff6644', '#ff2244'];

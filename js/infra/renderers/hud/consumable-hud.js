@@ -1,6 +1,6 @@
 // --- HUD consommables : ligne filet + boutons actifs ---
 
-import { gameScale } from '../../shared/responsive.js';
+import { gameScale } from '../../../shared/responsive.js';
 
 /** Dessine la ligne du filet de sécurité en bas de l'écran. */
 export function drawSafetyNetLine(ctx, W, H, hasCharge) {

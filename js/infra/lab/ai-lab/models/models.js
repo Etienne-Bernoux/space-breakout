@@ -2,8 +2,8 @@
 // Coordination UI pour le browsing, import, export de modèles IA.
 // L'I/O est déléguée à model-storage.js.
 
-import state from './state.js';
-import { drawAllGraphs } from './update.js';
+import state from '../state.js';
+import { drawAllGraphs } from '../update.js';
 import {
   loadCommittedModel, fetchModelIndex, fetchModel,
   loadFromStorage, saveToStorage, clearStorage,

@@ -1,8 +1,8 @@
 // --- AI Lab DOM Update ---
 
 import { formatGenStats, genStatsHeader, genStatsSeparator } from '../../../contexts/ai/use-cases/gen-stats.js';
-import { graphDataCache, drawAndCache, drawElitesGraph, drawGraph } from './graph-draw.js';
-export { drawZoomedGraph } from './graph-draw.js';
+import { graphDataCache, drawAndCache, drawElitesGraph, drawGraph } from './graph/index.js';
+export { drawZoomedGraph } from './graph/index.js';
 
 /** Met à jour les stats affichées selon le mode (training ou watch). */
 export function updateStats(el, trainer) {

@@ -8,7 +8,7 @@ import {
   loadCommittedModel, loadModelIndex, loadHistoryIntoTrainer, clearStorage,
   onModelSelectChange, loadSelectedModel,
   exportModel, importModel, saveModelToDownload,
-} from './models.js';
+} from './models/index.js';
 
 export { isAILabActive, isAILabOpen };
 

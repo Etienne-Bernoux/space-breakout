@@ -1,8 +1,8 @@
 // Sons tab - Data definitions (shared by build.js and handlers.js)
 // Draw functions removed (DOM version).
 
-import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../../../contexts/audio/infra/music/index.js';
-import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion, playForgePurchase } from '../../../contexts/audio/infra/sfx/audio.js';
+import { getTrack, playWinStinger, playGameOverStinger, playPowerUpAccent } from '../../../../contexts/audio/infra/music/index.js';
+import { playBounce, playAsteroidHit, playLoseLife, playLaunch, playShipExplosion, playAlienHit, playBossExplosion, playForgePurchase } from '../../../../contexts/audio/infra/sfx/index.js';
 
 // --- Data multi-pistes ---
 export const TRACKS = [

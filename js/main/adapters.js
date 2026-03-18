@@ -2,7 +2,7 @@
 // Extrait de init.js pour alléger la composition root.
 
 import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnTrail, updateParticles } from '../contexts/audio/infra/effects/particles.js';
-import { playAlienShoot, playMineralPickup, playSafetyNetBounce, playShockwave, playMissileLaunch, playFireballActivate } from '../contexts/audio/infra/sfx/audio.js';
+import { playAlienShoot, playMineralPickup, playSafetyNetBounce, playShockwave, playMissileLaunch, playFireballActivate } from '../contexts/audio/infra/sfx/index.js';
 import { triggerShake, updateShake, setAmbientShake } from '../contexts/audio/infra/effects/screenshake.js';
 import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/lab/dev-panel/index.js';
 import { isLabMode, isLabHubActive } from '../infra/lab/hub/index.js';
@@ -10,18 +10,18 @@ import { updateDevOverlay } from '../infra/dev-overlay/index.js';
 import { updateStars, setBodyTheme } from '../contexts/audio/infra/effects/stars.js';
 import { setupPointer, getPointerX, setAIPointerX, setTapHandler, setMenuTapHandler, setDragHandler, setReleaseHandler, getMousePos, setGameState } from '../infra/input/pointer.js';
 import { updateMenu, updateMenuHover, handleMenuInput, handleMenuTap, handleMenuDrag, handleMenuRelease, resetMenu } from '../infra/menu/index.js';
-import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/power-up-render.js';
-import { drawMineralCapsule, drawMineralHUD, resetMineralSessionGains, addMineralSessionGain } from '../infra/renderers/mineral-render.js';
+import { drawCapsule, drawPowerUpHUD } from '../infra/renderers/effects/index.js';
+import { drawMineralCapsule, drawMineralHUD, resetMineralSessionGains, addMineralSessionGain } from '../infra/renderers/effects/index.js';
 import { isMusicLabActive } from '../infra/lab/music-lab/index.js';
 import { isAILabActive } from '../infra/lab/ai-lab/index.js';
 import { isProgressLabActive, isSimulatorOpen, showSimulatorModal, hideSimulatorModal, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
-import { drawShip } from '../infra/renderers/ship-render.js';
-import { drawDrone } from '../infra/renderers/drone-render.js';
-import { drawField } from '../infra/renderers/field-render.js';
-import { spawnDebris, updateDebris } from '../infra/renderers/debris-render.js';
-import { drawProjectile } from '../infra/renderers/projectile-render.js';
-import { drawSafetyNetLine, drawConsumableHUD, getConsumableButtonRects } from '../infra/renderers/consumable-hud.js';
-import { drawMissile } from '../infra/renderers/missile-render.js';
+import { drawShip } from '../infra/renderers/ship/index.js';
+import { drawDrone } from '../infra/renderers/ship/index.js';
+import { drawField } from '../infra/renderers/asteroid/index.js';
+import { spawnDebris, updateDebris } from '../infra/renderers/effects/index.js';
+import { drawProjectile } from '../infra/renderers/combat/index.js';
+import { drawSafetyNetLine, drawConsumableHUD, getConsumableButtonRects } from '../infra/renderers/hud/index.js';
+import { drawMissile } from '../infra/renderers/combat/index.js';
 import { drawWorldMap, getNodePositions, getUpgradeButtonRect } from '../infra/screens/world-map/index.js';
 import { drawSystemMap, getSystemNodePositions } from '../infra/screens/system-map/index.js';
 import { drawStatsScreen, getStatsButtons } from '../infra/screens/stats-screen.js';

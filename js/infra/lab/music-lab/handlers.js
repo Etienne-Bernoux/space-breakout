@@ -12,8 +12,8 @@ import {
   isActive, setCurrentTab, setActivity, setMuffled, isMuffled,
   getSim, setLoopStartTime, getCurrentTab,
 } from './state.js';
-import { getStingers } from './tab-sons.js';
-import { simApply } from './tab-gameplay.js';
+import { getStingers } from './tabs/index.js';
+import { simApply } from './tabs/index.js';
 import { updateMusicLab } from './update.js';
 
 // Constants

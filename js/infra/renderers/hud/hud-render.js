@@ -1,4 +1,4 @@
-import { isMobile } from '../../shared/platform.js';
+import { isMobile } from '../../../shared/platform.js';
 
 const COMBO_ALPHA_FRAMES = 30;       // frames pendant lesquelles le combo est pleinement opaque
 const COMBO_PULSE_AMP = 0.3;         // amplitude du pulse sinusoïdal

@@ -100,7 +100,7 @@ js/
       infra/            → implémentations concrètes
         orchestrators/  → music-director.js, effect-director.js
         music/          → musique procédurale (Web Audio, 13 fichiers)
-        sfx/            → SFX procéduraux (audio.js, sfxr-synth.js)
+        sfx/            → SFX procéduraux (dossier-module : audio-core, sfx-gameplay, sfx-explosions, sfx-combat, sfx-economy, sfx-consumables)
         effects/        → particules, screenshake, étoiles, corps célestes
   use-cases/            → logique métier (0 DOM, 0 audio)
     game-logic/
@@ -127,17 +127,11 @@ js/
       pointer.js        → contrôles tactiles + souris unifiés
       resize.js         → canvas responsive
     renderers/
-      hud-render.js     → HUD, combo, pause screen, end screen
-      ship-render.js    → rendu vaisseau (sci-fi)
-      ship-render-classic.js → rendu vaisseau alternatif (classique)
-      drone-render.js   → rendu drone
-      field-render.js   → rendu champ d'astéroïdes
-      power-up-render.js → rendu capsules + HUD power-ups actifs
-      power-up-icons.js → icônes canvas power-ups (12 icônes)
-      asteroid-render.js → rendu par matériau (6 styles minéraux)
-      asteroid-render-helpers.js → helpers partagés (couleurs, cratères, veines, rim)
-      projectile-render.js → rendu projectiles alien
-      debris-render.js    → rendu débris (animation mort vaisseau)
+      asteroid/           → rendu astéroïdes (asteroid-render, helpers, field-render)
+      ship/               → rendu entités joueur (ship-render, ship-render-classic, drone-render)
+      hud/                → HUD (hud-render, consumable-hud)
+      combat/             → rendu projectiles (projectile-render, missile-render)
+      effects/            → rendu items/effets (power-up-render, power-up-icons, mineral-render, debris-render)
       alien-creature-render/ → rendu créature alien (dossier-module)
         index.js          → façade (drawAlienCreatures, flood-fill, grouping)
         tentacle-draw.js  → tentacule effilé (ondulation, œil, firePulse)
@@ -160,10 +154,9 @@ js/
         state.js        → état UI centralisé
         build.js        → construction DOM (tabs, panels, footer)
         update.js       → sync DOM ← state (volumes, sim, transport)
-        tab-sons.js     → données pistes/sections/instruments/stingers
-        tab-gameplay.js → logique simulation intensité (simApply)
         handlers.js     → event delegation DOM
         index.js        → façade publique (init, show/hide, rAF footer)
+        tabs/           → données pistes/sections/instruments (tab-sons, tab-gameplay)
       progress-lab/     → side panels + simulateur (swap systemMap/worldMap via CSS)
         state.js        → état UI (simulatorOpen)
         build.js        → builders (zone panel systemMap, wallet/upgrades worldMap, simulator modal)
@@ -174,11 +167,10 @@ js/
         state.js        → état UI (active, selectedLevel)
         build.js        → construction DOM (sélecteur niveau, boutons, stats, graphe, import/export)
         update.js       → sync DOM ← trainer (stats temps réel, graphe fitness)
-        graph-draw.js   → rendu canvas des graphes (fitness, élites, métriques)
-        model-storage.js → I/O modèles (fetch, cache, localStorage, download)
-        models.js       → coordination UI modèles (browse, import, export, preview)
         handlers.js     → event delegation (start/stop, watch, reset, export, import, level)
         index.js        → façade publique (init, show/hide, lifecycle trainer)
+        graph/          → rendu canvas des graphes (fitness, élites, métriques)
+        models/         → I/O + coordination UI modèles (storage, browse, import, export)
     menu/               → menu principal
       state.js          → état + persistence volumes
       draw-menu.js      → écran menu principal
@@ -225,8 +217,9 @@ playwright.config.js    → config Playwright BDD (2 projets : desktop + mobile)
 
 ## Règles de structure
 
-### Limite de taille : 300 lignes max par fichier
-Si un fichier dépasse ~300 lignes, le transformer en **dossier** avec un `index.js` façade.
+### 1 fichier = 1 responsabilité
+La règle première est **un fichier = une responsabilité**. ~300 lignes suffisent largement pour une seule responsabilité.
+Si un fichier dépasse ~300 lignes, vérifier qu'il n'a bien **qu'une seule responsabilité**. Si oui, le garder tel quel. Si non, le splitter en **dossier-module** avec un `index.js` façade.
 
 ### Limite de fichiers : 5 fichiers max à plat par dossier (hors tests)
 Si un dossier contient plus de 5 fichiers `.js` (hors `.spec.js`), regrouper les fichiers en sous-dossiers thématiques.

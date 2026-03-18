@@ -17,7 +17,7 @@ import { getNodePositions } from '../infra/screens/world-map/index.js';
 import { CONFIG } from '../config.js';
 import { AITrainer, AIPlayer } from '../contexts/ai/index.js';
 import { Genome } from '../contexts/ai/domain/genome.js';
-import { loadFromStorage } from '../infra/lab/ai-lab/model-storage.js';
+import { loadFromStorage } from '../infra/lab/ai-lab/models/model-storage.js';
 
 loadSettings();
 loadDevConfig();
@@ -122,10 +122,25 @@ window.__GAME__ = {
   get progressLab() { return isProgressLabActive(); },
   get aiLab() { return isAILabOpen(); },
   get labHub() { return isLabHubActive(); },
-  get wallet() { return G.wallet; },
-  get upgrades() { return G.upgrades; },
-  get consumables() { return G.consumableInventory; },
-  get consumableSession() { return G.consumableSession; },
+  get wallet() {
+    return {
+      get: (id) => G.wallet.get(id),
+      canAfford: (cost) => G.wallet.canAfford(cost),
+    };
+  },
+  get upgrades() {
+    return {
+      getLevel: (id) => G.upgrades.getLevel(id),
+      isMaxed: (id) => G.upgrades.isMaxed(id),
+      getNextCost: (id) => G.upgrades.getNextCost(id),
+      getActiveEffects: () => G.upgrades.getActiveEffects(),
+    };
+  },
+  get consumables() {
+    return {
+      getStock: (id) => G.consumableInventory.getStock(id),
+    };
+  },
   /** Multiplicateur de vitesse du jeu (usage e2e / dev). */
   set timeScale(v) { G.gameLoop.timeScale = v; },
   get timeScale() { return G.gameLoop.timeScale || 1; },

@@ -5,7 +5,7 @@ import { isLabMode } from '../lab/hub/index.js';
 import { isDesktop } from '../../shared/platform.js';
 import { isAILabOpen } from '../lab/ai-lab/index.js';
 import { POWER_UP_IDS, getPowerUp } from '../../domain/power-ups.js';
-import { drawIcon } from '../renderers/power-up-icons.js';
+import { drawIcon } from '../renderers/effects/power-up-icons.js';
 import { initDevStats, updateDevStats } from './dev-stats.js';
 
 const container = document.getElementById('dev-overlay');

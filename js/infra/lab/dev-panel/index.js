@@ -6,7 +6,7 @@ import state, { SLIDER_MAT_KEYS, loadDevConfig, saveDevConfig } from './state.js
 import { buildDevPanel } from './build.js';
 import { updateDevPanel } from './update.js';
 import { attachDevHandlers } from './handlers.js';
-import { loadCommittedModel } from '../ai-lab/model-storage.js';
+import { loadCommittedModel } from '../ai-lab/models/model-storage.js';
 
 let refs = null;
 let onLaunchCb = null;

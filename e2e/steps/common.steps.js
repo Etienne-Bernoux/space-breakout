@@ -9,11 +9,13 @@ const { Given, When, Then, Step } = createBdd(test);
 Given('je suis sur la page d\'accueil', async ({ page, gameHelpers }) => {
   await page.goto(gameHelpers.BASE);
   await page.waitForTimeout(500);
+  await gameHelpers.waitForGame();
 });
 
 Given('je suis sur la page {string}', async ({ page, gameHelpers }, path) => {
   await page.goto(`${gameHelpers.BASE}${path}`);
   await page.waitForTimeout(500);
+  await gameHelpers.waitForGame();
 });
 
 Given('une partie est lancée', async ({ gameHelpers }) => {

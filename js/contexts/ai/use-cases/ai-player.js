@@ -79,29 +79,7 @@ export class AIPlayer {
       this.rallyDestroys = 0;
     }
 
-    // Détecter les capsules récupérées (flag `collected` posé par collision)
-    for (const c of (entities.mineralCapsules || [])) {
-      if (c.collected && !c._aiCounted) {
-        this.capsulesCaught++;
-        this.mineralsCaught++;
-        if (c.mineralKey && this.mineralsByType[c.mineralKey] !== undefined) {
-          this.mineralsByType[c.mineralKey] += c.quantity || 1;
-        }
-        c._aiCounted = true;
-      }
-    }
-    for (const c of (entities.capsules || [])) {
-      if (c.collected && !c._aiCounted) {
-        this.capsulesCaught++;
-        this.powerUpsCaught++;
-        if (c.powerUp?.type === 'malus') this.malusCaught++;
-        else this.bonusCaught++;
-        c._aiCounted = true;
-      }
-    }
-    // Purger les capsules déjà comptées pour éviter l'accumulation en headless
-    entities.mineralCapsules = (entities.mineralCapsules || []).filter(c => !c._aiCounted);
-    entities.capsules = (entities.capsules || []).filter(c => !c._aiCounted);
+    this.#updateCapsuleTracking(entities);
 
     // --- Construire les inputs (20) ---
     const inputs = new Float32Array(INPUT_COUNT);
@@ -114,8 +92,9 @@ export class AIPlayer {
     // Drone position + vitesse + lancé (5)
     inputs[idx++] = drone.x / W * 2 - 1;
     inputs[idx++] = drone.y / H * 2 - 1;
-    inputs[idx++] = drone.launched ? drone.dx / (drone.speed || 3) : 0;
-    inputs[idx++] = drone.launched ? drone.dy / (drone.speed || 3) : 0;
+    const speed = drone.speedMod?.current ?? drone.speed ?? 3;
+    inputs[idx++] = drone.launched ? drone.dx / speed : 0;
+    inputs[idx++] = drone.launched ? drone.dy / speed : 0;
     inputs[idx++] = drone.launched ? 1 : -1;
 
     // Capsule minerai la plus proche du ship (2) — signal dédié collecte
@@ -167,6 +146,32 @@ export class AIPlayer {
     return { pointerX: targetX, shouldLaunch };
   }
 
+  /** Comptabilise les capsules récupérées et purge les déjà comptées (side effect isolé). */
+  #updateCapsuleTracking(entities) {
+    for (const c of (entities.mineralCapsules || [])) {
+      if (c.collected && !c._aiCounted) {
+        this.capsulesCaught++;
+        this.mineralsCaught++;
+        if (c.mineralKey && this.mineralsByType[c.mineralKey] !== undefined) {
+          this.mineralsByType[c.mineralKey] += c.quantity || 1;
+        }
+        c._aiCounted = true;
+      }
+    }
+    for (const c of (entities.capsules || [])) {
+      if (c.collected && !c._aiCounted) {
+        this.capsulesCaught++;
+        this.powerUpsCaught++;
+        if (c.powerUp?.type === 'malus') this.malusCaught++;
+        else this.bonusCaught++;
+        c._aiCounted = true;
+      }
+    }
+    // Purger les capsules déjà comptées pour éviter l'accumulation en headless
+    entities.mineralCapsules = (entities.mineralCapsules || []).filter(c => !c._aiCounted);
+    entities.capsules = (entities.capsules || []).filter(c => !c._aiCounted);
+  }
+
   #closeRally(progress = 0) {
     this.rallyScore += computeRallyScore(this.rallyDestroys, progress);
     this.rallyDestroys = 0;
@@ -212,7 +217,7 @@ export class AIPlayer {
 
   /** Trouve la capsule minerai la plus proche du ship. */
   #nearestMineral(entities, shipCx, shipY, W, H) {
-    let bestDx = 0, bestDy = 0, bestDist = Infinity;
+    let bestDx = 0, bestDy = -2, bestDist = Infinity;
     for (const c of (entities.mineralCapsules || [])) {
       if (!c.alive) continue;
       const cx = c.x + (c.width || 0) / 2;
@@ -238,7 +243,7 @@ export class AIPlayer {
       sumY += a.y + a.height / 2;
       count++;
     }
-    if (count === 0) return { dx: 0, dy: 0 };
+    if (count === 0) return { dx: 0, dy: -2 };
     return {
       dx: ((sumX / count) - shipCx) / W * 2,
       dy: ((sumY / count) - shipY) / H * 2,

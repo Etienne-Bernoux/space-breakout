@@ -51,9 +51,9 @@ export const test = base.extend({
     const helpers = {
       BASE,
 
-      async waitForState(expected, timeout = 3000) {
+      async waitForState(expected, timeout = 5000) {
         await page.waitForFunction(
-          (s) => window.__GAME__?.state === s,
+          (s) => typeof window.__GAME__ !== 'undefined' && window.__GAME__?.state === s,
           expected,
           { timeout },
         );
@@ -72,9 +72,18 @@ export const test = base.extend({
       },
 
       /** Lance une partie depuis le menu : menu → systemMap → worldMap → playing. */
+      /** Attend que le hook __GAME__ soit disponible (jeu initialisé). */
+      async waitForGame(timeout = 10000) {
+        await page.waitForFunction(
+          () => typeof window.__GAME__ !== 'undefined' && window.__GAME__?.state != null,
+          null,
+          { timeout },
+        );
+      },
+
       async launchGame() {
         await page.goto(BASE);
-        await page.waitForTimeout(500);
+        await helpers.waitForGame();
         await page.keyboard.press('Enter');
         await helpers.waitForState('systemMap');
         await page.keyboard.press('Enter');
@@ -118,9 +127,8 @@ export const test = base.extend({
           const zones = window.__GAME__?.hitZones || [];
           return zones.find(z => z.id === zoneId) || null;
         }, id);
-        if (!zone) return false;
+        if (!zone) throw new Error(`hitZone "${id}" not found in current state`);
         await helpers.tapCanvas(zone.x, zone.y);
-        return true;
       },
     };
 

@@ -74,7 +74,7 @@ export const CONFIG = {
   },
 
   mineralDrop: {
-    baseRate: 0.08,
+    baseRate: 0.20,
     sizeMult: { large: 1.6, medium: 1.0, small: 0.5 },
   },
 

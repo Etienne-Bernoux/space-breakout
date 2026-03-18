@@ -25,6 +25,8 @@ export class AIPlayer {
     this.rallyScore = 0;     // score cumulé des rallies (log décroissant)
     this.capsulesCaught = 0; // total capsules récupérées (rétro-compat)
     this.mineralsCaught = 0;  // capsules minerai
+    this.mineralsByType = { copper: 0, silver: 0, gold: 0, platinum: 0 };
+    this.powerUpsCaught = 0;  // power-ups collectés (bonus + malus)
     this.bonusCaught = 0;     // power-ups bonus
     this.malusCaught = 0;     // power-ups malus
     this.prevPointerX = null; // pour détecter les changements de direction
@@ -82,12 +84,16 @@ export class AIPlayer {
       if (c.collected && !c._aiCounted) {
         this.capsulesCaught++;
         this.mineralsCaught++;
+        if (c.mineralKey && this.mineralsByType[c.mineralKey] !== undefined) {
+          this.mineralsByType[c.mineralKey] += c.quantity || 1;
+        }
         c._aiCounted = true;
       }
     }
     for (const c of (entities.capsules || [])) {
       if (c.collected && !c._aiCounted) {
         this.capsulesCaught++;
+        this.powerUpsCaught++;
         if (c.powerUp?.type === 'malus') this.malusCaught++;
         else this.bonusCaught++;
         c._aiCounted = true;
@@ -196,6 +202,8 @@ export class AIPlayer {
       directionChanges: this.directionChanges,
       framesBeforeLaunch: this.framesBeforeLaunch,
       mineralsCaught: this.mineralsCaught,
+      mineralsByType: { ...this.mineralsByType },
+      powerUpsCaught: this.powerUpsCaught,
       bonusCaught: this.bonusCaught,
       malusCaught: this.malusCaught,
       extraRally,

@@ -24,9 +24,11 @@ const noopEffects = {
 
 /**
  * Crée un environnement de jeu headless complet.
+ * @param {object} [opts]
+ * @param {boolean} [opts.realisticDrops=false] - true pour utiliser les taux de drop gameplay (0.08) au lieu de 0.35
  * @returns {{ session, entities, ui, startGame, tick, gameState }}
  */
-export function createHeadlessGame() {
+export function createHeadlessGame(opts = {}) {
   const session = new GameSession(CONFIG);
   const entities = {
     ship: null, drones: [], field: null,
@@ -42,8 +44,8 @@ export function createHeadlessGame() {
   const powerUp = new PowerUpManager({ droneManager });
   powerUp.droneManager = droneManager;
   const drop = new DropSystem(CONFIG.drop);
-  // Drop rate minerai augmenté en entraînement (0.35 vs 0.08 en jeu)
-  const mineralDrop = new MineralDropSystem({ ...CONFIG.mineralDrop, baseRate: 0.35 });
+  const mineralBaseRate = opts.realisticDrops ? CONFIG.mineralDrop.baseRate : 0.35;
+  const mineralDrop = new MineralDropSystem({ ...CONFIG.mineralDrop, baseRate: mineralBaseRate });
   const intensity = {
     update: noop, onBounce: noop, onAsteroidHit: noop, onAsteroidDestroyed: noop,
     onPowerUpActivated: noop, onPowerUpExpired: noop, onLifeChanged: noop,

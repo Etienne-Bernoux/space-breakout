@@ -26,7 +26,7 @@ import { AlienCombatManager } from '../use-cases/alien-combat/alien-combat-manag
 import { AlienProjectile, Missile } from '../domain/projectile/index.js';
 import { DroneManager } from '../use-cases/drone/drone-manager.js';
 import { HudRenderer } from '../infra/renderers/hud/index.js';
-import { GameLoop } from './loop.js';
+import { GameLoop } from './loop/index.js';
 import { InputHandler } from '../infra/input/input-handler/index.js';
 import { loopInfra, inputInfra, collisionEffects, resetMineralSessionGains, setBodyTheme } from './adapters.js';
 import { initMineralHUD } from '../infra/renderers/effects/index.js';

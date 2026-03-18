@@ -2,8 +2,8 @@
   {
     "file": "best.json",
     "name": "best",
-    "generation": 900,
-    "fitness": 3607,
+    "generation": 1650,
+    "fitness": 3848,
     "description": "Modèle multi-level curriculum [30,20,12,2]"
   }
 ]

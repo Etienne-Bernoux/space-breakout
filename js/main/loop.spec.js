@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GameLoop } from './loop.js';
+import { GameLoop } from './loop/index.js';
 
 // Stub global requestAnimationFrame
 globalThis.requestAnimationFrame = vi.fn();

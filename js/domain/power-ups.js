@@ -130,7 +130,7 @@ export const POWER_UPS = {
     name: 'Boule de feu',
     short: 'Feu',
     type: 'bonus',
-    duration: 15000,
+    duration: 20000,
     color: '#ff4400',
     effect: { target: 'drone', prop: 'fireball' },
     dropWeight: { rock: 1, ice: 5, lava: 0, metal: 1, crystal: 1, obsidian: 0 },

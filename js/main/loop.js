@@ -12,7 +12,9 @@ export class GameLoop {
    * @param {object} deps.infra      - infra adapters (stars, touch, menu, particles, shake, renderers, panels, devOverlay)
    * @param {object} deps.alienCombat - AlienCombatManager instance
    */
-  constructor({ render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, systemMapState, getLevelResult, alienCombat, wallet, upgrades }) {
+  constructor(deps) {
+    const { render, entities, session, systems, ui, canvas, hud, collisionHandler, infra, progress, mapState, systemMapState, getLevelResult, alienCombat, wallet, upgrades } = deps;
+    this._deps = deps; // pour les getters dynamiques (consumableSession, consumableInventory, etc.)
     this.render = render;
     this.entities = entities;
     this.session = session;
@@ -34,6 +36,10 @@ export class GameLoop {
     this._fadeAlpha = 0;          // overlay noir pour transition fade-in
     this.loop = this.loop.bind(this);
   }
+
+  get consumableSession() { return this._deps.consumableSession; }
+  get consumableActivator() { return this._deps.consumableActivator; }
+  get _consumableInventory() { return this._deps._consumableInventory; }
 
   start() {
     requestAnimationFrame(this.loop);

@@ -20,7 +20,8 @@ export class GameSession {
   start(levelId) {
     if (levelId) this.currentLevelId = levelId;
     this.levelStartTime = Date.now();
-    if (this.lives <= 0) this.lives = this.maxLives; // reset uniquement si zone fresh
+    const baseline = this.maxLives + (this.bonusLives || 0);
+    this.lives = Math.max(this.lives, baseline);
     this.score = 0;
     this.scoreMultiplier = 1;
     this._combo = 0;

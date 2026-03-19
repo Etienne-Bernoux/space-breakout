@@ -202,7 +202,6 @@ export function startGame(levelId, opts) {
   spawnEntities(G.entities, level?.asteroids);
   resetSystems(G.systems);
   resetMineralSessionGains();
-  if (!opts?.skipUpgrades) applyUpgradeEffects();
   // Consommables : snapshot du stock dans la session
   G.consumableSession = new ConsumableSession(G.consumableInventory);
   G.consumableActivator = new ConsumableActivator({
@@ -214,6 +213,7 @@ export function startGame(levelId, opts) {
     config: { ...CONFIG, MissileClass: Missile },
   });
   G.collisionHandler.consumableActivator = G.consumableActivator;
+  if (!opts?.skipUpgrades) applyUpgradeEffects();
   G.session.start(levelId);
 }
 
@@ -248,9 +248,9 @@ function applyUpgradeEffects() {
       G.systems.drop.baseRate *= effects.powerUp.dropRateMult;
     }
   }
-  // Session upgrades (bonus lives)
+  // Session upgrades (bonus lives) — stocké pour le reset, pas cumulé
   if (effects.session) {
-    if (effects.session.bonusLives) G.session.lives += effects.session.bonusLives;
+    if (effects.session.bonusLives) G.session.bonusLives = effects.session.bonusLives;
   }
 }
 

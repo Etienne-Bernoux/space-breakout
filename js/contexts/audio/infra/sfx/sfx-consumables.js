@@ -66,6 +66,31 @@ export function playMissileLaunch() {
   src.start(now);
 }
 
+export function playMissileImpact() {
+  const ctx = getCtx(); const sfxGain = getSfxGain(); const now = ctx.currentTime;
+  // Explosion courte : bruit passe-bas + craquement
+  const len = ctx.sampleRate * 0.12;
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.35, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+  src.connect(f); f.connect(g); g.connect(sfxGain);
+  src.start(now);
+  // Impact tonal descendant
+  const osc = ctx.createOscillator(); osc.type = 'square';
+  osc.frequency.setValueAtTime(400, now);
+  osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(0.12, now);
+  og.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  osc.connect(og); og.connect(sfxGain);
+  osc.start(now); osc.stop(now + 0.15);
+}
+
 export function playFireballActivate() {
   const ctx = getCtx(); const sfxGain = getSfxGain(); const now = ctx.currentTime;
   // Whoosh de feu

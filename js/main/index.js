@@ -6,7 +6,7 @@ import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../i
 import { isProgressLabActive, initProgressLab, showProgressLab, hideProgressLab } from '../infra/lab/progress-lab/index.js';
 import { isAILabActive, isAILabOpen, initAILab, showAILab, hideAILab } from '../infra/lab/ai-lab/index.js';
 import { isLabMode, initLabHub, showLabHub, hideLabHub, isLabHubActive } from '../infra/lab/hub/index.js';
-import { getAllLevels } from '../domain/progression/level-catalog.js';
+import { getAllLevels, ALL_LEVELS_FLAT } from '../domain/progression/level-catalog.js';
 import { getAllZones } from '../domain/progression/zone-catalog.js';
 import { ZONE_1 } from '../domain/progression/level-catalog.js';
 import { saveProgress } from '../infra/persistence/progress-storage.js';
@@ -60,7 +60,7 @@ initProgressLab({
   wallet: G.wallet,
   upgrades: G.upgrades,
   progress: G.progress,
-  levels: getAllLevels(),
+  levels: ALL_LEVELS_FLAT,
   zones: getAllZones(),
   saveProgress,
   onBack: () => { hideProgressLab(); showLabHub(); },

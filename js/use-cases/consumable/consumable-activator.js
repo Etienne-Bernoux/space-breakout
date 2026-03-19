@@ -59,6 +59,7 @@ export class ConsumableActivator {
         this.effects.spawnExplosion?.(a.x + a.width / 2, a.y + a.height / 2, a.color);
       }
     }
+    this.effects.spawnShockwaveRing?.(drone.x, drone.y, radius, '#00e5ff');
     this.effects.triggerShake?.(8);
     this.effects.playShockwave?.();
     return true;

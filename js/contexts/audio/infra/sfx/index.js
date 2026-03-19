@@ -5,4 +5,4 @@ export { playBounce, playAsteroidHit, playAlienHit, playLoseLife, playWin, playG
 export { playShipExplosion, playBossExplosion } from './sfx-explosions.js';
 export { playAlienShoot } from './sfx-combat.js';
 export { playMineralPickup, playForgePurchase } from './sfx-economy.js';
-export { playSafetyNetBounce, playShockwave, playMissileLaunch, playFireballActivate } from './sfx-consumables.js';
+export { playSafetyNetBounce, playShockwave, playMissileLaunch, playMissileImpact, playFireballActivate } from './sfx-consumables.js';

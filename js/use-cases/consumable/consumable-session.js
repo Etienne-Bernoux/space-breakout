@@ -13,12 +13,7 @@ export class ConsumableSession {
     /** @type {Map<string, number>} charges dispo cette partie */
     this._charges = new Map();
     for (const id of CONSUMABLE_IDS) {
-      const stock = inventory.getStock(id);
-      if (stock <= 0) { this._charges.set(id, 0); continue; }
-      const def = getConsumable(id);
-      // Missiles : 1 stock = N tirs
-      const charges = def?.shotsPerCharge ? def.shotsPerCharge : 1;
-      this._charges.set(id, charges);
+      this._charges.set(id, inventory.getStock(id));
     }
   }
 
@@ -35,16 +30,7 @@ export class ConsumableSession {
     const charges = this.getCharges(id);
     if (charges <= 0) return false;
     this._charges.set(id, charges - 1);
-    // Déduire du stock persistant (sauf missiles qui déduisent quand toutes les shots sont épuisées)
-    const def = getConsumable(id);
-    if (def?.shotsPerCharge) {
-      // Missiles : déduire 1 du stock quand les N tirs sont écoulés
-      if (this.getCharges(id) <= 0) {
-        this._inventory.useOne(id);
-      }
-    } else {
-      this._inventory.useOne(id);
-    }
+    this._inventory.useOne(id);
     return true;
   }
 

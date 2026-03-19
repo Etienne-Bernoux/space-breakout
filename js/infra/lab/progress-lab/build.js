@@ -2,6 +2,8 @@
 
 import { MINERAL_IDS, getMineral } from '../../../domain/minerals/index.js';
 import { UPGRADE_IDS, getUpgrade } from '../../../use-cases/upgrade/upgrade-catalog.js';
+import { getZoneForLevel } from '../../../domain/progression/level-catalog.js';
+import { getZone } from '../../../domain/progression/zone-catalog.js';
 
 /**
  * Construit le panel unique (wallet + upgrades + reset + zone details).
@@ -157,11 +159,21 @@ export function buildSimulatorModal(root, levels) {
   const select = document.createElement('select');
   select.className = 'pl-select';
   select.dataset.action = 'sim-level';
+  let currentGroup = null;
+  let currentZoneId = null;
   for (let i = 0; i < levels.length; i++) {
+    const zoneId = getZoneForLevel(levels[i].id);
+    if (zoneId !== currentZoneId) {
+      currentZoneId = zoneId;
+      const zone = getZone(zoneId);
+      currentGroup = document.createElement('optgroup');
+      currentGroup.label = zone ? zone.name : zoneId;
+      select.appendChild(currentGroup);
+    }
     const opt = document.createElement('option');
     opt.value = i;
     opt.textContent = levels[i].name;
-    select.appendChild(opt);
+    (currentGroup || select).appendChild(opt);
   }
   levelRow.appendChild(select);
   body.appendChild(levelRow);

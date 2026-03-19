@@ -309,7 +309,9 @@ export class CollisionHandler {
             }
           }
           this.effects.spawnExplosion(m.x, m.y, m.color || '#ff3355');
-          this.effects.triggerShake(2);
+          this.effects.spawnExplosion(m.x, m.y, '#ffaa33');
+          this.effects.triggerShake(5);
+          this.effects.playMissileImpact?.();
           break;
         }
       }

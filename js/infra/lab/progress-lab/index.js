@@ -91,8 +91,9 @@ export function hideProgressLab() {
   if (deps?.onBackToMenu) deps.onBackToMenu();
 }
 
-export function showSimulatorModal(levelIndex) {
-  state.sim.levelIndex = levelIndex ?? 0;
+export function showSimulatorModal(levelId) {
+  const idx = levelId && deps ? deps.levels.findIndex(l => l.id === levelId) : -1;
+  state.sim.levelIndex = idx >= 0 ? idx : 0;
   state.simulatorOpen = true;
   document.getElementById('pl-simulator')?.classList.add('open');
   if (refs) updateSimulator(refs);

@@ -11,13 +11,13 @@ function makeSession(stocks = {}) {
 describe('ConsumableSession', () => {
   it('snapshot les charges depuis l\'inventaire', () => {
     const { session } = makeSession({ safetyNet: 3, shockwave: 1 });
-    expect(session.getCharges('safetyNet')).toBe(1); // 1 charge par unité
+    expect(session.getCharges('safetyNet')).toBe(3);
     expect(session.getCharges('shockwave')).toBe(1);
   });
 
-  it('missiles : 1 stock = 3 tirs', () => {
+  it('missiles : charges = stock', () => {
     const { session } = makeSession({ missiles: 2 });
-    expect(session.getCharges('missiles')).toBe(3); // shotsPerCharge = 3
+    expect(session.getCharges('missiles')).toBe(2);
   });
 
   it('0 stock = 0 charges', () => {
@@ -29,8 +29,8 @@ describe('ConsumableSession', () => {
   it('use consomme 1 charge et déduit du stock', () => {
     const { session, inv } = makeSession({ safetyNet: 2 });
     expect(session.use('safetyNet')).toBe(true);
-    expect(session.getCharges('safetyNet')).toBe(0);
-    expect(inv.getStock('safetyNet')).toBe(1); // déduit 1
+    expect(session.getCharges('safetyNet')).toBe(1);
+    expect(inv.getStock('safetyNet')).toBe(1);
   });
 
   it('use retourne false si plus de charge', () => {
@@ -38,14 +38,11 @@ describe('ConsumableSession', () => {
     expect(session.use('safetyNet')).toBe(false);
   });
 
-  it('missiles : stock déduit quand les 3 tirs sont écoulés', () => {
-    const { session, inv } = makeSession({ missiles: 1 });
-    expect(session.use('missiles')).toBe(true); // tir 1
-    expect(inv.getStock('missiles')).toBe(1);   // pas encore déduit
-    expect(session.use('missiles')).toBe(true); // tir 2
+  it('missiles : 1 use = 1 stock déduit', () => {
+    const { session, inv } = makeSession({ missiles: 2 });
+    expect(session.use('missiles')).toBe(true);
     expect(inv.getStock('missiles')).toBe(1);
-    expect(session.use('missiles')).toBe(true); // tir 3
-    expect(inv.getStock('missiles')).toBe(0);   // maintenant déduit
+    expect(session.getCharges('missiles')).toBe(1);
   });
 
   it('getActiveConsumables retourne les actifs avec charges', () => {

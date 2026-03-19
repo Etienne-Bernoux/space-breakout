@@ -32,8 +32,7 @@ export const CONSUMABLES = {
     color: '#ff3355',
     maxStock: 10,
     cost: { copper: 15, silver: 3 },
-    shotsPerCharge: 3,
-    description: '2 missiles verticaux (3 tirs par charge).',
+    description: '2 missiles verticaux.',
   },
   fireball: {
     id: 'fireball',

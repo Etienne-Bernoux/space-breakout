@@ -66,11 +66,8 @@ export function drawConsumableHUD(ctx, activeList, W, H) {
     ctx.textBaseline = 'top';
     ctx.fillText(def.key, x + 3 * s, y + 2 * s);
 
-    // Icône simplifiée (cercle coloré)
-    ctx.fillStyle = def.color;
-    ctx.beginPath();
-    ctx.arc(x + btnSize / 2, y + btnSize * 0.42, btnSize * 0.22, 0, Math.PI * 2);
-    ctx.fill();
+    // Icône distincte par consommable
+    _drawConsumableIcon(ctx, id, x + btnSize / 2, y + btnSize * 0.42, btnSize * 0.22, def.color);
 
     // Charges (coin bas-droite)
     ctx.fillStyle = '#ffffff';
@@ -101,6 +98,65 @@ export function getConsumableButtonRects(activeList, W, H) {
     w: btnSize,
     h: btnSize,
   }));
+}
+
+function _drawConsumableIcon(ctx, id, cx, cy, r, color) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  if (id === 'shockwave') {
+    // Onde de choc : cercles concentriques
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * (0.4 + i * 0.3), 0, Math.PI * 2);
+      ctx.globalAlpha = 1 - i * 0.3;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  } else if (id === 'missiles') {
+    // Missile : triangle pointu + traînée
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx - r * 0.5, cy + r * 0.4);
+    ctx.lineTo(cx + r * 0.5, cy + r * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    // Ailerons
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.5, cy + r * 0.2);
+    ctx.lineTo(cx - r * 0.9, cy + r * 0.7);
+    ctx.lineTo(cx - r * 0.3, cy + r * 0.4);
+    ctx.moveTo(cx + r * 0.5, cy + r * 0.2);
+    ctx.lineTo(cx + r * 0.9, cy + r * 0.7);
+    ctx.lineTo(cx + r * 0.3, cy + r * 0.4);
+    ctx.fill();
+    // Flamme
+    ctx.fillStyle = '#ffaa00';
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.3, cy + r * 0.4);
+    ctx.lineTo(cx, cy + r);
+    ctx.lineTo(cx + r * 0.3, cy + r * 0.4);
+    ctx.fill();
+  } else if (id === 'fireball') {
+    // Flamme : goutte inversée
+    ctx.beginPath();
+    ctx.arc(cx, cy + r * 0.1, r * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.5, cy);
+    ctx.quadraticCurveTo(cx, cy - r * 1.2, cx + r * 0.5, cy);
+    ctx.fill();
+    // Centre clair
+    ctx.fillStyle = '#ffee88';
+    ctx.beginPath();
+    ctx.arc(cx, cy + r * 0.15, r * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Fallback cercle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function _roundRect(ctx, x, y, w, h, r) {

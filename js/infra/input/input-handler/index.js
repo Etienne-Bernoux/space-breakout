@@ -102,7 +102,7 @@ export class InputHandler {
     const lvl = levels[this.mapState.selectedIndex];
     if (lvl && this.progress.isUnlocked(lvl.id)) {
       if (this.infra.isProgressLabActive()) {
-        this.infra.showSimulatorModal(this.mapState.selectedIndex);
+        this.infra.showSimulatorModal(lvl.id);
         return;
       }
       this.startGame(lvl.id);

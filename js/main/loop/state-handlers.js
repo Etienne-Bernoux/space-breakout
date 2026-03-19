@@ -293,6 +293,10 @@ export function loopPlaying(gl, ctx, fx, dt) {
       field, ship, gl.entities.projectiles, dtEff, gl.canvas,
     );
   }
+  if (gl.entities.missiles) {
+    for (const m of gl.entities.missiles) m.update(dtEff);
+    gl.entities.missiles = gl.entities.missiles.filter(m => m.alive);
+  }
 
   gl.collisionHandler.update();
 

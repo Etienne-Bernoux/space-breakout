@@ -39,7 +39,7 @@ const LEVELS_BY_ZONE = {
 };
 
 /** Tous les levels à plat (toutes zones confondues). */
-const ALL_LEVELS_FLAT = Object.values(LEVELS_BY_ZONE).flat();
+export const ALL_LEVELS_FLAT = Object.values(LEVELS_BY_ZONE).flat();
 
 /** Retourne les niveaux d'une zone. Défaut : zone1. */
 export function getLevelsForZone(zoneId = 'zone1') {

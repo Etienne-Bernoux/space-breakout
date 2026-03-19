@@ -275,7 +275,35 @@ export function spawnTrail(x, y, dx = 0, dy = 0) {
 }
 
 // --- Update & Draw ---
+// --- Onde de choc (anneau qui s'étend) ---
+const shockwaves = [];
+
+export function spawnShockwaveRing(x, y, maxRadius = 120, color = '#00e5ff') {
+  shockwaves.push({ x, y, radius: 0, maxRadius, color, life: 1 });
+}
+
 export function updateParticles(ctx, dt = 1) {
+  // Ondes de choc
+  for (let i = shockwaves.length - 1; i >= 0; i--) {
+    const sw = shockwaves[i];
+    sw.radius += dt * 6;
+    sw.life = 1 - sw.radius / sw.maxRadius;
+    if (sw.life <= 0) { shockwaves.splice(i, 1); continue; }
+    ctx.strokeStyle = sw.color;
+    ctx.lineWidth = 3 * sw.life;
+    ctx.globalAlpha = sw.life * 0.8;
+    ctx.beginPath();
+    ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    // Glow
+    ctx.lineWidth = 8 * sw.life;
+    ctx.globalAlpha = sw.life * 0.2;
+    ctx.beginPath();
+    ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
   // Particules d'explosion
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];

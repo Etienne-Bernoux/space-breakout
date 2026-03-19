@@ -1,8 +1,8 @@
 // --- Infra adapters : regroupement des imports infra pour injection dans GameLoop / InputHandler ---
 // Extrait de init.js pour alléger la composition root.
 
-import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnTrail, updateParticles } from '../contexts/audio/infra/effects/particles.js';
-import { playAlienShoot, playMineralPickup, playSafetyNetBounce, playShockwave, playMissileLaunch, playFireballActivate } from '../contexts/audio/infra/sfx/index.js';
+import { spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnShockwaveRing, spawnTrail, updateParticles } from '../contexts/audio/infra/effects/particles.js';
+import { playAlienShoot, playMineralPickup, playSafetyNetBounce, playShockwave, playMissileLaunch, playMissileImpact, playFireballActivate } from '../contexts/audio/infra/sfx/index.js';
 import { triggerShake, updateShake, setAmbientShake } from '../contexts/audio/infra/effects/screenshake.js';
 import { isDevPanelActive, hideDevPanel, showDevPanel } from '../infra/lab/dev-panel/index.js';
 import { isLabMode, isLabHubActive } from '../infra/lab/hub/index.js';
@@ -72,8 +72,8 @@ export const inputInfra = {
 };
 
 export const collisionEffects = {
-  spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, triggerShake, spawnDebris, playMineralPickup, addMineralSessionGain,
-  playSafetyNetBounce, playShockwave, playMissileLaunch, playFireballActivate,
+  spawnExplosion, spawnShipExplosion, spawnAlienExplosion, spawnBossExplosion, spawnBounceFlash, spawnComboSparkle, spawnShockwaveRing, triggerShake, spawnDebris, playMineralPickup, addMineralSessionGain,
+  playSafetyNetBounce, playShockwave, playMissileLaunch, playMissileImpact, playFireballActivate,
 };
 
 export { resetMineralSessionGains, setBodyTheme };

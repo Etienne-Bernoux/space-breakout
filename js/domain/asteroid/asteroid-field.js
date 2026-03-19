@@ -5,6 +5,7 @@ import { buildRandom, buildFromPattern, makeAsteroid, pickMaterial } from './fie
 import { polarToCartesian } from '../shape/polygon-collision.js';
 import { computeTentaclePoly } from '../shape/tentacle-shape.js';
 import { computeCorePoly } from '../shape/core-shape.js';
+import { computeSpirePoly } from '../shape/spire-shape.js';
 
 export class AsteroidField {
   /**
@@ -32,15 +33,19 @@ export class AsteroidField {
     // Cache du core pour les calculs tentacules
     this._core = this.grid.find(a => a.material?.isBoss) || null;
 
+    // Régénérations pendantes (éperons de glace)
+    this.pendingRegens = [];
+
     // Initialiser les collisionPoly des créatures alien (avant la première frame)
     if (this._core) {
       this._core.collisionPoly = computeCorePoly(this._core);
       const coreCx = this._core.x + this._core.width / 2;
       const coreCy = this._core.y + this._core.height / 2;
       for (const a of this.grid) {
-        if (a.materialKey !== 'tentacle') continue;
+        if (a.materialKey !== 'tentacle' && a.materialKey !== 'iceSpire') continue;
         const bb = { cx: a.x + a.width / 2, cy: a.y + a.height / 2, w: a.width, h: a.height };
-        a.collisionPoly = computeTentaclePoly(bb, coreCx, coreCy, a.floatPhase);
+        const computeFn = a.materialKey === 'iceSpire' ? computeSpirePoly : computeTentaclePoly;
+        a.collisionPoly = computeFn(bb, coreCx, coreCy, a.floatPhase);
       }
     }
   }
@@ -99,11 +104,25 @@ export class AsteroidField {
 
   // --- Mutations ---
 
-  /** Tue tous les tentacules vivants — appelé quand le core est détruit */
+  /** Tue tous les tentacules/éperons vivants — appelé quand le core est détruit */
   killTentacles() {
     for (const a of this.grid) {
       if (a.alive && a.material?.creaturePart && !a.material?.isBoss) a.alive = false;
     }
+    this.pendingRegens = []; // annuler les régénérations
+  }
+
+  /** Programme la régénération d'un éperon détruit (une seule fois). */
+  scheduleRegen(asteroid) {
+    if (asteroid.hasRegenerated) return;
+    this.pendingRegens.push({
+      gridCol: asteroid.gridCol,
+      gridRow: asteroid.gridRow,
+      cw: asteroid.cw,
+      ch: asteroid.ch,
+      timer: 480, // ~8s à 60fps
+      materialKey: asteroid.materialKey,
+    });
   }
 
   /**
@@ -182,8 +201,33 @@ export class AsteroidField {
   // --- Update ---
 
   update(dt = 1) {
+    // Régénérations pendantes
+    for (let i = this.pendingRegens.length - 1; i >= 0; i--) {
+      const regen = this.pendingRegens[i];
+      regen.timer -= dt;
+      if (regen.timer <= 0) {
+        this.pendingRegens.splice(i, 1);
+        if (!this.bossAlive) continue; // boss mort → pas de regen
+        const a = makeAsteroid(regen.gridCol, regen.gridRow, regen.cw, regen.ch, this.config, regen.materialKey);
+        a.hp = 1; // régénéré à 1 HP seulement
+        a.hasRegenerated = true;
+        a.regenProgress = 0; // animation de cristallisation
+        // Recalculer le collisionPoly
+        if (this._core && this._core.alive) {
+          const bb = { cx: a.x + a.width / 2, cy: a.y + a.height / 2, w: a.width, h: a.height };
+          a.collisionPoly = computeSpirePoly(
+            bb, this._core.x + this._core.width / 2, this._core.y + this._core.height / 2, 0,
+          );
+        }
+        this.grid.push(a);
+      }
+    }
+
     for (const a of this.grid) {
       if (!a.alive) continue;
+      if (a.regenProgress !== undefined && a.regenProgress < 1) {
+        a.regenProgress = Math.min(1, a.regenProgress + 0.022 * dt); // ~45 frames
+      }
       a.rotation += a.rotSpeed * dt;
       a.floatPhase += a.floatFreq * dt;
       a.y = a.baseY + Math.sin(a.floatPhase) * a.floatAmp;
@@ -203,14 +247,15 @@ export class AsteroidField {
       if (a.material?.isBoss) {
         // Core alien : ellipse dynamique (pulse via firePulse)
         a.collisionPoly = computeCorePoly(a, a.firePulse || 0);
-      } else if (a.materialKey === 'tentacle') {
-        // Tentacule : polygone effilé dynamique (ondulation)
+      } else if (a.materialKey === 'tentacle' || a.materialKey === 'iceSpire') {
+        // Tentacule/éperon : polygone dynamique
         if (this._core && this._core.alive) {
           const bb = {
             cx: a.x + a.width / 2, cy: a.y + a.height / 2,
             w: a.width, h: a.height,
           };
-          a.collisionPoly = computeTentaclePoly(
+          const computeFn = a.materialKey === 'iceSpire' ? computeSpirePoly : computeTentaclePoly;
+          a.collisionPoly = computeFn(
             bb,
             this._core.x + this._core.width / 2,
             this._core.y + this._core.height / 2,

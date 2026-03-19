@@ -10,8 +10,8 @@
 // en astéroïdes plus gros (2×2, 2×1, 1×2) via un algo glouton.
 
 const CHAR_TO_MAT = {
-  R: 'rock', I: 'ice', L: 'lava', M: 'metal', C: 'crystal', O: 'obsidian', A: 'tentacle', B: 'alienCore',
-  r: 'rock', i: 'ice', l: 'lava', m: 'metal', c: 'crystal', o: 'obsidian', a: 'tentacle', b: 'alienCore',
+  R: 'rock', I: 'ice', L: 'lava', M: 'metal', C: 'crystal', O: 'obsidian', A: 'tentacle', B: 'alienCore', S: 'iceSpire',
+  r: 'rock', i: 'ice', l: 'lava', m: 'metal', c: 'crystal', o: 'obsidian', a: 'tentacle', b: 'alienCore', s: 'iceSpire',
 };
 
 /** Parse un pattern ASCII → matrice de materialKey|'?'|null */
@@ -356,11 +356,11 @@ export const PATTERNS = {
     grid: GRID_PRESETS.medium,
     lines: [
       'O..IIIIIIII..O',
-      '..II.ABBA.II..',
-      '.II..ABBA..II.',
-      '..II.A..A.II..',
-      'O..IIIIIIII..O',
-      '..............',
+      '..II.SBBS.II..',
+      '.II..SBBS..II.',
+      '..II..SS..II..',
+      '......SS......',
+      '......SS......',
       '..I..IIII..I..',
       '.I..I....I..I.',
       'I..I......I..I',

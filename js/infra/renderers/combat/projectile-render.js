@@ -18,10 +18,26 @@ export function drawProjectile(ctx, p) {
   ctx.fillRect(-radius * 3, -radius * 3, radius * 6, radius * 6);
 
   // Corps
-  ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
+  if (p.frostShot) {
+    // Losange cristallin pour éclats de glace
+    const r = radius * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 1.4);
+    ctx.lineTo(r, 0);
+    ctx.lineTo(0, r * 1.4);
+    ctx.lineTo(-r, 0);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(220,240,255,0.6)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
 
   // Reflet central
   const hl = ctx.createRadialGradient(-radius * 0.2, -radius * 0.3, 0, 0, 0, radius);

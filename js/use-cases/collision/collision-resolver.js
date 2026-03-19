@@ -25,6 +25,15 @@ export class CollisionResolver {
         return { type: 'sticky' };
       }
       drone.dy = -drone.dy;
+      if (ship.frozen) {
+        // Vaisseau gelé : angle de rebond aléatoire
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.8;
+        drone.dx = Math.cos(angle) * drone.speed;
+        drone.dy = Math.sin(angle) * drone.speed;
+        if (drone.dy > 0) drone.dy = -drone.dy; // toujours vers le haut
+        ship.freezeTimer = 0; // le drone casse la glace
+        return { type: 'bounce', frozenBreak: true };
+      }
       const hit = (drone.x - ship.x) / ship.width;
       drone.dx = drone.speed * (hit - 0.5) * 2;
       return { type: 'bounce' };

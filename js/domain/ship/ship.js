@@ -34,6 +34,7 @@ export class Ship {
     this.vx = 0; // vélocité horizontale (pour le rendu des flammes)
     this.visible = true;
     this.stunTimer = 0; // immobilisation (frames, décrémenté par dt)
+    this.freezeTimer = 0; // gel givrant (frames, décrémenté par dt)
   }
 
   get width() { return this.widthMod.current; }
@@ -44,7 +45,20 @@ export class Ship {
     this.stunTimer = duration;
   }
 
+  /** Applique un gel givrant (immobilisation + bounce aléatoire drone). 120 frames ≈ 2s. */
+  freeze(duration = 120) {
+    this.freezeTimer = duration;
+  }
+
+  /** Le vaisseau est-il gelé ? */
+  get frozen() { return this.freezeTimer > 0; }
+
   update(pointerX, dt = 1) {
+    if (this.freezeTimer > 0) {
+      this.freezeTimer -= dt;
+      this.vx = 0;
+      return;
+    }
     if (this.stunTimer > 0) {
       this.stunTimer -= dt;
       this.vx = 0;

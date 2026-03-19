@@ -8,3 +8,4 @@ export {
 
 export { computeTentaclePoly } from './tentacle-shape.js';
 export { computeCorePoly } from './core-shape.js';
+export { computeSpirePoly } from './spire-shape.js';

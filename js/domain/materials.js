@@ -62,6 +62,21 @@ export const MATERIALS = {
     fireRate: 360,          // frames entre tirs (≈6s à 60fps)
     projectileSpeed: 1.5,   // vitesse du projectile
   },
+  iceSpire: {
+    name: 'Éperon de glace',
+    hp: 4,
+    destructible: true,
+    pointsMult: 2.5,
+    noFragment: true,
+    piercingImmune: true,
+    creaturePart: true,
+    optional: true,
+    colors: ['#5bc0eb', '#88ddff', '#3399cc', '#aaeeff'],
+    style: 'iceSpire', // cristal angulaire, shimmer, aura givrée
+    fireRate: 300,          // frames entre tirs (≈5s à 60fps)
+    projectileSpeed: 1.2,   // plus lent mais gèle le vaisseau
+    frostShot: true,        // projectile givrant (freeze au lieu de stun)
+  },
   alienCore: {
     name: 'Noyau alien',
     hp: 5,

@@ -208,4 +208,27 @@ export function drawShip(ctx, ship) {
   ctx.beginPath();
   ctx.arc(cx, y + height * 0.5, 1.5, 0, Math.PI * 2);
   ctx.fill();
+
+  // --- 9. Overlay givre (quand gelé par Cryovore) ---
+  if (ship.freezeTimer > 0) {
+    const freezeAlpha = Math.min(ship.freezeTimer / 60, 0.5);
+    bodyPath();
+    ctx.fillStyle = `rgba(91,192,235,${freezeAlpha})`;
+    ctx.fill();
+    // Cristaux de givre sur les bords
+    ctx.strokeStyle = `rgba(200,235,255,${freezeAlpha * 1.4})`;
+    ctx.lineWidth = 1.5;
+    const crystalCount = 6;
+    for (let i = 0; i < crystalCount; i++) {
+      const t = (i + 0.5) / crystalCount;
+      const crx = x + width * t;
+      const crLen = 3 + Math.sin(i * 2.3 + ship.freezeTimer * 0.05) * 2;
+      ctx.beginPath();
+      ctx.moveTo(crx, y);
+      ctx.lineTo(crx - 1.5, y - crLen);
+      ctx.lineTo(crx + 1.5, y - crLen);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
 }

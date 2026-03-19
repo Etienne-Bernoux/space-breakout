@@ -1,5 +1,5 @@
 import { loadSettings, setVolumeChangeCallback, getMusicVolume, getSfxVolume } from '../infra/menu/index.js';
-import { loadDevConfig, isDevPanelActive, isAIPlayEnabled, showDevPanel, hideDevPanel, initDevPanel } from '../infra/lab/dev-panel/index.js';
+import { loadDevConfig, isDevPanelActive, isAIPlayEnabled, getSelectedLevelId, showDevPanel, hideDevPanel, initDevPanel } from '../infra/lab/dev-panel/index.js';
 import { setVolume as setMusicVolume } from '../contexts/audio/infra/music/index.js';
 import { setSfxVolume, perceptualVolume } from '../contexts/audio/infra/sfx/index.js';
 import { isMusicLabActive, showMusicLab, hideMusicLab, initMusicLab } from '../infra/lab/music-lab/index.js';
@@ -34,7 +34,7 @@ if (isLabMode()) showLabHub();
 // Init dev panel DOM (toujours, pour que le div existe)
 initDevPanel({
   onLaunch: () => {
-    startGame();
+    startGame(getSelectedLevelId());
     // Si l'IA doit jouer, charger le meilleur genome et créer l'AIPlayer
     if (isAIPlayEnabled()) {
       const data = loadFromStorage();

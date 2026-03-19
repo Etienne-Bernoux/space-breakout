@@ -85,9 +85,12 @@ export class CollisionHandler {
       || this.config.screenshake.intensity.small;
     this.effects.triggerShake(shakeAmount);
 
-    // Tentacule détruite → grosse explosion alien
-    if (ev.materialKey === 'tentacle') {
+    // Tentacule/éperon détruit → grosse explosion alien + régénération éperon
+    if (ev.materialKey === 'tentacle' || ev.materialKey === 'iceSpire') {
       this.effects.spawnAlienExplosion(ev.x, ev.y);
+      if (ev.materialKey === 'iceSpire' && ev.asteroid) {
+        field.scheduleRegen(ev.asteroid);
+      }
     }
 
     // Explosion givrante → gèle les voisins (sauf si fireball)
@@ -150,7 +153,11 @@ export class CollisionHandler {
       const cy = Math.max(ship.y, Math.min(p.y, ship.y + ship.height));
       if (Math.hypot(p.x - cx, p.y - cy) < p.radius + 2) {
         p.alive = false;
-        ship.stun(150); // ~2.5s à 60fps
+        if (p.frostShot) {
+          ship.freeze(120); // ~2s gel givrant
+        } else {
+          ship.stun(150); // ~2.5s stun
+        }
         this.effects.spawnExplosion(p.x, p.y, p.color || '#33ff66');
         this.effects.triggerShake(6);
         continue;

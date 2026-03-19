@@ -41,9 +41,12 @@ export class AlienCombatManager {
       const px = a.x + a.width / 2;
       const py = a.y + a.height;
       const target = { x: ship.x + ship.width / 2, y: ship.y };
-      projectiles.push(this.createProjectile(px, py, target, {
-        speed: a.projectileSpeed,
-      }));
+      const opts = { speed: a.projectileSpeed };
+      if (a.material?.frostShot) {
+        opts.frostShot = true;
+        opts.color = '#5bc0eb';
+      }
+      projectiles.push(this.createProjectile(px, py, target, opts));
       a.firePulse = 1.0;
       this.onShoot();
     }

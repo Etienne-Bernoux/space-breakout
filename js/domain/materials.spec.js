@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import { MATERIALS, getMaterial } from './materials.js';
 
 describe('materials', () => {
-  it('définit 8 matériaux', () => {
-    expect(Object.keys(MATERIALS)).to.have.length(8);
+  it('définit 9 matériaux', () => {
+    expect(Object.keys(MATERIALS)).to.have.length(9);
   });
 
   it('chaque matériau a les champs requis', () => {

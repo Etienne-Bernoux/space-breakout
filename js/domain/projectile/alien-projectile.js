@@ -17,7 +17,8 @@ export class AlienProjectile {
     this.color = config.color || '#33ff66';
     this.alive = true;
     this.rotation = 0;
-    this.rotationSpeed = 0.08;
+    this.rotationSpeed = config.frostShot ? 0.12 : 0.08;
+    this.frostShot = config.frostShot || false;
 
     // Direction fixe vers la cible au moment du tir
     const dx = target.x - x;

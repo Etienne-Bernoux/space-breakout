@@ -6,6 +6,9 @@ import { isAdjacent, partsBBox } from './utils.js';
 import { drawOrganicBridge } from './bridge-draw.js';
 import { drawTentacle } from './tentacle-draw.js';
 import { drawCorePart } from './core-draw.js';
+import { drawIceBridge } from './ice-bridge-draw.js';
+import { drawIceSpire } from './spire-draw.js';
+import { drawCryoCore } from './cryo-core-draw.js';
 
 /**
  * Trouve tous les groupes alien connectés dans le field.
@@ -77,27 +80,37 @@ function groupTentacles(tentacles) {
 /** Dessine un groupe alien comme une créature unifiée */
 function drawCreature(ctx, group) {
   const core = group.find((a) => a.materialKey === 'alienCore');
-  const tentacles = group.filter((a) => a.materialKey === 'tentacle');
   const phase = core?.floatPhase || 0;
   const pulse = core ? 0.15 + Math.sin(phase * 2.5) * 0.12 : 0.15;
 
+  // Dispatch : Cryovore (iceSpire) vs Parasite (tentacle)
+  const isCryovore = group.some((a) => a.materialKey === 'iceSpire');
+
+  if (isCryovore) {
+    _drawCryovore(ctx, group, core, phase, pulse);
+  } else {
+    _drawParasite(ctx, group, core, phase, pulse);
+  }
+}
+
+function _drawParasite(ctx, group, core, phase, pulse) {
+  const tentacles = group.filter((a) => a.materialKey === 'tentacle');
   const tentacleGroups = groupTentacles(tentacles);
 
-  // 1. Ponts organiques (un par tentacule logique)
   if (core) {
-    for (const tg of tentacleGroups) {
-      const bb = partsBBox(tg);
-      drawOrganicBridge(ctx, core, bb, pulse);
-    }
+    for (const tg of tentacleGroups) drawOrganicBridge(ctx, core, partsBBox(tg), pulse);
   }
+  for (const tg of tentacleGroups) drawTentacle(ctx, tg, core, pulse);
+  if (core) drawCorePart(ctx, core, pulse, phase);
+}
 
-  // 2. Tentacules (un rendu unifié par groupe)
-  for (const tg of tentacleGroups) {
-    drawTentacle(ctx, tg, core, pulse);
-  }
+function _drawCryovore(ctx, group, core, phase, pulse) {
+  const spires = group.filter((a) => a.materialKey === 'iceSpire');
+  const spireGroups = groupTentacles(spires);
 
-  // 3. Corps (par-dessus)
   if (core) {
-    drawCorePart(ctx, core, pulse, phase);
+    for (const sg of spireGroups) drawIceBridge(ctx, core, partsBBox(sg), pulse);
   }
+  for (const sg of spireGroups) drawIceSpire(ctx, sg, core, pulse);
+  if (core) drawCryoCore(ctx, core, pulse, phase);
 }

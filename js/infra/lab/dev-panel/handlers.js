@@ -31,6 +31,7 @@ export function attachDevHandlers(root, refs, { onLaunch, onBack }) {
       for (const k of SLIDER_MAT_KEYS) state.devConfig.materials[k] = k === 'rock' ? 1.0 : 0;
       state.devConfig.patternKey = 'random';
       state.devConfig.gridKey = 'small';
+      state.devConfig.levelId = null;
       saveDevConfig();
       updateDevPanel(refs);
       return;
@@ -49,8 +50,17 @@ export function attachDevHandlers(root, refs, { onLaunch, onBack }) {
       return;
     }
 
+    if (action === 'level') {
+      state.devConfig.levelId = btn.dataset.key;
+      state.devConfig.patternKey = 'random'; // désélectionner le pattern libre
+      saveDevConfig();
+      updateDevPanel(refs);
+      return;
+    }
+
     if (action === 'pattern') {
       state.devConfig.patternKey = btn.dataset.key;
+      state.devConfig.levelId = null; // désélectionner le niveau
       saveDevConfig();
       updateDevPanel(refs);
       return;

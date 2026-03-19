@@ -37,6 +37,11 @@ export function isAIPlayEnabled() {
   return state.devConfig.aiPlay;
 }
 
+/** Retourne le levelId sélectionné (null = mode sandbox/pattern). */
+export function getSelectedLevelId() {
+  return state.devConfig.levelId || null;
+}
+
 /** Retourne la config astéroïdes enrichie du dev panel */
 export function getDevAsteroidConfig() {
   // Normaliser les poids matériaux (tentacle/alienCore exclus — placement manuel uniquement)

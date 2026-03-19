@@ -6,8 +6,8 @@ import { PATTERNS, GRID_PRESETS } from '../../../domain/patterns.js';
 
 export const STORAGE_KEY = 'space-breakout-dev';
 export const MAT_KEYS = Object.keys(MATERIALS);
-/** Matériaux affichés dans les sliders (tentacle/alienCore = placement manuel uniquement) */
-export const SLIDER_MAT_KEYS = MAT_KEYS.filter(k => k !== 'tentacle' && k !== 'alienCore');
+/** Matériaux affichés dans les sliders (créatures alien = placement manuel uniquement) */
+export const SLIDER_MAT_KEYS = MAT_KEYS.filter(k => k !== 'tentacle' && k !== 'alienCore' && k !== 'iceSpire');
 export const GRID_KEYS = Object.keys(GRID_PRESETS);
 
 // --- Presets ---
@@ -29,6 +29,7 @@ const state = {
     patternKey: 'random',
     gridKey: 'small', // taille grille pour mode aléatoire
     aiPlay: false,    // l'IA joue à la place du joueur
+    levelId: null,    // niveau catalogue sélectionné (null = mode sandbox)
   },
   active: false,
 };
@@ -43,6 +44,7 @@ export function loadDevConfig() {
       if (data.patternKey) state.devConfig.patternKey = data.patternKey;
       if (data.gridKey) state.devConfig.gridKey = data.gridKey;
       if (data.aiPlay !== undefined) state.devConfig.aiPlay = data.aiPlay;
+      if (data.levelId !== undefined) state.devConfig.levelId = data.levelId;
     }
   } catch (_) {}
 }

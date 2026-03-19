@@ -4,6 +4,7 @@
 import { MATERIALS } from '../../../domain/materials.js';
 import { PATTERNS, PATTERN_KEYS, GRID_PRESETS } from '../../../domain/patterns.js';
 import { SLIDER_MAT_KEYS, GRID_KEYS, PRESETS } from './state.js';
+import { ZONE_1, ZONE_2 } from '../../../domain/progression/level-catalog.js';
 
 function el(tag, cls, attrs = {}) {
   const e = document.createElement(tag);
@@ -100,10 +101,51 @@ export function buildDevPanel(root) {
   }
   colLeft.appendChild(presetGrid);
 
-  // --- Pattern (colonne droite) ---
-  colRight.appendChild(txt('div', 'dp-section-label', 'PATTERN'));
-  const patternList = el('div', 'dp-btn-list');
-  for (const key of PATTERN_KEYS) {
+  // --- Niveaux par zone (accordéons repliables) ---
+  refs.levels = [];
+  refs.accordions = [];
+  const zones = [ZONE_1, ZONE_2];
+  for (const zone of zones) {
+    const name = zone.name.toUpperCase();
+    const header = txt('div', 'dp-section-label dp-accordion', `▸ ${name}`);
+    const levelList = el('div', 'dp-btn-list dp-collapsed');
+    const levelIds = zone.levels.map(l => l.id);
+    header.addEventListener('click', () => {
+      const collapsed = levelList.classList.toggle('dp-collapsed');
+      header.textContent = `${collapsed ? '▸' : '▾'} ${name}`;
+    });
+    colRight.appendChild(header);
+    for (const lvl of zone.levels) {
+      const btn = txt('button', 'dp-btn', `${lvl.id} ${lvl.name}`);
+      btn.setAttribute('data-action', 'level');
+      btn.setAttribute('data-key', lvl.id);
+      levelList.appendChild(btn);
+      refs.levels.push({ key: lvl.id, btn });
+    }
+    colRight.appendChild(levelList);
+    refs.accordions.push({ header, list: levelList, name, levelIds });
+  }
+
+  // --- Patterns libres (accordéon repliable) ---
+  const usedPatterns = new Set();
+  for (const zone of zones) {
+    for (const lvl of zone.levels) {
+      if (lvl.asteroids?.pattern) {
+        const patKey = PATTERN_KEYS.find(k => PATTERNS[k] === lvl.asteroids.pattern);
+        if (patKey) usedPatterns.add(patKey);
+      }
+    }
+  }
+  const freePatternKeys = PATTERN_KEYS.filter(k => !usedPatterns.has(k));
+
+  const patHeader = txt('div', 'dp-section-label dp-accordion', '▸ PATTERNS LIBRES');
+  const patternList = el('div', 'dp-btn-list dp-collapsed');
+  patHeader.addEventListener('click', () => {
+    const collapsed = patternList.classList.toggle('dp-collapsed');
+    patHeader.textContent = `${collapsed ? '▸' : '▾'} PATTERNS LIBRES`;
+  });
+  colRight.appendChild(patHeader);
+  for (const key of freePatternKeys) {
     const pat = PATTERNS[key];
     const btn = txt('button', 'dp-btn', pat.name);
     btn.setAttribute('data-action', 'pattern');

@@ -369,6 +369,9 @@ body.menu #game {
 }
 
 .dp-section-label { color: #aabbcc; font-weight: bold; font-size: 12px; margin-top: 8px; }
+.dp-accordion { cursor: pointer; user-select: none; }
+.dp-accordion:hover { color: #ddeeff; }
+.dp-collapsed { display: none !important; }
 .dp-hint { color: #556666; font-size: 10px; }
 
 .dp-slider-row {

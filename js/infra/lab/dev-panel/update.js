@@ -25,9 +25,24 @@ export function updateDevPanel(refs) {
   refs.densitySlider.value = Math.round(cfg.density * 100);
   refs.densityVal.textContent = `${Math.round(cfg.density * 100)}%`;
 
-  // Pattern buttons
+  // Level buttons + auto-open accordion
+  if (refs.levels) {
+    for (const l of refs.levels) {
+      l.btn.classList.toggle('dp-btn-active', cfg.levelId === l.key);
+    }
+  }
+  if (refs.accordions && cfg.levelId) {
+    for (const acc of refs.accordions) {
+      if (acc.levelIds.includes(cfg.levelId)) {
+        acc.list.classList.remove('dp-collapsed');
+        acc.header.textContent = `▾ ${acc.name}`;
+      }
+    }
+  }
+
+  // Pattern buttons (libres)
   for (const p of refs.patterns) {
-    p.btn.classList.toggle('dp-btn-active', cfg.patternKey === p.key);
+    p.btn.classList.toggle('dp-btn-active', !cfg.levelId && cfg.patternKey === p.key);
   }
 
   // Grid buttons
